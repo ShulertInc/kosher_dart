@@ -1190,63 +1190,102 @@ class JewishDate implements Comparable<JewishDate> {
     }
   }
 
-  /// Rolls the date back by 1 day. It modifies both the Gregorian and Jewish dates accordingly. The API does not
-  /// currently offer the ability to forward more than one day at a time, or to forward by month or year. If such
-  /// manipulation is required use the {@link Calendar} class {@link Calendar#add(int, int)} or
-  /// {@link Calendar#roll(int, int)} methods in the following manner.
+  /// Rolls the Jewish date back by the number of months passed in.
+  /// This modifies both the Gregorian and Jewish dates accordingly.
+  /// If the day of the month is invalid for the new month (e.g., 30 Tishrei rolling back to 30 Elul,
+  /// which has 29 days), the day is adjusted to the last valid day of the new month.
   ///
-  /// <pre>
-  /// <code>
-  /// 	Calendar cal = jewishDate.getTime(); // get a java.util.Calendar representation of the JewishDate
-  /// 	cal.add(Calendar.MONTH, -3); // subtract 3 Gregorian months
-  /// 	jewishDate.setDate(cal); // set the updated calendar back to this class
-  /// </code>
-  /// </pre>
-  ///
-  /// @see #back()
-  /// @see Calendar#add(int, int)
-  /// @see Calendar#roll(int, int)
-  void back() {
-    // Change Gregorian date
-    if (_gregorianDayOfMonth == 1) {
-      // if first day of month
-      if (_gregorianMonth == 1) {
-        // if first day of year
-        _gregorianMonth = 12;
-        _gregorianYear--;
-      } else {
-        _gregorianMonth--;
-      }
-      // change to last day of previous month
-      _gregorianDayOfMonth =
-          _getLastDayOfGregorianMonth(_gregorianMonth, _gregorianYear);
-    } else {
-      _gregorianDayOfMonth--;
+  /// @param amount the number of months to roll the month backward
+  /// @throws ArgumentError if the amount is less than 1
+  void _backwardJewishMonth(int amount) {
+    if (amount < 1) {
+      throw ArgumentError(
+          "the amount of months to backward has to be greater than zero.");
     }
-    // change Jewish date
-    if (_jewishDay == 1) {
-      // if first day of the Jewish month
-      if (_jewishMonth == NISSAN) {
-        _jewishMonth = _getLastMonthOfJewishYear(_jewishYear);
-      } else if (_jewishMonth == TISHREI) {
-        // if Rosh Hashana
-        _jewishYear--;
-        _jewishMonth--;
+    for (int i = 0; i < amount; i++) {
+      if (getJewishMonth() == TISHREI) {
+        // If Tishrei, move to Elul of the previous year
+        setJewishYear(getJewishYear() - 1);
+        setJewishMonth(ELUL);
+      } else if (getJewishMonth() == NISSAN) {
+        // If Nissan, move to Adar (non-leap year) or Adar II (leap year)
+        setJewishMonth(_getLastMonthOfJewishYear(getJewishYear()));
       } else {
-        _jewishMonth--;
+        // Otherwise, move to the previous month
+        setJewishMonth(getJewishMonth() - 1);
       }
-      _jewishDay = getDaysInJewishMonth();
-    } else {
-      _jewishDay--;
     }
+  }
 
-    if (_dayOfWeek == 1) {
-      // if first day of week, loop back to Saturday
-      _dayOfWeek = 7;
-    } else {
-      _dayOfWeek--;
+  /// Rolls the date back by the specified field and amount. Supports [Calendar.DATE] (default),
+  /// [Calendar.MONTH], and [Calendar.YEAR].
+  ///
+  /// When rolling back by [Calendar.DATE], it modifies both the Gregorian and Jewish dates accordingly.
+  /// When rolling back by [Calendar.MONTH], it calls [_backwardJewishMonth].
+  /// When rolling back by [Calendar.YEAR], it decrements the Jewish year.
+  ///
+  /// @param field the calendar field to roll back. Must be [Calendar.DATE], [Calendar.MONTH], or [Calendar.YEAR]
+  /// @param amount the positive number of units to roll back (defaults to 1)
+  /// @throws ArgumentError if the field is unsupported or the amount is less than 1
+  ///
+  /// @see #forward(Calendar, int)
+  void back([Calendar field = Calendar.DATE, int amount = 1]) {
+    if (field == Calendar.MONTH) {
+      _backwardJewishMonth(amount);
+      return;
+    } else if (field == Calendar.YEAR) {
+      setJewishYear(getJewishYear() - amount);
+      return;
+    } else if (field != Calendar.DATE) {
+      throw ArgumentError(
+          "Unsupported field was passed to back(). Only Calendar.DATE, Calendar.MONTH or Calendar.YEAR are supported.");
     }
-    _gregorianAbsDate--; // change the absolute date
+    if (amount < 1) {
+      throw ArgumentError(
+          "JewishDate.back() does not support amounts less than 1. See JewishDate.forward()");
+    }
+    for (int i = 0; i < amount; i++) {
+      // Change Gregorian date
+      if (_gregorianDayOfMonth == 1) {
+        // if first day of month
+        if (_gregorianMonth == 1) {
+          // if first day of year
+          _gregorianMonth = 12;
+          _gregorianYear--;
+        } else {
+          _gregorianMonth--;
+        }
+        // change to last day of previous month
+        _gregorianDayOfMonth =
+            _getLastDayOfGregorianMonth(_gregorianMonth, _gregorianYear);
+      } else {
+        _gregorianDayOfMonth--;
+      }
+      // change Jewish date
+      if (_jewishDay == 1) {
+        // if first day of the Jewish month
+        if (_jewishMonth == NISSAN) {
+          _jewishMonth = _getLastMonthOfJewishYear(_jewishYear);
+        } else if (_jewishMonth == TISHREI) {
+          // if Rosh Hashana
+          _jewishYear--;
+          _jewishMonth--;
+        } else {
+          _jewishMonth--;
+        }
+        _jewishDay = getDaysInJewishMonth();
+      } else {
+        _jewishDay--;
+      }
+
+      if (_dayOfWeek == 1) {
+        // if first day of week, loop back to Saturday
+        _dayOfWeek = 7;
+      } else {
+        _dayOfWeek--;
+      }
+      _gregorianAbsDate--; // change the absolute date
+    }
   }
 
   /// @see Object#equals(Object)#
