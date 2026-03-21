@@ -1,7 +1,16 @@
+/// Tests for Gregorian date navigation with corresponding Jewish date tracking.
+///
+/// Each test walks through every Gregorian month boundary in a given year,
+/// stepping one day forward or backward across the boundary, and asserts that
+/// both the resulting Gregorian fields and the corresponding Jewish calendar
+/// fields are correct. This ensures that the dual-calendar state machine in
+/// [JewishDate] stays consistent across month and year rollovers.
 import 'package:test/test.dart';
 import 'package:kosher_dart/kosher_dart.dart';
 
 void main() {
+  // Steps forward one day across each Gregorian month boundary in 2011
+  // (a non-leap year) and verifies the paired Jewish date values.
   test('gregorianForwardMonthToMonth', () async {
     DateTime dateTime = DateTime.utc(2011, DateTime.january, 31);
 
@@ -112,6 +121,8 @@ void main() {
     expect(hebrewDate.getJewishDayOfMonth(), 6);
   });
 
+  // Steps backward one day across each Gregorian month boundary in 2010/2011
+  // and verifies the paired Jewish date values.
   test('gregorianBackwardMonthToMonth', () async {
     DateTime dateTime = DateTime.utc(2011, DateTime.january, 1);
 
