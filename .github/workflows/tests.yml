@@ -21,7 +21,7 @@ jobs:
         uses: dart-lang/setup-dart@v1
 
       - name: Install dependencies
-        run: flutter pub get
+        run: dart pub get
 
       - name: Run tests
         run: dart test --exclude=example/test
