@@ -1,3 +1,44 @@
+/// Comprehensive unit tests for [AstronomicalCalendar].
+///
+/// Covers the following areas with a focus on edge cases:
+///
+/// - **Normal mid-latitude locations** — verifies that sunrise, sunset, and
+///   the relationship sunrise < sunset hold for Jerusalem and New York on
+///   typical dates; checks that summer days are longer than winter days.
+///
+/// - **Equator** — confirms sunrise and sunset are non-null on the vernal
+///   equinox, that day length is approximately 12 hours (±15 min), and that
+///   sunrise time varies by less than 1 UTC hour across the whole year.
+///
+/// - **Near-North Pole (89.9°N)** — the NOAA calculator still returns
+///   computed (non-infinite) values even at extreme latitudes, so these tests
+///   verify that the library does not throw and that, where a DateTime is
+///   returned in summer, the day length is > 22 hours.
+///
+/// - **Near-South Pole (−89.9°N)** — mirrors the North Pole tests with
+///   reversed seasons (southern summer in December, southern winter in June).
+///
+/// - **Arctic Circle (65°N)** — verifies very long summer days (> 20 h) and
+///   very short winter days (< 5 h or null polar night).
+///
+/// - **Twilight ordering** — asserts that astronomical < nautical < civil <
+///   sunrise for dawn, and sunset < civil twilight end for dusk.
+///
+/// - **Sea-level sunrise/sunset** — smoke-tests the elevation-independent
+///   variants, confirming non-null values and the correct ordering.
+///
+/// - **UTC sunrise/sunset values** — checks that UTC doubles are finite, that
+///   sunset > sunrise, and documents the near-pole NOAA behaviour.
+///
+/// - **Gregorian leap day (Feb 29)** — confirms that Feb 29 computations do
+///   not throw, return non-null results, and that the sunrise time follows the
+///   expected seasonal progression between Feb 28 and Mar 1.
+///
+/// - **Sun transit (solar noon)** — verifies that solar noon falls strictly
+///   between sunrise and sunset.
+///
+/// Note: [AstronomicalCalendar] is not exported from `kosher_dart.dart`, so
+/// this file imports it directly from its source path.
 import 'package:test/test.dart';
 import 'package:kosher_dart/kosher_dart.dart';
 import 'package:kosher_dart/src/astronomical_calendar.dart';

@@ -1,3 +1,33 @@
+/// Comprehensive unit tests for [JewishDate].
+///
+/// Covers the following areas with a focus on edge cases:
+///
+/// - **Jewish leap year detection** — verifies [JewishDate.isJewishLeapYear]
+///   for known leap and non-leap years across multiple 19-year Metonic cycles,
+///   and checks that leap years have 13 months (Adar II) while non-leap years
+///   end at Adar (12).
+///
+/// - **Gregorian leap year rules** — tests [JewishDate.getLastDayOfGregorianMonth]
+///   for Feb 28/29 across regular years, divisible-by-4 leap years, century
+///   years that are NOT leap (1900), and 400-year leap years (2000).
+///
+/// - **Days in Jewish months** — asserts fixed-length months (Nissan = 30,
+///   Iyar = 29, Tishrei = 30) and variable-length months (Cheshvan, Kislev),
+///   plus the correct length of Adar I (30), Adar II (29) in leap years,
+///   and Adar (29) in non-leap years.
+///
+/// - **Jewish ↔ Gregorian date conversion** — verifies that setting a Jewish
+///   date produces the correct Gregorian fields, and vice versa, including
+///   round-trip conversion and the Feb 29, 2000 edge case.
+///
+/// - **Date navigation** — tests [JewishDate.forward] and [JewishDate.back]
+///   across month and year boundaries (e.g. Elul → Tishrei).
+///
+/// - **Known Rosh Hashana dates** — spot-checks specific Gregorian equivalents
+///   for 1 Tishrei of several years.
+///
+/// - **Absolute date arithmetic** — verifies that the absolute day counter
+///   increments/decrements by exactly 1 when navigating forward/backward.
 import 'package:test/test.dart';
 import 'package:kosher_dart/kosher_dart.dart';
 

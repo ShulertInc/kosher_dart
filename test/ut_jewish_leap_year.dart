@@ -1,7 +1,13 @@
+/// Tests for [JewishDate.isJewishLeapYear].
+///
+/// A Jewish leap year contains 13 months instead of 12, with an extra Adar
+/// (Adar II) inserted. Leap years follow the 19-year Metonic cycle and occur
+/// in years 3, 6, 8, 11, 14, 17, and 19 of every cycle.
 import 'package:test/test.dart';
 import 'package:kosher_dart/kosher_dart.dart';
 
 void main() {
+  // Verifies a broad range of years spanning multiple 19-year cycles.
   test('isLeapYear', () async {
     _shouldBeLeapYear(5160);
     _shouldNotBeLeapYear(5536);
@@ -35,6 +41,7 @@ void main() {
   });
 }
 
+/// Asserts that [year] is a Jewish leap year.
 void _shouldBeLeapYear(int year) {
   JewishDate jewishDate = JewishDate();
   jewishDate.setJewishYear(year);
@@ -42,6 +49,7 @@ void _shouldBeLeapYear(int year) {
   expect(jewishDate.isJewishLeapYear(), true);
 }
 
+/// Asserts that [year] is NOT a Jewish leap year.
 void _shouldNotBeLeapYear(int year) {
   JewishDate jewishDate = JewishDate();
   jewishDate.setJewishYear(year);

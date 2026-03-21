@@ -1,3 +1,36 @@
+/// Comprehensive unit tests for [GeoLocation].
+///
+/// Covers the following areas with a focus on edge cases:
+///
+/// - **Constructors** — verifies default constructor (Greenwich), named
+///   constructor [GeoLocation.setLocation], and correct storage of all fields.
+///
+/// - **Latitude boundary validation** — accepts ±90° (North/South Pole) and
+///   0° (Equator); throws [ArgumentError] for values outside [-90, 90].
+///
+/// - **Longitude boundary validation** — accepts 0° (Prime Meridian), ±180°
+///   (antimeridian); throws [ArgumentError] for values outside [-180, 180].
+///
+/// - **Elevation** — accepts 0 and positive values; throws [ArgumentError]
+///   for negative elevation.
+///
+/// - **DMS (degrees/minutes/seconds) constructor** — verifies north and south
+///   latitude parsing and that an invalid direction character throws.
+///
+/// - **Antimeridian adjustment** — confirms typical locations (New York,
+///   Jerusalem) return an adjustment of 0.
+///
+/// - **Geodesic (Vincenty) distance** — tests self-distance = 0, known
+///   NYC–Jerusalem distance (~9130 km), symmetry, equatorial quarter-
+///   circumference (~10 007 km), and the documented NaN result for exactly
+///   antipodal points where Vincenty's algorithm fails to converge.
+///
+/// - **Rhumb-line distance** — smoke-tests self-distance = 0.
+///
+/// - **Clone** — verifies that [GeoLocation.clone] produces identical field values.
+///
+/// - **Local mean time offset** — checks that the Prime Meridian with a UTC
+///   clock returns an offset of approximately 0.
 import 'package:test/test.dart';
 import 'package:kosher_dart/kosher_dart.dart';
 

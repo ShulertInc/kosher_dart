@@ -1,3 +1,33 @@
+/// Comprehensive unit tests for [JewishCalendar].
+///
+/// Covers the following areas with a focus on edge cases:
+///
+/// - **Holidays outside Israel** — verifies [JewishCalendar.getYomTovIndex]
+///   for every major holiday (Erev Pesach, Pesach, Chol Hamoed Pesach,
+///   Shavuos, Rosh Hashana, Yom Kippur, Succos, Hoshana Rabba, Shemini
+///   Atzeret, Chanukah days 1 and 8, Purim, Purim Katan, Tu BeShvat,
+///   Tisha BeAv) and confirms that a plain weekday returns -1.
+///
+/// - **Holidays inside Israel** — checks cases where the Israel schedule
+///   differs from the Diaspora (e.g. 16 Nisan is Chol Hamoed in Israel vs.
+///   a second day of Pesach outside Israel; 22 Tishrei behaviour).
+///
+/// - **Leap year Adar edge cases** — verifies that on a leap year 14 Adar I
+///   is Purim Katan (not Purim), while 14 Adar II is Purim; and that on a
+///   non-leap year 14 Adar is simply Purim.
+///
+/// - **isYomTov / isCholHamoed helpers** — tests [JewishCalendar.isYomTovAssurBemelacha]
+///   and [JewishCalendar.isCholHamoed] for Pesach and regular days.
+///
+/// - **Shabbat detection** — verifies day-of-week values for known
+///   Saturdays and Sundays.
+///
+/// - **Rosh Chodesh** — checks [JewishCalendar.isRoshChodesh] for the 1st
+///   and 30th of a 30-day month, and a non-Rosh-Chodesh date.
+///
+/// - **Omer counting** — verifies [JewishCalendar.getDayOfOmer] returns the
+///   correct count on day 1 (16 Nisan), day 33 (Lag BaOmer, 18 Iyar),
+///   day 49 (5 Sivan), and -1 outside the Omer period.
 import 'package:test/test.dart';
 import 'package:kosher_dart/kosher_dart.dart';
 
