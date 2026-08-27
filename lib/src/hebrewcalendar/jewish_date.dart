@@ -962,6 +962,11 @@ class JewishDate implements Comparable<JewishDate> {
   /// Sets the Gregorian Date, and updates the Jewish date accordingly. A value of 0 is expected
   /// for January (0-based months).
   ///
+  /// Note that [getGregorianMonth] hands the month back 1-based, so passing its
+  /// result straight back in here moves the date on by a month. KosherJava counts
+  /// months 1-based on both sides; this setter has not been brought into line yet,
+  /// because doing so silently changes what every existing caller means.
+  ///
   /// - [year]:
   ///   the Gregorian year
   /// - [month]:
@@ -1300,10 +1305,12 @@ class JewishDate implements Comparable<JewishDate> {
             : 0;
   }
 
-  /// Returns the Gregorian month (between 0-11).
+  /// Returns the Gregorian month, 1 for January through 12 for December, the same
+  /// way [DateTime] counts them and the same way KosherJava does.
   ///
-  /// Returns the Gregorian month (between 0-11). Note: this class uses 0-based months (0 = January)
-  /// for its public API, unlike [DateTime] which uses 1-based months.
+  /// Beware that [setGregorianDate] does **not** take the month back in this form:
+  /// it expects 0 for January, so feeding this getter straight into that setter
+  /// moves the date on by a month. See the note there.
   int getGregorianMonth() {
     return _gregorianMonth;
   }
