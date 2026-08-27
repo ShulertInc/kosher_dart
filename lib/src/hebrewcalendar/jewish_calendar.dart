@@ -207,35 +207,31 @@ class JewishCalendar extends JewishDate {
 
   /// Rosh Chodesh, the new moon on the first day of the Jewish month, and the 30th day of the previous month in the
   /// case of a month with 30 days.
-  static const int EREV_ROSH_CHODESH = 28;
+  static const int ROSH_CHODESH = 28;
 
   /// Yom HaShoah, Holocaust Remembrance Day, usually held on the 27th of Nisan. If it falls on a Friday, it is moved
   /// to the 26th, and if it falls on a Sunday it is moved to the 28th. A [isUseModernHolidays].
-  static const int ROSH_CHODESH = 29;
+  static const int YOM_HASHOAH = 29;
 
   /// Yom HaZikaron, Israeli Memorial Day, held a day before Yom Ha'atzmaut.  A [isUseModernHolidays].
-  static const int YOM_HASHOAH = 30;
+  static const int YOM_HAZIKARON = 30;
 
   /// Yom Ha'atzmaut, Israel Independence Day, the 5th of Iyar, but if it occurs on a Friday or Saturday, the holiday is
   /// moved back to Thursday, the 3rd of 4th of Iyar, and if it falls on a Monday, it is moved forward to Tuesday the
   /// 6th of Iyar.  A [isUseModernHolidays].
-  static const int YOM_HAZIKARON = 31;
-
-  /// Yom Ha'atzmaut, Israel Independence Day, the 5th of Iyar, but if it occurs on a Friday or Saturday, the holiday is
-  /// 	moved back to Thursday, the 3rd of 4th of Iyar, and if it falls on a Monday, it is moved forward to Tuesday the
-  /// 	6th of Iyar.  A [isUseModernHolidays].
-  static const int YOM_HAATZMAUT = 32;
+  static const int YOM_HAATZMAUT = 31;
 
   /// Yom Yerushalayim or Jerusalem Day, on 28 Iyar. A [isUseModernHolidays].
-  static const int YOM_YERUSHALAYIM = 33;
+  static const int YOM_YERUSHALAYIM = 32;
 
   ///  The 33rd day of the Omer, the 18th of Iyar, a minor holiday.
-  static const int LAG_BAOMER = 34;
+  static const int LAG_BAOMER = 33;
 
-  /// The holiday of Purim Katan on the 15th day of Adar I on a leap year when Purim is on Adar II, a minor holiday.
-  static const int SHUSHAN_PURIM_KATAN = 35;
+  /// The holiday of Shushan Purim Katan on the 15th day of Adar I on a leap year when Purim is on Adar II, a minor
+  /// holiday.
+  static const int SHUSHAN_PURIM_KATAN = 34;
 
-  /// The day following the last day of Pesach, Shavuos and Sukkos.
+  /// The day following the last day of _Pesach_, _Shavuos_ and _Succos_.
   static const int ISRU_CHAG = 35;
 
   /// Is the calendar set to Israel, where some holidays have different rules.
@@ -1489,6 +1485,9 @@ class JewishCalendar extends JewishDate {
         if (day >= 17 && day <= 20 || (day == 16 && inIsrael)) {
           return CHOL_HAMOED_PESACH;
         }
+        if ((day == 22 && inIsrael) || (day == 23 && !inIsrael)) {
+          return ISRU_CHAG;
+        }
         if (isUseModernHolidays() &&
             ((day == 26 && dayOfWeek == JewishDate.thursday) ||
                 (day == 28 && dayOfWeek == JewishDate.monday) ||
@@ -1539,6 +1538,9 @@ class JewishCalendar extends JewishDate {
         }
         if (day == 6 || (day == 7 && !inIsrael)) {
           return SHAVUOS;
+        }
+        if ((day == 7 && inIsrael) || (day == 8 && !inIsrael)) {
+          return ISRU_CHAG;
         }
         break;
       case JewishDate.TAMMUZ:
@@ -1595,6 +1597,9 @@ class JewishCalendar extends JewishDate {
         }
         if (day == 23 && !inIsrael) {
           return SIMCHAS_TORAH;
+        }
+        if ((day == 23 && inIsrael) || (day == 24 && !inIsrael)) {
+          return ISRU_CHAG;
         }
         break;
       case JewishDate.KISLEV: // no yomtov in CHESHVAN

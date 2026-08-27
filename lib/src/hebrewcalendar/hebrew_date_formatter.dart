@@ -314,14 +314,14 @@ class HebrewDateFormatter {
     "Purim",
     "Shushan Purim",
     "Purim Katan",
-    "Erev Rosh Chodesh",
     "Rosh Chodesh",
     "Yom HaShoah",
     "Yom Hazikaron",
     "Yom Ha'atzmaut",
     "Yom Yerushalayim",
     "Lag B'Omer",
-    "Shushan Purim Katan"
+    "Shushan Purim Katan",
+    "Isru Chag"
   ];
 
   /// Hebrew holiday list
@@ -354,14 +354,14 @@ class HebrewDateFormatter {
     'פורים',
     'פורים שושן',
     'פורים קטן',
-    'ערב ראש חודש',
     'ראש חודש',
     'יום השואה',
     'יום הזיכרון',
     'יום העצמאות',
     'יום ירושלים',
     'ל״ג בעומר',
-    'פורים שושן קטן'
+    'פורים שושן קטן',
+    'איסרו חג'
   ];
 
   final List<String> _hebrewShortHolidays = [
@@ -393,14 +393,14 @@ class HebrewDateFormatter {
     'פורים',
     'פורים שושן',
     'פורים קטן',
-    'ער״ח	',
     'ר״ח',
     'יום השואה',
     'יום הזיכרון',
     'יום העצמאות',
     'יום ירושלים',
     'ל״ג בעומר',
-    'פורים שושן קטן'
+    'פורים שושן קטן',
+    'איסרו חג'
   ];
 
   static final List<String> _longOmerDay = [
@@ -534,11 +534,11 @@ class HebrewDateFormatter {
     // This method is only about formatting, so we shouldn't make any changes to the params passed in...
     jewishCalendar = jewishCalendar.clone();
     jewishCalendar.setJewishMonth(month);
+    // Named directly rather than looked up by index: erev rosh chodesh is not one of the
+    // days getYomTovIndex returns, so it has no slot in the holiday name lists.
     formattedErevRoshChodesh = hebrewFormat
-        ? (useShortHolidayFormat
-            ? _hebrewShortHolidays[JewishCalendar.EREV_ROSH_CHODESH]
-            : _hebrewHolidays[JewishCalendar.EREV_ROSH_CHODESH])
-        : transliteratedHolidays[JewishCalendar.EREV_ROSH_CHODESH];
+        ? (useShortHolidayFormat ? 'ער״ח' : 'ערב ראש חודש')
+        : 'Erev Rosh Chodesh';
     formattedErevRoshChodesh += " ${formatMonth(jewishCalendar)}";
     return formattedErevRoshChodesh;
   }

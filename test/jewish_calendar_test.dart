@@ -363,4 +363,173 @@ void main() {
       expect(c.getYomTovIndex(), isNot(equals(JewishCalendar.YOM_HAATZMAUT)));
     });
   });
+
+  // ────────────────────────────────────────────────────────────────
+  // Isru chag
+  // ────────────────────────────────────────────────────────────────
+  group('JewishCalendar - isru chag', () {
+    JewishCalendar diaspora() => JewishCalendar()..inIsrael = false;
+    JewishCalendar israel() => JewishCalendar()..inIsrael = true;
+
+    test('22 Nisan is isru chag in Israel', () {
+      final c = israel()..setJewishDate(5784, JewishDate.NISSAN, 22);
+      expect(c.getYomTovIndex(), equals(JewishCalendar.ISRU_CHAG));
+      expect(c.isIsruChag(), isTrue);
+    });
+
+    test('23 Nisan is isru chag outside Israel', () {
+      final c = diaspora()..setJewishDate(5784, JewishDate.NISSAN, 23);
+      expect(c.isIsruChag(), isTrue);
+    });
+
+    test('22 Nisan is still Pesach outside Israel', () {
+      final c = diaspora()..setJewishDate(5784, JewishDate.NISSAN, 22);
+      expect(c.getYomTovIndex(), equals(JewishCalendar.PESACH));
+      expect(c.isIsruChag(), isFalse);
+    });
+
+    test('7 Sivan is isru chag in Israel', () {
+      final c = israel()..setJewishDate(5784, JewishDate.SIVAN, 7);
+      expect(c.isIsruChag(), isTrue);
+    });
+
+    test('7 Sivan is still Shavuos outside Israel', () {
+      final c = diaspora()..setJewishDate(5784, JewishDate.SIVAN, 7);
+      expect(c.getYomTovIndex(), equals(JewishCalendar.SHAVUOS));
+      expect(c.isIsruChag(), isFalse);
+    });
+
+    test('8 Sivan is isru chag outside Israel', () {
+      final c = diaspora()..setJewishDate(5784, JewishDate.SIVAN, 8);
+      expect(c.isIsruChag(), isTrue);
+    });
+
+    test('23 Tishrei is isru chag in Israel', () {
+      final c = israel()..setJewishDate(5784, JewishDate.TISHREI, 23);
+      expect(c.isIsruChag(), isTrue);
+    });
+
+    test('23 Tishrei is still Simchas Torah outside Israel', () {
+      final c = diaspora()..setJewishDate(5784, JewishDate.TISHREI, 23);
+      expect(c.getYomTovIndex(), equals(JewishCalendar.SIMCHAS_TORAH));
+      expect(c.isIsruChag(), isFalse);
+    });
+
+    test('24 Tishrei is isru chag outside Israel', () {
+      final c = diaspora()..setJewishDate(5784, JewishDate.TISHREI, 24);
+      expect(c.isIsruChag(), isTrue);
+    });
+
+    // 15 Adar I of a leap year. It shared a constant value with isru chag, which is how
+    // the two came to answer for each other.
+    test('Shushan Purim Katan is not isru chag', () {
+      final c = diaspora()..setJewishDate(5784, JewishDate.ADAR, 15);
+      expect(c.getYomTovIndex(), equals(JewishCalendar.SHUSHAN_PURIM_KATAN));
+      expect(c.isIsruChag(), isFalse);
+    });
+
+    test('isru chag and Shushan Purim Katan are different days', () {
+      expect(
+        JewishCalendar.ISRU_CHAG,
+        isNot(equals(JewishCalendar.SHUSHAN_PURIM_KATAN)),
+      );
+    });
+
+    test('an ordinary day is not isru chag', () {
+      final c = diaspora()..setJewishDate(5784, JewishDate.CHESHVAN, 12);
+      expect(c.isIsruChag(), isFalse);
+    });
+  });
+
+  // ────────────────────────────────────────────────────────────────
+  // Holiday index values, against KosherJava
+  // ────────────────────────────────────────────────────────────────
+  group('JewishCalendar - holiday indexes match KosherJava', () {
+    // Every index KosherJava defines, and nothing it does not, so a future port of one of
+    // its methods can be taken across without checking the numbering first.
+    const expected = <String, int>{
+      'EREV_PESACH': 0,
+      'PESACH': 1,
+      'CHOL_HAMOED_PESACH': 2,
+      'PESACH_SHENI': 3,
+      'EREV_SHAVUOS': 4,
+      'SHAVUOS': 5,
+      'SEVENTEEN_OF_TAMMUZ': 6,
+      'TISHA_BEAV': 7,
+      'TU_BEAV': 8,
+      'EREV_ROSH_HASHANA': 9,
+      'ROSH_HASHANA': 10,
+      'FAST_OF_GEDALYAH': 11,
+      'EREV_YOM_KIPPUR': 12,
+      'YOM_KIPPUR': 13,
+      'EREV_SUCCOS': 14,
+      'SUCCOS': 15,
+      'CHOL_HAMOED_SUCCOS': 16,
+      'HOSHANA_RABBA': 17,
+      'SHEMINI_ATZERES': 18,
+      'SIMCHAS_TORAH': 19,
+      'CHANUKAH': 21,
+      'TENTH_OF_TEVES': 22,
+      'TU_BESHVAT': 23,
+      'FAST_OF_ESTHER': 24,
+      'PURIM': 25,
+      'SHUSHAN_PURIM': 26,
+      'PURIM_KATAN': 27,
+      'ROSH_CHODESH': 28,
+      'YOM_HASHOAH': 29,
+      'YOM_HAZIKARON': 30,
+      'YOM_HAATZMAUT': 31,
+      'YOM_YERUSHALAYIM': 32,
+      'LAG_BAOMER': 33,
+      'SHUSHAN_PURIM_KATAN': 34,
+      'ISRU_CHAG': 35,
+    };
+
+    final actual = <String, int>{
+      'EREV_PESACH': JewishCalendar.EREV_PESACH,
+      'PESACH': JewishCalendar.PESACH,
+      'CHOL_HAMOED_PESACH': JewishCalendar.CHOL_HAMOED_PESACH,
+      'PESACH_SHENI': JewishCalendar.PESACH_SHENI,
+      'EREV_SHAVUOS': JewishCalendar.EREV_SHAVUOS,
+      'SHAVUOS': JewishCalendar.SHAVUOS,
+      'SEVENTEEN_OF_TAMMUZ': JewishCalendar.SEVENTEEN_OF_TAMMUZ,
+      'TISHA_BEAV': JewishCalendar.TISHA_BEAV,
+      'TU_BEAV': JewishCalendar.TU_BEAV,
+      'EREV_ROSH_HASHANA': JewishCalendar.EREV_ROSH_HASHANA,
+      'ROSH_HASHANA': JewishCalendar.ROSH_HASHANA,
+      'FAST_OF_GEDALYAH': JewishCalendar.FAST_OF_GEDALYAH,
+      'EREV_YOM_KIPPUR': JewishCalendar.EREV_YOM_KIPPUR,
+      'YOM_KIPPUR': JewishCalendar.YOM_KIPPUR,
+      'EREV_SUCCOS': JewishCalendar.EREV_SUCCOS,
+      'SUCCOS': JewishCalendar.SUCCOS,
+      'CHOL_HAMOED_SUCCOS': JewishCalendar.CHOL_HAMOED_SUCCOS,
+      'HOSHANA_RABBA': JewishCalendar.HOSHANA_RABBA,
+      'SHEMINI_ATZERES': JewishCalendar.SHEMINI_ATZERES,
+      'SIMCHAS_TORAH': JewishCalendar.SIMCHAS_TORAH,
+      'CHANUKAH': JewishCalendar.CHANUKAH,
+      'TENTH_OF_TEVES': JewishCalendar.TENTH_OF_TEVES,
+      'TU_BESHVAT': JewishCalendar.TU_BESHVAT,
+      'FAST_OF_ESTHER': JewishCalendar.FAST_OF_ESTHER,
+      'PURIM': JewishCalendar.PURIM,
+      'SHUSHAN_PURIM': JewishCalendar.SHUSHAN_PURIM,
+      'PURIM_KATAN': JewishCalendar.PURIM_KATAN,
+      'ROSH_CHODESH': JewishCalendar.ROSH_CHODESH,
+      'YOM_HASHOAH': JewishCalendar.YOM_HASHOAH,
+      'YOM_HAZIKARON': JewishCalendar.YOM_HAZIKARON,
+      'YOM_HAATZMAUT': JewishCalendar.YOM_HAATZMAUT,
+      'YOM_YERUSHALAYIM': JewishCalendar.YOM_YERUSHALAYIM,
+      'LAG_BAOMER': JewishCalendar.LAG_BAOMER,
+      'SHUSHAN_PURIM_KATAN': JewishCalendar.SHUSHAN_PURIM_KATAN,
+      'ISRU_CHAG': JewishCalendar.ISRU_CHAG,
+    };
+
+    test('every index KosherJava defines has the same value here', () {
+      expect(actual, equals(expected));
+    });
+
+    test('no two holiday indexes share a value', () {
+      final values = actual.values.toList();
+      expect(values.toSet().length, equals(values.length));
+    });
+  });
 }
