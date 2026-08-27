@@ -237,6 +237,10 @@ class JewishCalendar extends JewishDate {
   /// Is the calendar set to Israel, where some holidays have different rules.
   bool inIsrael = false;
 
+  /// Is the calendar set to a city walled since the days of Yehoshua, where _Purim_ is
+  /// kept on _Shushan Purim_ instead. Used by [isPurim].
+  bool isMukafChoma = false;
+
   ///Is the calendar set to use modern Israeli holidays such as Yom Haatzmaut.
   ///See also [isUseModernHolidays].
   ///See also [setUseModernHolidays].
@@ -1803,7 +1807,7 @@ class JewishCalendar extends JewishDate {
   /// See also [CHOL_HAMOED_SUCCOS].
   bool isCholHamoedSuccos() {
     int holidayIndex = getYomTovIndex();
-    return holidayIndex == CHOL_HAMOED_SUCCOS;
+    return holidayIndex == CHOL_HAMOED_SUCCOS || holidayIndex == HOSHANA_RABBA;
   }
 
   /// Returns true if the current day is erev Yom Tov. The method returns true for Erev - Pesach (first and last days),
@@ -1881,6 +1885,63 @@ class JewishCalendar extends JewishDate {
   /// See also [getDayOfChanukah].
   bool isChanukah() {
     return getYomTovIndex() == CHANUKAH;
+  }
+
+  /// Returns if the day is _Pesach_, the yom tov days and _chol hamoed_ alike.
+  bool isPesach() {
+    int holidayIndex = getYomTovIndex();
+    return holidayIndex == PESACH || holidayIndex == CHOL_HAMOED_PESACH;
+  }
+
+  /// Returns if the day is _Shavuos_.
+  bool isShavuos() {
+    return getYomTovIndex() == SHAVUOS;
+  }
+
+  /// Returns if the day is _Rosh Hashana_.
+  bool isRoshHashana() {
+    return getYomTovIndex() == ROSH_HASHANA;
+  }
+
+  /// Returns if the day is _Yom Kippur_.
+  bool isYomKippur() {
+    return getYomTovIndex() == YOM_KIPPUR;
+  }
+
+  /// Returns if the day is _Succos_, the yom tov days, _chol hamoed_ and _Hoshana Rabba_
+  /// alike. _Shemini Atzeres_ is not included; see [isShminiAtzeres].
+  bool isSuccos() {
+    int holidayIndex = getYomTovIndex();
+    return holidayIndex == SUCCOS ||
+        holidayIndex == CHOL_HAMOED_SUCCOS ||
+        holidayIndex == HOSHANA_RABBA;
+  }
+
+  /// Returns if the day is _Shemini Atzeres_.
+  bool isShminiAtzeres() {
+    return getYomTovIndex() == SHEMINI_ATZERES;
+  }
+
+  /// Returns if the day is _Simchas Torah_. In Israel this is never true: _Simchas Torah_
+  /// is the same day as [SHEMINI_ATZERES] there, and [getYomTovIndex] returns that.
+  bool isSimchasTorah() {
+    return getYomTovIndex() == SIMCHAS_TORAH;
+  }
+
+  /// Returns if the day is _Tisha B'Av_, moved to the 10th when the 9th is _Shabbos_.
+  bool isTishaBav() {
+    return getYomTovIndex() == TISHA_BEAV;
+  }
+
+  /// Returns if the day is _Purim_, which in a walled city is _Shushan Purim_ instead.
+  ///
+  /// See also [isMukafChoma].
+  bool isPurim() {
+    if (isMukafChoma) {
+      return getYomTovIndex() == SHUSHAN_PURIM;
+    } else {
+      return getYomTovIndex() == PURIM;
+    }
   }
 
   /// Returns if the day is Rosh Chodesh. Rosh Hashana will return false

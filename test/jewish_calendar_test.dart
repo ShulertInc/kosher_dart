@@ -532,4 +532,103 @@ void main() {
       expect(values.toSet().length, equals(values.length));
     });
   });
+
+  // ────────────────────────────────────────────────────────────────
+  // Holiday helpers ported from KosherJava
+  // ────────────────────────────────────────────────────────────────
+  group('JewishCalendar - holiday helpers', () {
+    JewishCalendar diaspora() => JewishCalendar()..inIsrael = false;
+    JewishCalendar israel() => JewishCalendar()..inIsrael = true;
+
+    test('isPesach covers yom tov and chol hamoed', () {
+      expect(
+        (diaspora()..setJewishDate(5784, JewishDate.NISSAN, 15)).isPesach(),
+        isTrue,
+      );
+      expect(
+        (diaspora()..setJewishDate(5784, JewishDate.NISSAN, 18)).isPesach(),
+        isTrue,
+      );
+      expect(
+        (diaspora()..setJewishDate(5784, JewishDate.NISSAN, 14)).isPesach(),
+        isFalse,
+      );
+    });
+
+    test('isSuccos covers yom tov, chol hamoed and hoshana rabba', () {
+      expect(
+        (diaspora()..setJewishDate(5784, JewishDate.TISHREI, 15)).isSuccos(),
+        isTrue,
+      );
+      expect(
+        (diaspora()..setJewishDate(5784, JewishDate.TISHREI, 18)).isSuccos(),
+        isTrue,
+      );
+      expect(
+        (diaspora()..setJewishDate(5784, JewishDate.TISHREI, 21)).isSuccos(),
+        isTrue,
+      );
+    });
+
+    test('shemini atzeres is not succos', () {
+      final c = diaspora()..setJewishDate(5784, JewishDate.TISHREI, 22);
+      expect(c.isSuccos(), isFalse);
+      expect(c.isShminiAtzeres(), isTrue);
+    });
+
+    // Hoshana Rabba is chol hamoed, and leaving it out hid the festival insertions of
+    // that day.
+    test('isCholHamoedSuccos includes hoshana rabba', () {
+      final c = diaspora()..setJewishDate(5784, JewishDate.TISHREI, 21);
+      expect(c.getYomTovIndex(), equals(JewishCalendar.HOSHANA_RABBA));
+      expect(c.isCholHamoedSuccos(), isTrue);
+      expect(c.isCholHamoed(), isTrue);
+    });
+
+    test('simchas torah is only outside Israel', () {
+      expect(
+        (diaspora()..setJewishDate(5784, JewishDate.TISHREI, 23))
+            .isSimchasTorah(),
+        isTrue,
+      );
+      expect(
+        (israel()..setJewishDate(5784, JewishDate.TISHREI, 23)).isSimchasTorah(),
+        isFalse,
+      );
+    });
+
+    test('isShavuos, isRoshHashana, isYomKippur, isTishaBav', () {
+      expect(
+        (diaspora()..setJewishDate(5784, JewishDate.SIVAN, 6)).isShavuos(),
+        isTrue,
+      );
+      expect(
+        (diaspora()..setJewishDate(5784, JewishDate.TISHREI, 1)).isRoshHashana(),
+        isTrue,
+      );
+      expect(
+        (diaspora()..setJewishDate(5784, JewishDate.TISHREI, 10)).isYomKippur(),
+        isTrue,
+      );
+      expect(
+        (diaspora()..setJewishDate(5784, JewishDate.AV, 9)).isTishaBav(),
+        isTrue,
+      );
+    });
+
+    test('isPurim follows isMukafChoma', () {
+      final open = diaspora()..setJewishDate(5784, JewishDate.ADAR_II, 14);
+      expect(open.isPurim(), isTrue);
+
+      final walled = diaspora()
+        ..isMukafChoma = true
+        ..setJewishDate(5784, JewishDate.ADAR_II, 14);
+      expect(walled.isPurim(), isFalse);
+
+      final shushan = diaspora()
+        ..isMukafChoma = true
+        ..setJewishDate(5784, JewishDate.ADAR_II, 15);
+      expect(shushan.isPurim(), isTrue);
+    });
+  });
 }
