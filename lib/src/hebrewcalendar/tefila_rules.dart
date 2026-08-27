@@ -173,6 +173,13 @@ class TefilaRules {
   /// See also [setTachanunRecitedMinchaAllYear].
   final bool tachanunRecitedMinchaAllYear;
 
+  /// Is _mizmor lesoda_ recited on _erev Yom Kippur_, _erev Pesach_ and _chol hamoed
+  /// Pesach_. See [Shulchan Aruch 51:9](https://hebrewbooks.org/pdfpager.aspx?req=14675&st=&pgnum=87)
+  /// and [Kaf Hachaim 51:8](https://hebrewbooks.org/pdfpager.aspx?req=57085&st=&pgnum=94).
+  /// Returns if _mizmor lesoda_ is recited on those days.
+  /// See also [isMizmorLesodaRecited].
+  final bool mizmorLesodaRecitedErevYomKippurAndPesach;
+
   TefilaRules({
     this.tachanunRecitedEndOfTishrei = true,
     this.tachanunRecitedWeekAfterShavuos = false,
@@ -186,6 +193,7 @@ class TefilaRules {
     this.tachanunRecitedFridays = true,
     this.tachanunRecitedSundays = true,
     this.tachanunRecitedMinchaAllYear = true,
+    this.mizmorLesodaRecitedErevYomKippurAndPesach = false,
   });
 
   /// Returns if _tachanun_ is recited during _shacharis_ on the day in question. See the many
@@ -504,5 +512,49 @@ class TefilaRules {
       }
     }
     return false;
+  }
+
+  /// Returns if _al hanissim_ is recited on the day in question.
+  ///
+  /// - [jewishCalendar]: the Jewish calendar day.
+  /// Returns if _al hanissim_ is recited.
+  /// See also [JewishCalendar.isPurim].
+  /// See also [JewishCalendar.isChanukah].
+  bool isAlHanissimRecited(JewishCalendar jewishCalendar) {
+    return jewishCalendar.isPurim() || jewishCalendar.isChanukah();
+  }
+
+  /// Returns if _ya'aleh v'yavo_ is recited on the day in question.
+  ///
+  /// - [jewishCalendar]: the Jewish calendar day.
+  /// Returns if _ya'aleh v'yavo_ is recited.
+  bool isYaalehVeyavoRecited(JewishCalendar jewishCalendar) {
+    return jewishCalendar.isPesach() ||
+        jewishCalendar.isShavuos() ||
+        jewishCalendar.isRoshHashana() ||
+        jewishCalendar.isYomKippur() ||
+        jewishCalendar.isSuccos() ||
+        jewishCalendar.isShminiAtzeres() ||
+        jewishCalendar.isSimchasTorah() ||
+        jewishCalendar.isRoshChodesh();
+  }
+
+  /// Returns if _mizmor lesoda_ is recited on the day in question. It is not recited on a
+  /// day with a prohibition of work, and by default not on _erev Yom Kippur_, _erev
+  /// Pesach_ or _chol hamoed Pesach_ either.
+  ///
+  /// - [jewishCalendar]: the Jewish calendar day.
+  /// Returns if _mizmor lesoda_ is recited.
+  /// See also [mizmorLesodaRecitedErevYomKippurAndPesach].
+  bool isMizmorLesodaRecited(JewishCalendar jewishCalendar) {
+    if (jewishCalendar.isAssurBemelacha()) {
+      return false;
+    }
+
+    int holidayIndex = jewishCalendar.getYomTovIndex();
+    return mizmorLesodaRecitedErevYomKippurAndPesach ||
+        (holidayIndex != JewishCalendar.EREV_YOM_KIPPUR &&
+            holidayIndex != JewishCalendar.EREV_PESACH &&
+            !jewishCalendar.isCholHamoedPesach());
   }
 }
