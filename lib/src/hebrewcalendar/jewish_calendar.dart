@@ -1981,6 +1981,16 @@ class JewishCalendar extends JewishDate {
     return getYomTovIndex() == HOSHANA_RABBA;
   }
 
+  /// Returns if the night that opened this day was _motzei shabbos_.
+  ///
+  /// The Jewish day begins at nightfall, so the night after _shabbos_ belongs to sunday,
+  /// and that is the day this answers for. It says nothing about the hour: a caller
+  /// showing something for _motzei shabbos_ during sunday in daylight has to decide that
+  /// for itself.
+  bool isMotzeiShabbos() {
+    return getDayOfWeek() == JewishDate.sunday;
+  }
+
   /// Returns if the day is _Yom Ha'atzmaut_. Only ever true when
   /// [isUseModernHolidays] is set.
   bool isYomHaatzmaut() {
