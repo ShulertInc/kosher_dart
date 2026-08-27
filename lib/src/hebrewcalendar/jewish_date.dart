@@ -174,8 +174,8 @@ class JewishDate implements Comparable<JewishDate> {
   int? _minute;
   int? _second;
 
-  /// The month, where 1 == January, 2 == February, etc. Note that the public API uses 0-based months
-  /// (0 == January) to match legacy behavior, but this internal field uses 1-based months.
+  /// The month, where 1 == January, 2 == February, etc, the same way [DateTime]
+  /// counts them and the same way the public API takes and returns them.
   late int _gregorianMonth;
 
   /// The day of the Gregorian month
@@ -651,8 +651,8 @@ class JewishDate implements Comparable<JewishDate> {
   /// - [year]:
   ///   the Gregorian year to validate. It will reject any year < 1.
   /// - [month]:
-  ///   the Gregorian month number to validate. It will enforce that the month is between 0 - 11
-  ///   (0 = January), matching the legacy 0-based month convention used by this class.
+  ///   the Gregorian month number to validate. It will enforce that the month is between
+  ///   1 - 12 (1 = January), the way [DateTime] counts months.
   /// - [dayOfMonth]:
   ///   the day of the Gregorian month to validate. It will reject any value < 1, but will allow values > 31
   ///   since calling methods will simply set it to the maximum for that month.
@@ -670,12 +670,12 @@ class JewishDate implements Comparable<JewishDate> {
   /// Validates a Gregorian month for validity.
   ///
   /// - [month]:
-  ///   the Gregorian month number to validate. It will enforce that the month is between 0 - 11
-  ///   (0 = January), matching the legacy 0-based month convention used by this class.
+  ///   the Gregorian month number to validate. It will enforce that the month is between
+  ///   1 - 12 (1 = January), the way [DateTime] counts months.
   static void _validateGregorianMonth(int month) {
-    if (month > 11 || month < 0) {
+    if (month > 12 || month < 1) {
       throw ArgumentError(
-          "The Gregorian month has to be between 0 - 11. $month is invalid.");
+          "The Gregorian month has to be between 1 - 12. $month is invalid.");
     }
   }
 
@@ -959,31 +959,27 @@ class JewishDate implements Comparable<JewishDate> {
     _dayOfWeek = (_gregorianAbsDate % 7).abs() + 1; // set day of week
   }
 
-  /// Sets the Gregorian Date, and updates the Jewish date accordingly. A value of 0 is expected
-  /// for January (0-based months).
-  ///
-  /// Note that [getGregorianMonth] hands the month back 1-based, so passing its
-  /// result straight back in here moves the date on by a month. KosherJava counts
-  /// months 1-based on both sides; this setter has not been brought into line yet,
-  /// because doing so silently changes what every existing caller means.
+  /// Sets the Gregorian Date, and updates the Jewish date accordingly. A value of 1 is
+  /// expected for January, the way [DateTime] counts months and the way
+  /// [getGregorianMonth] hands them back.
   ///
   /// - [year]:
   ///   the Gregorian year
   /// - [month]:
-  ///   the Gregorian month. This class expects 0 for January (0-based)
+  ///   the Gregorian month. This class expects 1 for January
   /// - [dayOfMonth]:
   ///   the Gregorian day of month. If this is > the number of days in the month/year, the last valid date of
   ///   the month will be set
   /// Throws [ArgumentError]
-  ///             if a year of < 1, a month < 0 or > 11 or a day of month < 1 is passed in
+  ///             if a year of < 1, a month < 1 or > 12 or a day of month < 1 is passed in
   void setGregorianDate(int year, int month, int dayOfMonth) {
     _validateGregorianDate(year, month, dayOfMonth);
-    _setInternalGregorianDate(year, month + 1, dayOfMonth);
+    _setInternalGregorianDate(year, month, dayOfMonth);
   }
 
-  /// Sets the hidden internal representation of the Gregorian date and updates the Jewish date accordingly. While
-  /// public getters and setters have 0-based months (0 = January), this class internally represents the Gregorian
-  /// month starting at 1. When this is called it will not adjust the month to the 0-based convention.
+  /// Sets the hidden internal representation of the Gregorian date and updates the Jewish
+  /// date accordingly, skipping the validation the public setters do. Months count from 1
+  /// for January here as they do everywhere else in this class.
   ///
   /// - [year]: the year
   /// - [month]: the month
@@ -1306,11 +1302,7 @@ class JewishDate implements Comparable<JewishDate> {
   }
 
   /// Returns the Gregorian month, 1 for January through 12 for December, the same
-  /// way [DateTime] counts them and the same way KosherJava does.
-  ///
-  /// Beware that [setGregorianDate] does **not** take the month back in this form:
-  /// it expects 0 for January, so feeding this getter straight into that setter
-  /// moves the date on by a month. See the note there.
+  /// way [DateTime] counts them and the same way [setGregorianDate] takes them.
   int getGregorianMonth() {
     return _gregorianMonth;
   }
@@ -1386,13 +1378,13 @@ class JewishDate implements Comparable<JewishDate> {
   /// Sets the Gregorian month.
   ///
   /// - [month]:
-  ///   the Gregorian month
+  ///   the Gregorian month, 1 for January through 12 for December
   ///
   /// Throws [ArgumentError]
-  ///             if a month < 0 or > 11 is passed in
+  ///             if a month < 1 or > 12 is passed in
   void setGregorianMonth(int month) {
     _validateGregorianMonth(month);
-    _setInternalGregorianDate(_gregorianYear, month + 1, _gregorianDayOfMonth);
+    _setInternalGregorianDate(_gregorianYear, month, _gregorianDayOfMonth);
   }
 
   /// sets the Gregorian year.
@@ -1460,7 +1452,7 @@ class JewishDate implements Comparable<JewishDate> {
   JewishDate clone() {
     JewishDate clone = JewishDate();
     clone.setGregorianDate(
-        _gregorianYear, _gregorianMonth - 1, _gregorianDayOfMonth);
+        _gregorianYear, _gregorianMonth, _gregorianDayOfMonth);
     return clone;
   }
 
