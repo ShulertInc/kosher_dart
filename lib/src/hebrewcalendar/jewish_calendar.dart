@@ -20,7 +20,6 @@ import 'package:kosher_dart/src/hebrewcalendar/jewish_date.dart';
 import 'package:kosher_dart/src/hebrewcalendar/daf.dart';
 import 'package:kosher_dart/src/hebrewcalendar/yerushalmi_yomi_calculator.dart';
 import 'package:kosher_dart/src/hebrewcalendar/yomi_calculator.dart';
-import 'package:kosher_dart/src/util/geo_location.dart';
 
 /// List of _parshiyos_. [NONE] indicates a week without a _parsha_, while the enum for the _parsha_ of
 /// [VZOS_HABERACHA] exists for consistency, but is not currently used.
@@ -2074,43 +2073,38 @@ class JewishCalendar extends JewishDate {
   /// Returns the molad in Standard Time in Yerushalayim as a Date. The traditional calculation uses local time. This
   /// method subtracts 20.94 minutes (20 minutes and 56.496 seconds) from the local time (Har Habayis with a longitude
   /// of 35.2354° is 5.2354° away from the %15 timezone longitude) to get to standard time. This method
-  /// intentionally uses standard time and not dailight savings time. Java will implicitly format the time to the
-  /// default (or set) Timezone.
+  /// intentionally uses standard time and not daylight savings time; formatting the
+  /// result for a timezone is the caller's job.
   ///
   /// Returns the Date representing the moment of the molad in Yerushalayim standard time (GMT + 2)
   DateTime getMoladAsDateTime() {
     JewishDate molad = getMolad();
-    String locationName = "Jerusalem, Israel";
 
-    double latitude = 31.778; // Har Habayis latitude
-    double longitude = 35.2354; // Har Habayis longitude
-
-    // The raw molad Date (point in time) must be generated using standard time. Using "Asia/Jerusalem" timezone will result in the time
-    // being incorrectly off by an hour in the summer due to DST. Proper adjustment for the actual time in DST will be done by the date
-    // formatter class used to display the Date.
-    String year = DateTime.now().year.toString();
-    String month = DateTime.now().month.toString().padLeft(2, '0');
-    String day = DateTime.now().day.toString().toString().padLeft(2, '0');
-    String hour = DateTime.now().hour.toString().padLeft(2, '0');
-    String minute = DateTime.now().minute.toString().padLeft(2, '0');
-    DateTime dateTime = DateTime.parse("$year-$month-$day $hour:$minute");
-    GeoLocation geo =
-        GeoLocation.setLocation(locationName, latitude, longitude, dateTime);
-
+    // A chelek is 10/3 of a second, and the fraction left over from the whole
+    // seconds is the millisecond part.
     double moladSeconds = molad.getMoladChalakim() * 10 / 3;
-    double moladMillisecond = (1000 * (moladSeconds - moladSeconds));
-    DateTime cal = DateTime(
+    int seconds = moladSeconds.floor();
+    int milliseconds = ((moladSeconds - seconds) * 1000).floor();
+
+    DateTime moladTime = DateTime(
         molad.getGregorianYear(),
         molad.getGregorianMonth(),
         molad.getGregorianDayOfMonth(),
         molad.getMoladHours(),
         molad.getMoladMinutes(),
-        moladSeconds.toInt(),
-        moladMillisecond.toInt());
-    // subtract local time difference of 20.94 minutes (20 minutes and 56.496 seconds) to get to Standard time
-    cal.add(Duration(milliseconds: -1 * geo.getLocalMeanTimeOffset().toInt()));
-    return cal;
+        seconds,
+        milliseconds);
+
+    // The traditional calculation is in local time at Har Habayis, whose longitude
+    // of 35.2354° sits 0.2354° east of the 35° line its GMT+2 timezone is measured
+    // from, so local mean time there runs 20 minutes, 56 seconds and 496
+    // milliseconds ahead of standard time.
+    return moladTime.subtract(_jerusalemLocalMeanTimeOffset);
   }
+
+  /// How far ahead of Yerushalayim standard time local mean time at Har Habayis runs.
+  static const Duration _jerusalemLocalMeanTimeOffset =
+      Duration(minutes: 20, seconds: 56, milliseconds: 496);
 
   /// Returns the earliest time of _Kiddush Levana_ calculated as 3 days after the molad. This method returns the time
   /// even if it is during the day when _Kiddush Levana_ can't be said. Callers of this method should consider
