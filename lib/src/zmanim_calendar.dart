@@ -296,14 +296,24 @@ class ZmanimCalendar extends AstronomicalCalendar {
   DateTime? getCandleLighting() {
     JewishCalendar today = JewishCalendar.fromDateTime(getCalendar());
     int dayOfWeek = today.getDayOfWeek();
+
+    // A Friday is erev shabbos whatever else it is, and candles have to be lit
+    // before sunset. The tzais based time below is for lighting from a flame that
+    // is already burning, which shabbos does not allow, so it can never apply
+    // here - as it wrongly did when the first day of Shavuos fell on a Friday,
+    // where it returned a time 25 minutes after shkia.
+    if (dayOfWeek == 6) {
+      return AstronomicalCalendar.getTimeOffset(getSeaLevelSunset(),
+          -getCandleLightingOffset() * AstronomicalCalendar.MINUTE_MILLIS);
+    }
     if ((dayOfWeek == 7 && today.isErevYomTov()) ||
         today.isErevYomTovSheni() ||
-        (today.isChanukah() && dayOfWeek != 6)) {
+        today.isChanukah()) {
       return AstronomicalCalendar.getTimeOffset(
           getSunsetOffsetByDegrees(ComplexZmanimCalendar.ZENITH_7_POINT_083),
           -13.5 * AstronomicalCalendar.MINUTE_MILLIS);
     }
-    if (dayOfWeek == 6 || today.isErevYomTov()) {
+    if (today.isErevYomTov()) {
       return AstronomicalCalendar.getTimeOffset(getSeaLevelSunset(),
           -getCandleLightingOffset() * AstronomicalCalendar.MINUTE_MILLIS);
     }

@@ -74,6 +74,51 @@ void main() {
     complexZmanimCalendar.setCalendar(DateTime.utc(2021, 9, 23));
     expect(_getCandleLighting(complexZmanimCalendar), null);
   });
+
+  // The first day of Shavuos can fall on a Friday, which makes that day both the
+  // eve of the second day of Yom Tov and erev Shabbos. Candles then have to be lit
+  // before sunset like any Friday - the tzais based time used for lighting from an
+  // existing flame cannot apply, because Shabbos does not allow it. This used to
+  // return a time roughly 25 minutes after shkia.
+  test('testFirstDayOfShavuosOnFriday', () async {
+    complexZmanimCalendar.setGeoLocation(GeoLocation.setLocation(
+        "NY", 40.7128, -74.0060, DateTime.utc(2026, 5, 22)));
+
+    for (final date in [DateTime.utc(2026, 5, 22), DateTime.utc(2027, 6, 11)]) {
+      complexZmanimCalendar.setCalendar(date);
+
+      final JewishCalendar jewishCalendar = JewishCalendar.fromDateTime(date);
+      expect(jewishCalendar.getDayOfWeek(), 6, reason: 'test date is a Friday');
+      expect(jewishCalendar.isErevYomTovSheni(), isTrue,
+          reason: 'and the first day of Shavuos');
+
+      final DateTime? candleLighting = complexZmanimCalendar.getCandleLighting();
+      final DateTime sunset = complexZmanimCalendar.getSeaLevelSunset()!;
+
+      expect(candleLighting!.isBefore(sunset), isTrue,
+          reason: 'candles must be lit before sunset on erev Shabbos');
+      expect(candleLighting,
+          sunset.subtract(const Duration(minutes: 18)));
+    }
+  });
+
+  // The same day midweek keeps the tzais based time, which is what the second
+  // night of Yom Tov wants when Shabbos is not involved. 2 April 2026 is the first
+  // day of Pesach, a Thursday.
+  test('testErevYomTovSheniMidweekStillUsesTzais', () async {
+    final DateTime date = DateTime.utc(2026, 4, 2);
+    complexZmanimCalendar.setGeoLocation(
+        GeoLocation.setLocation("NY", 40.7128, -74.0060, date));
+    complexZmanimCalendar.setCalendar(date);
+
+    expect(JewishCalendar.fromDateTime(date).isErevYomTovSheni(), isTrue);
+    expect(
+        complexZmanimCalendar
+            .getCandleLighting()!
+            .isAfter(complexZmanimCalendar.getSeaLevelSunset()!),
+        isTrue,
+        reason: 'lit from an existing flame once the stars are out');
+  });
 }
 
 /// Formats the candle lighting time as "HH:mm" in UTC, or returns `null` if
