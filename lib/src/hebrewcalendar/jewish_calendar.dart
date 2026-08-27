@@ -1944,6 +1944,74 @@ class JewishCalendar extends JewishDate {
     }
   }
 
+  /// Returns if the day is _Shushan Purim_, the 15th of Adar, whether or not the caller
+  /// keeps Purim on it. Use [isPurim] for the day Purim is kept.
+  bool isShushanPurim() {
+    return getYomTovIndex() == SHUSHAN_PURIM;
+  }
+
+  /// Returns if the day is _Purim Katan_, the 14th of Adar I in a leap year.
+  bool isPurimKatan() {
+    return getYomTovIndex() == PURIM_KATAN;
+  }
+
+  /// Returns if the day is _Shushan Purim Katan_, the 15th of Adar I in a leap year.
+  bool isShushanPurimKatan() {
+    return getYomTovIndex() == SHUSHAN_PURIM_KATAN;
+  }
+
+  /// Returns if the day is _Taanis Esther_, moved off the 13th of Adar when that falls on
+  /// _Shabbos_ or Friday.
+  bool isTaanisEsther() {
+    return getYomTovIndex() == FAST_OF_ESTHER;
+  }
+
+  /// Returns if the day is _erev Pesach_.
+  bool isErevPesach() {
+    return getYomTovIndex() == EREV_PESACH;
+  }
+
+  /// Returns if the day is _erev Yom Kippur_.
+  bool isErevYomKippur() {
+    return getYomTovIndex() == EREV_YOM_KIPPUR;
+  }
+
+  /// Returns if the day is _Hoshana Rabba_.
+  bool isHoshanaRabba() {
+    return getYomTovIndex() == HOSHANA_RABBA;
+  }
+
+  /// Returns if the day is _Yom Ha'atzmaut_. Only ever true when
+  /// [isUseModernHolidays] is set.
+  bool isYomHaatzmaut() {
+    return getYomTovIndex() == YOM_HAATZMAUT;
+  }
+
+  /// Returns if the day is _Yom Yerushalayim_. Only ever true when
+  /// [isUseModernHolidays] is set.
+  bool isYomYerushalayim() {
+    return getYomTovIndex() == YOM_YERUSHALAYIM;
+  }
+
+  /// Returns if the day falls in _sefiras haomer_, the 49 days from the 16th of Nissan.
+  ///
+  /// See also [getDayOfOmer].
+  bool isSefirasHaomer() {
+    return getDayOfOmer() != -1;
+  }
+
+  /// Returns if _LeDavid Hashem Ori_ is said, from the 1st of Elul through _Hoshana
+  /// Rabba_, the 21st of Tishrei.
+  ///
+  /// The day it starts is a _minhag_ - some begin on the 2nd of Elul, and some on the
+  /// 30th of Av, the first day of _Rosh Chodesh_ Elul - so a community that does not
+  /// begin on the 1st has to say so itself.
+  bool isLeDavidPeriod() {
+    int month = getJewishMonth();
+    return month == JewishDate.ELUL ||
+        (month == JewishDate.TISHREI && getJewishDayOfMonth() <= 21);
+  }
+
   /// Returns if the day is Rosh Chodesh. Rosh Hashana will return false
   ///
   /// Returns true if it is Rosh Chodesh. Rosh Hashana will return false

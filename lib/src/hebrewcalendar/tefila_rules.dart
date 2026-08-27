@@ -557,4 +557,37 @@ class TefilaRules {
             holidayIndex != JewishCalendar.EREV_PESACH &&
             !jewishCalendar.isCholHamoedPesach());
   }
+
+  /// Returns if _Avinu Malkeinu_ is said on the day in question: through the _Aseres Yemei
+  /// Teshuva_, and on a public fast other than _Tisha B'Av_. Never on _Shabbos_.
+  ///
+  /// The _minhagim_ this does not decide: some do not say it at _mincha_ on _erev
+  /// Shabbos_, and some omit it on _erev Yom Kippur_. A caller that follows either has to
+  /// say so itself.
+  bool isAvinuMalkeinuRecited(JewishCalendar jewishCalendar) {
+    if (jewishCalendar.isShabbos()) {
+      return false;
+    }
+    return jewishCalendar.isAseresYemeiTeshuva() ||
+        (jewishCalendar.isTaanis() && !jewishCalendar.isTishaBav());
+  }
+
+  /// Returns if the long _tachanun_ - the Monday and Thursday _vehu rachum_ - is said on
+  /// the day in question.
+  ///
+  /// - [jewishCalendar]: the Jewish calendar day.
+  /// See also [isTachanunRecitedShacharis].
+  bool isLongTachanunRecited(JewishCalendar jewishCalendar) {
+    return jewishCalendar.isMondayOrThursday() &&
+        isTachanunRecitedShacharis(jewishCalendar);
+  }
+
+  /// Returns if _mussaf_ is said on the day in question: _Shabbos_, _Rosh Chodesh_, yom
+  /// tov and _chol hamoed_.
+  bool isMussafRecited(JewishCalendar jewishCalendar) {
+    return jewishCalendar.isShabbos() ||
+        jewishCalendar.isRoshChodesh() ||
+        jewishCalendar.isYomTovAssurBemelacha() ||
+        jewishCalendar.isCholHamoed();
+  }
 }

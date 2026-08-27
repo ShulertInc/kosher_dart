@@ -1352,6 +1352,30 @@ class JewishDate implements Comparable<JewishDate> {
     return _dayOfWeek;
   }
 
+  /// Returns if the day is Sunday.
+  bool isSunday() => _dayOfWeek == sunday;
+
+  /// Returns if the day is Monday.
+  bool isMonday() => _dayOfWeek == monday;
+
+  /// Returns if the day is Tuesday.
+  bool isTuesday() => _dayOfWeek == tuesday;
+
+  /// Returns if the day is Wednesday.
+  bool isWednesday() => _dayOfWeek == wednesday;
+
+  /// Returns if the day is Thursday.
+  bool isThursday() => _dayOfWeek == thursday;
+
+  /// Returns if the day is Friday.
+  bool isFriday() => _dayOfWeek == friday;
+
+  /// Returns if the day is _Shabbos_.
+  bool isShabbos() => _dayOfWeek == saturday;
+
+  /// Returns if the day is Monday or Thursday, the weekdays the Torah is read.
+  bool isMondayOrThursday() => _dayOfWeek == monday || _dayOfWeek == thursday;
+
   /// Sets the Gregorian month.
   ///
   /// - [month]:
