@@ -1673,7 +1673,8 @@ class JewishCalendar extends JewishDate {
 
   /// Returns true if the current day is _Yom Tov_. The method returns true even for holidays such as [CHANUKAH]
   /// and minor ones such as [TU_BEAV] and [PESACH_SHENI]. _Erev Yom Tov_ (with the exception of
-  /// [HOSHANA_RABBA], _erev_ the second days of _Pesach_) returns false, as do [isTaanis] besides [YOM_KIPPUR]. Use [isAssurBemelacha] to find the days that have a prohibition of work.
+  /// [HOSHANA_RABBA] and _erev_ the last day of _Pesach_) returns false, as do [isTaanis] besides
+  /// [YOM_KIPPUR] and [ISRU_CHAG]. Use [isAssurBemelacha] to find the days that have a prohibition of work.
   ///
   ///  See also [getYomTovIndex].
   /// Returns true if the current day is a Yom Tov
@@ -1685,13 +1686,13 @@ class JewishCalendar extends JewishDate {
   bool isYomTov() {
     int holidayIndex = getYomTovIndex();
     if ((isErevYomTov() &&
-            (holidayIndex != HOSHANA_RABBA &&
-                (holidayIndex == CHOL_HAMOED_PESACH &&
-                    getJewishDayOfMonth() != 20))) ||
-        (isTaanis() && holidayIndex != YOM_KIPPUR)) {
+            !(holidayIndex == HOSHANA_RABBA ||
+                holidayIndex == CHOL_HAMOED_PESACH)) ||
+        (isTaanis() && holidayIndex != YOM_KIPPUR) ||
+        holidayIndex == ISRU_CHAG) {
       return false;
     }
-    return getYomTovIndex() != -1;
+    return holidayIndex != -1;
   }
 
   /// Returns true if the _Yom Tov_ day has a _melacha_ (work)  prohibition. This method will return false for a
@@ -1862,6 +1863,59 @@ class JewishCalendar extends JewishDate {
             (day == 12 && dayOfWeek == JewishDate.tuesday));
   }
 
+  /// Returns true if the day is _BeHaB_ - the Monday, Thursday and Monday after the first
+  /// _Shabbos_ of _Cheshvan_ and _Iyar_, on which _selichos_ are said and some fast.
+  bool isBeHaB() {
+    final int dayOfWeek = getDayOfWeek();
+    final int month = getJewishMonth();
+    final int day = getJewishDayOfMonth();
+
+    if (month == JewishDate.CHESHVAN || month == JewishDate.IYAR) {
+      return (dayOfWeek == JewishDate.monday && day > 4 && day < 18) ||
+          (dayOfWeek == JewishDate.thursday && day > 7 && day < 14);
+    }
+    return false;
+  }
+
+  /// Returns true if the day is _Yom Kippur Katan_, said on _erev Rosh Chodesh_ and moved
+  /// back to the Thursday when that falls on Friday or _Shabbos_. It is not said before
+  /// _Rosh Chodesh_ Cheshvan, Teves, Iyar or Sivan, so Elul, Tishrei, Kislev and Nissan
+  /// answer false.
+  bool isYomKippurKatan() {
+    final int dayOfWeek = getDayOfWeek();
+    final int month = getJewishMonth();
+    final int day = getJewishDayOfMonth();
+
+    if (month == JewishDate.ELUL ||
+        month == JewishDate.TISHREI ||
+        month == JewishDate.KISLEV ||
+        month == JewishDate.NISSAN) {
+      return false;
+    }
+
+    if (day == 29 &&
+        dayOfWeek != JewishDate.friday &&
+        dayOfWeek != JewishDate.saturday) {
+      return true;
+    }
+    return (day == 27 || day == 28) && dayOfWeek == JewishDate.thursday;
+  }
+
+  /// Returns true if today is _assur bemelacha_ and tomorrow is not, which is the night
+  /// melacha becomes permitted again. False on the first day of a two-day yom tov, and on
+  /// a _Shabbos_ that runs into one.
+  ///
+  /// See also [isAssurBemelacha].
+  bool isTonightMutarBemelacha() {
+    if (!isAssurBemelacha()) {
+      return false;
+    }
+
+    final JewishCalendar tomorrow = clone();
+    tomorrow.forward(Calendar.DATE, 1);
+    return !tomorrow.isAssurBemelacha();
+  }
+
   /// Returns the day of Chanukah or -1 if it is not Chanukah.
   ///
   /// Returns the day of Chanukah or -1 if it is not Chanukah.
@@ -1963,6 +2017,24 @@ class JewishCalendar extends JewishDate {
   /// _Shabbos_ or Friday.
   bool isTaanisEsther() {
     return getYomTovIndex() == FAST_OF_ESTHER;
+  }
+
+  /// Returns if the day is _Tzom Gedalyah_, the 3rd of Tishrei, moved to the 4th when the
+  /// 3rd is _Shabbos_. [isTaanis] answers every public fast; this answers one of them,
+  /// which is what a siddur printing a passage for a named fast needs.
+  bool isFastOfGedalyah() {
+    return getYomTovIndex() == FAST_OF_GEDALYAH;
+  }
+
+  /// Returns if the day is _Asara B'Teves_, the 10th of Teves. It is the one public fast
+  /// that can never be moved, since the 10th of Teves never falls on _Shabbos_.
+  bool isTenthOfTeves() {
+    return getYomTovIndex() == TENTH_OF_TEVES;
+  }
+
+  /// Returns if the day is the _17th of Tammuz_, moved to the 18th when the 17th is _Shabbos_.
+  bool isSeventeenthOfTammuz() {
+    return getYomTovIndex() == SEVENTEEN_OF_TAMMUZ;
   }
 
   /// Returns if the day is _erev Pesach_.
