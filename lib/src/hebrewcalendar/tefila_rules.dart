@@ -539,6 +539,42 @@ class TefilaRules {
         jewishCalendar.isRoshChodesh();
   }
 
+  /// Returns if the _mussaf_ korban of the [dayOfSuccos]th day of _Succos_ is read on the
+  /// day in question. The _mussaf_ of _chol hamoed Succos_ reads the day's own korban out
+  /// of _Pinchas_ and the bulls fall by one a day, so which passage is read is a separate
+  /// question from which day of the festival it is.
+  ///
+  /// In Israel it is the day's own: the 16th of Tishrei reads the second day's korban, the
+  /// 17th the third's, and so on to _Hoshana Rabba_, which reads the seventh's.
+  ///
+  /// Outside Israel the second day of _yom tov_ pushes _chol hamoed_ a day later and leaves
+  /// a doubt about which day of the festival it is, so each day reads two korbanos, its own
+  /// and the next day's: the 17th of Tishrei reads the second day's and the third's, and
+  /// _Hoshana Rabba_ the sixth's and the seventh's.
+  ///
+  /// Only _chol hamoed_ is in question. The first days read the korban of the first day and
+  /// _Shemini Atzeres_ reads its own, and neither is a matter of doubt.
+  ///
+  /// - [jewishCalendar]: the Jewish calendar day.
+  /// - [dayOfSuccos]: which day of _Succos_ the korban belongs to, 2 through 7.
+  bool isSuccosKorbanRecited(JewishCalendar jewishCalendar, int dayOfSuccos) {
+    if (dayOfSuccos < 2 || dayOfSuccos > 7) {
+      throw ArgumentError.value(dayOfSuccos, 'dayOfSuccos',
+          'chol hamoed Succos reads the korbanos of days 2 through 7');
+    }
+
+    if (!jewishCalendar.isCholHamoedSuccos()) {
+      return false;
+    }
+
+    // Succos opens on the 15th of Tishrei, so its nth day is the (n + 14)th of the month.
+    final today = jewishCalendar.getJewishDayOfMonth();
+    if (jewishCalendar.inIsrael) {
+      return today == dayOfSuccos + 14;
+    }
+    return today == dayOfSuccos + 14 || today == dayOfSuccos + 15;
+  }
+
   /// Returns if _ata chonantanu_ - the _havdalah_ said inside the fourth bracha of the
   /// weekday _amidah_ - is said on the day in question: the night after _shabbos_, and the
   /// night after a _yom tov_ that is _assur bemelacha_.
