@@ -242,4 +242,26 @@ void main() {
       expect(saying.isMizmorLesodaRecited(c), isFalse);
     });
   });
+
+  group('TefilaRules - ata chonantanu', () {
+    JewishCalendar cal() => JewishCalendar()..inIsrael = false;
+
+    test('said on motzei shabbos', () {
+      final c = cal()..setJewishDate(5784, JewishDate.CHESHVAN, 14);
+      expect(c.isSunday(), isTrue);
+      expect(rules.isAtaChonantanuRecited(c), isTrue);
+    });
+
+    test('said after yom tov as well', () {
+      // 23 Tishrei 5784 is Simchas Torah, so the 24th is the first weekday after it.
+      final c = cal()..setJewishDate(5784, JewishDate.TISHREI, 24);
+      expect(c.isMotzeiShabbos(), isFalse);
+      expect(rules.isAtaChonantanuRecited(c), isTrue);
+    });
+
+    test('not said on an ordinary weekday', () {
+      final c = cal()..setJewishDate(5784, JewishDate.CHESHVAN, 16);
+      expect(rules.isAtaChonantanuRecited(c), isFalse);
+    });
+  });
 }

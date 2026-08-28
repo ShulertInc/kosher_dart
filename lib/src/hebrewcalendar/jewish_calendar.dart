@@ -1990,6 +1990,26 @@ class JewishCalendar extends JewishDate {
     return getDayOfWeek() == JewishDate.sunday;
   }
 
+  /// Returns if the night that opened this day was _motzei yom tov_ - the night after a
+  /// _yom tov_ that is _assur bemelacha_, which is when _ata chonantanu_ and the rest of
+  /// the _motzei shabbos_ additions are said as well.
+  ///
+  /// False on the second day of _yom tov_, and outside Israel on the second day of a
+  /// two day _yom tov_, because the night before it was still _yom tov_. True when
+  /// _yom tov_ ran into _shabbos_: that night is both.
+  ///
+  /// Like [isMotzeiShabbos] this answers for the day, not the hour.
+  bool isMotzeiYomTov() {
+    if (isYomTovAssurBemelacha()) {
+      return false;
+    }
+
+    final yesterday = clone();
+    yesterday.back();
+
+    return yesterday.isYomTovAssurBemelacha();
+  }
+
   /// Returns if the day is _Yom Ha'atzmaut_. Only ever true when
   /// [isUseModernHolidays] is set.
   bool isYomHaatzmaut() {

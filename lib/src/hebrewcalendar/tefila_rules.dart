@@ -539,6 +539,19 @@ class TefilaRules {
         jewishCalendar.isRoshChodesh();
   }
 
+  /// Returns if _ata chonantanu_ - the _havdalah_ said inside the fourth bracha of the
+  /// weekday _amidah_ - is said on the day in question: the night after _shabbos_, and the
+  /// night after a _yom tov_ that is _assur bemelacha_.
+  ///
+  /// Like the two calls it is written in terms of, this answers for the day the night
+  /// opened and says nothing about the hour.
+  ///
+  /// See also [JewishCalendar.isMotzeiShabbos].
+  /// See also [JewishCalendar.isMotzeiYomTov].
+  bool isAtaChonantanuRecited(JewishCalendar jewishCalendar) {
+    return jewishCalendar.isMotzeiShabbos() || jewishCalendar.isMotzeiYomTov();
+  }
+
   /// Returns if _mizmor lesoda_ is recited on the day in question. It is not recited on a
   /// day with a prohibition of work, and by default not on _erev Yom Kippur_, _erev
   /// Pesach_ or _chol hamoed Pesach_ either.
