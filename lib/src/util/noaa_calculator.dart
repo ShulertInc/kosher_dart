@@ -323,9 +323,11 @@ class NOAACalculator extends AstronomicalCalculator {
       double lat, double solarDec, double zenith) {
     double latRad = radians(lat);
     double sdRad = radians(solarDec);
+    // Left unclamped on purpose: outside [-1, 1] the sun never reaches this dip on
+    // this day, and the NaN is what tells the caller there is no such time. Clamping
+    // it invented an alos for a London June night.
     double x = (cos(radians(zenith)) / (cos(latRad) * cos(sdRad)) -
         tan(latRad) * tan(sdRad));
-    x = max(min(1, x), -1);
     return acos(x); // in radians
   }
 

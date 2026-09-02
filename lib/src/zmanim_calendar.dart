@@ -222,6 +222,41 @@ class ZmanimCalendar extends AstronomicalCalendar {
   ///         method. If the calculation can't be computed such as in the Arctic Circle where there is at least one day
   ///         a year where the sun does not rise, and one where it does not set, a null will be returned. See detailed
   ///         explanation on top of the [AstronomicalCalendar] documentation.
+  /// The same zmanim as [getSofZmanShma], [getSofZmanTfila], [getMinchaGedola],
+  /// [getMinchaKetana] and [getPlagHamincha], for a day whose bounds were themselves
+  /// calculated. A bound that came back null means the day could not be established, so
+  /// the zman cannot be either - where the argument-less forms read a missing bound as
+  /// "use the sunrise to sunset day", which is not what a caller whose alos or tzais
+  /// does not occur means.
+  DateTime? getSofZmanShmaOfDay(DateTime? startOfDay, DateTime? endOfDay) =>
+      startOfDay == null || endOfDay == null
+          ? null
+          : getShaahZmanisBasedZman(startOfDay, endOfDay, 3);
+
+  /// See [getSofZmanShmaOfDay].
+  DateTime? getSofZmanTfilaOfDay(DateTime? startOfDay, DateTime? endOfDay) =>
+      startOfDay == null || endOfDay == null
+          ? null
+          : getShaahZmanisBasedZman(startOfDay, endOfDay, 4);
+
+  /// See [getSofZmanShmaOfDay].
+  DateTime? getMinchaGedolaOfDay(DateTime? startOfDay, DateTime? endOfDay) =>
+      startOfDay == null || endOfDay == null
+          ? null
+          : getShaahZmanisBasedZman(startOfDay, endOfDay, 6.5);
+
+  /// See [getSofZmanShmaOfDay].
+  DateTime? getMinchaKetanaOfDay(DateTime? startOfDay, DateTime? endOfDay) =>
+      startOfDay == null || endOfDay == null
+          ? null
+          : getShaahZmanisBasedZman(startOfDay, endOfDay, 9.5);
+
+  /// See [getSofZmanShmaOfDay].
+  DateTime? getPlagHaminchaOfDay(DateTime? startOfDay, DateTime? endOfDay) =>
+      startOfDay == null || endOfDay == null
+          ? null
+          : getShaahZmanisBasedZman(startOfDay, endOfDay, 10.75);
+
   DateTime? getSofZmanShma(DateTime? startOfDay, DateTime? endOfDay) {
     final start = startOfDay ?? getElevationAdjustedSunrise();
     final end = endOfDay ?? getElevationAdjustedSunset();

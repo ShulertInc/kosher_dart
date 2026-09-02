@@ -632,7 +632,7 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   ///
   /// see [getShaahZmanis120MinutesZmanis]
   DateTime? getPlagHamincha120MinutesZmanis() =>
-      getPlagHamincha(getAlos120Zmanis(), getTzais120Zmanis());
+      getPlagHaminchaOfDay(getAlos120Zmanis(), getTzais120Zmanis());
 
   /// This method returns the time of _plag hamincha_ according to the _Magen Avraham_ with the day
   /// starting 120 minutes before sunrise and ending 120 minutes after sunset. This is calculated as 10.75 hours after
@@ -646,7 +646,7 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   ///
   /// see #getShaahZmanis120Minutes]
   DateTime? getPlagHamincha120Minutes() =>
-      getPlagHamincha(getAlos120(), getTzais120());
+      getPlagHaminchaOfDay(getAlos120(), getTzais120());
 
   /// Method to return _alos_ (dawn) calculated as 60 minutes before sunrise. This is the time to walk the
   /// distance of 4 _Mil_ at 15 minutes a _Mil_. This seems to be the opinion of the
@@ -983,7 +983,7 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   /// _see [getShaahZmanis19Point8Degrees]_
   /// _see [getAlos19Point8Degrees]_
   DateTime? getSofZmanShmaMGA19Point8Degrees() =>
-      getSofZmanShma(getAlos19Point8Degrees(), getTzais19Point8Degrees());
+      getSofZmanShmaOfDay(getAlos19Point8Degrees(), getTzais19Point8Degrees());
 
   /// This method returns the latest _zman krias shema_ (time to recite Shema in the morning) according to the
   /// opinion of the _[Magen Avraham (MGA)](https://en.wikipedia.org/wiki/Avraham_Gombinern)_ based
@@ -1000,7 +1000,7 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   /// _see [getShaahZmanis16Point1Degrees]
   /// _see [getAlos16Point1Degrees]
   DateTime? getSofZmanShmaMGA16Point1Degrees() =>
-      getSofZmanShma(getAlos16Point1Degrees(), getTzais16Point1Degrees());
+      getSofZmanShmaOfDay(getAlos16Point1Degrees(), getTzais16Point1Degrees());
 
   /// This method returns the latest _zman krias shema_ (time to recite Shema in the morning) according to the
   /// opinion of the _[Magen Avraham (MGA)](https://en.wikipedia.org/wiki/Avraham_Gombinern)_ based
@@ -1017,7 +1017,7 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   /// _see [getShaahZmanis18Degrees]
   /// _see [getAlos18Degrees]
   DateTime? getSofZmanShmaMGA18Degrees() =>
-      getSofZmanShma(getAlos18Degrees(), getTzais18Degrees());
+      getSofZmanShmaOfDay(getAlos18Degrees(), getTzais18Degrees());
 
   /// This method returns the latest _zman krias shema_ (time to recite Shema in the morning) according to the
   ///  opinion of the [Magen Avraham (MGA)](https://en.wikipedia.org/wiki/Avraham_Gombinern) based on
@@ -1054,7 +1054,7 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   /// _see #getShaahZmanis72MinutesZmanis]_
   /// _see #getAlos72Zmanis]_
   DateTime? getSofZmanShmaMGA72MinutesZmanis() =>
-      getSofZmanShma(getAlos72Zmanis(), getTzais72Zmanis());
+      getSofZmanShmaOfDay(getAlos72Zmanis(), getTzais72Zmanis());
 
   /// This method returns the latest _zman krias shema_ (time to recite Shema in the morning) according to the
   /// opinion of the _[Magen Avraham (MGA)](https://en.wikipedia.org/wiki/Avraham_Gombinern)_ based on
@@ -1071,7 +1071,7 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   /// _see [getShaahZmanis90Minutes]
   /// _see [getAlos90]
   DateTime? getSofZmanShmaMGA90Minutes() =>
-      getSofZmanShma(getAlos90(), getTzais90());
+      getSofZmanShmaOfDay(getAlos90(), getTzais90());
 
   /// This method returns the latest _zman krias shema_ (time to recite Shema in the morning) according to the
   /// opinion of the [Magen Avraham (MGA)](https://en.wikipedia.org/wiki/Avraham_Gombinern) based
@@ -1088,7 +1088,7 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   /// _see [getShaahZmanis90MinutesZmanis]_
   /// _see [getAlos90Zmanis]_
   DateTime? getSofZmanShmaMGA90MinutesZmanis() =>
-      getSofZmanShma(getAlos90Zmanis(), getTzais90Zmanis());
+      getSofZmanShmaOfDay(getAlos90Zmanis(), getTzais90Zmanis());
 
   /// This method returns the latest _zman krias shema_ (time to recite Shema in the morning) according to the
   /// opinion of the [Magen Avraham (MGA)](https://en.wikipedia.org/wiki/Avraham_Gombinern) based
@@ -1105,7 +1105,7 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   /// _see [getShaahZmanis96Minutes]_
   /// _see [getAlos96]_
   DateTime? getSofZmanShmaMGA96Minutes() =>
-      getSofZmanShma(getAlos96(), getTzais96());
+      getSofZmanShmaOfDay(getAlos96(), getTzais96());
 
   /// This method returns the latest _zman krias shema_ (time to recite Shema in the morning) according to the
   /// opinion of the _[Magen Avraham (MGA)](https://en.wikipedia.org/wiki/Avraham_Gombinern)_ based
@@ -1122,7 +1122,7 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   /// _see [getShaahZmanis96MinutesZmanis]_
   /// _see [getAlos96Zmanis]_
   DateTime? getSofZmanShmaMGA96MinutesZmanis() =>
-      getSofZmanShma(getAlos96Zmanis(), getTzais96Zmanis());
+      getSofZmanShmaOfDay(getAlos96Zmanis(), getTzais96Zmanis());
 
   /// This method returns the latest _zman krias shema_ (time to recite Shema in the morning) calculated as 3
   /// hours (regular and not zmaniyos) before [ZmanimCalendar.getChatzos]. This is the opinion of the
@@ -1154,7 +1154,7 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   /// _see [getShaahZmanis120Minutes]_
   /// _see [getAlos120]_
   DateTime? getSofZmanShmaMGA120Minutes() =>
-      getSofZmanShma(getAlos120(), getTzais120());
+      getSofZmanShmaOfDay(getAlos120(), getTzais120());
 
   /// This method returns the latest _zman krias shema_ (time to recite _Shema_ in the morning) based
   /// on the opinion that the day starts at _[getAlos16Point1Degrees]_ and ends at
@@ -1172,7 +1172,7 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   /// _see [getAlos16Point1Degrees]_
   /// _see [getSeaLevelSunset]_
   DateTime? getSofZmanShmaAlos16Point1ToSunset() =>
-      getSofZmanShma(getAlos16Point1Degrees(), getElevationAdjustedSunset());
+      getSofZmanShmaOfDay(getAlos16Point1Degrees(), getElevationAdjustedSunset());
 
   /// This method returns the latest _zman krias shema_ (time to recite Shema in the morning) based on the
   /// opinion that the day starts at _[getAlos16Point1Degrees] alos 16.1°_ and ends at
@@ -1192,7 +1192,7 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   /// _see [getTzaisGeonim7Point083Degrees]_
 
   DateTime? getSofZmanShmaAlos16Point1ToTzaisGeonim7Point083Degrees() =>
-      getSofZmanShma(
+      getSofZmanShmaOfDay(
           getAlos16Point1Degrees(), getTzaisGeonim7Point083Degrees());
 
   /// From the GRA in Kol Eliyahu on Berachos #173 that states that _zman krias shema_ is calculated as half the
@@ -1233,7 +1233,7 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   /// _see [getShaahZmanis19Point8Degrees]_
   /// _see [getAlos19Point8Degrees]_
   DateTime? getSofZmanTfilaMGA19Point8Degrees() =>
-      getSofZmanTfila(getAlos19Point8Degrees(), getTzais19Point8Degrees());
+      getSofZmanTfilaOfDay(getAlos19Point8Degrees(), getTzais19Point8Degrees());
 
   /// This method returns the latest _zman tfila_ (time to recite the morning prayers) according to the opinion
   /// of the _[Magen Avraham (MGA)](https://en.wikipedia.org/wiki/Avraham_Gombinern)_ based on
@@ -1251,7 +1251,7 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   /// _see #getShaahZmanis16Point1Degrees]_
   /// _see #getAlos16Point1Degrees]_
   DateTime? getSofZmanTfilaMGA16Point1Degrees() =>
-      getSofZmanTfila(getAlos16Point1Degrees(), getTzais16Point1Degrees());
+      getSofZmanTfilaOfDay(getAlos16Point1Degrees(), getTzais16Point1Degrees());
 
   /// This method returns the latest _zman tfila_ (time to recite the morning prayers) according to the opinion
   /// of the _[Magen Avraham (MGA)](https://en.wikipedia.org/wiki/Avraham_Gombinern)_ based on
@@ -1269,7 +1269,7 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   /// see [getShaahZmanis18Degrees]_
   /// see [getAlos18Degrees]_
   DateTime? getSofZmanTfilaMGA18Degrees() =>
-      getSofZmanTfila(getAlos18Degrees(), getTzais18Degrees());
+      getSofZmanTfilaOfDay(getAlos18Degrees(), getTzais18Degrees());
 
   /// This method returns the latest _zman tfila_ (time to recite the morning prayers) according to the opinion
   /// of the _[Magen Avraham (MGA)](https://en.wikipedia.org/wiki/Avraham_Gombinern)_ based on
@@ -1304,7 +1304,7 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   /// _see [getShaahZmanis72MinutesZmanis]_
   /// _see [getAlos72Zmanis]_
   DateTime? getSofZmanTfilaMGA72MinutesZmanis() =>
-      getSofZmanTfila(getAlos72Zmanis(), getTzais72Zmanis());
+      getSofZmanTfilaOfDay(getAlos72Zmanis(), getTzais72Zmanis());
 
   /// This method returns the latest _zman tfila_ (time to recite the morning prayers) according to the opinion
   /// of the _[Magen Avraham (MGA)](https://en.wikipedia.org/wiki/Avraham_Gombinern)_ based on
@@ -1321,7 +1321,7 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   /// _see [getShaahZmanis90Minutes]_
   /// _see [getAlos90]_
   DateTime? getSofZmanTfilaMGA90Minutes() =>
-      getSofZmanTfila(getAlos90(), getTzais90());
+      getSofZmanTfilaOfDay(getAlos90(), getTzais90());
 
   /// This method returns the latest _zman tfila_ (time to the morning prayers) according to the opinion of the
   /// _[Magen Avraham (MGA)](https://en.wikipedia.org/wiki/Avraham_Gombinern)_ based on _alos_
@@ -1338,7 +1338,7 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   /// _see [getShaahZmanis90MinutesZmanis]_
   /// _see [getAlos90Zmanis]_
   DateTime? getSofZmanTfilaMGA90MinutesZmanis() =>
-      getSofZmanTfila(getAlos90Zmanis(), getTzais90Zmanis());
+      getSofZmanTfilaOfDay(getAlos90Zmanis(), getTzais90Zmanis());
 
   /// This method returns the latest _zman tfila_ (time to recite the morning prayers) according to the opinion
   ///  of the _[Magen Avraham (MGA)](https://en.wikipedia.org/wiki/Avraham_Gombinern)_ based on
@@ -1355,7 +1355,7 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   /// _see [getShaahZmanis96Minutes]_
   /// _see [getAlos96]_
   DateTime? getSofZmanTfilaMGA96Minutes() =>
-      getSofZmanTfila(getAlos96(), getTzais96());
+      getSofZmanTfilaOfDay(getAlos96(), getTzais96());
 
   /// This method returns the latest _zman tfila_ (time to the morning prayers) according to the opinion of the
   ///  _[Magen Avraham (MGA)](https://en.wikipedia.org/wiki/Avraham_Gombinern)_ based on _alos_
@@ -1372,7 +1372,7 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   /// _see [getShaahZmanis90MinutesZmanis]_
   /// _see [getAlos90Zmanis]_
   DateTime? getSofZmanTfilaMGA96MinutesZmanis() =>
-      getSofZmanTfila(getAlos96Zmanis(), getTzais96Zmanis());
+      getSofZmanTfilaOfDay(getAlos96Zmanis(), getTzais96Zmanis());
 
   /// This method returns the latest _zman tfila_ (time to recite the morning prayers) according to the opinion
   ///  of the _[Magen Avraham (MGA)](https://en.wikipedia.org/wiki/Avraham_Gombinern)_ based on
@@ -1389,7 +1389,7 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   /// _see [getShaahZmanis120Minutes]_
   /// _see [getAlos120]_
   DateTime? getSofZmanTfilaMGA120Minutes() =>
-      getSofZmanTfila(getAlos120(), getTzais120());
+      getSofZmanTfilaOfDay(getAlos120(), getTzais120());
 
   /// This method returns the latest _zman tfila_ (time to recite the morning prayers) calculated as 2 hours
   /// before [ZmanimCalendar.getChatzos]. This is based on the opinions that calculate
@@ -1440,7 +1440,7 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   ///         not set, a null will be returned. See detailed explanation on top of the [AstronomicalCalendar]
   ///         documentation.
   DateTime? getMinchaGedola72Minutes() =>
-      getMinchaGedola(getAlos72(), getTzais72());
+      getMinchaGedolaOfDay(getAlos72(), getTzais72());
 
   /// This method returns the time of _mincha gedola_ according to the Magen Avraham with the day starting and
   /// ending 16.1° below the horizon. This is the earliest time to pray _mincha_. For more information on
@@ -1456,7 +1456,7 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   ///         may not reach low enough below the horizon for this calculation, a null will be returned. See detailed
   ///         explanation on top of the [AstronomicalCalendar] documentation.
   DateTime? getMinchaGedola16Point1Degrees() =>
-      getMinchaGedola(getAlos16Point1Degrees(), getTzais16Point1Degrees());
+      getMinchaGedolaOfDay(getAlos16Point1Degrees(), getTzais16Point1Degrees());
 
   /// This is a convenience method that returns the later of [getMinchaGedola] and
   /// [getMinchaGedola30Minutes]. In the winter when 1/2 of a _[getShaahZmanisGra] shaah zmanis_ is
@@ -1492,7 +1492,7 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   ///         may not reach low enough below the horizon for this calculation, a null will be returned. See detailed
   ///         explanation on top of the [AstronomicalCalendar] documentation.
   DateTime? getMinchaKetana16Point1Degrees() =>
-      getMinchaKetana(getAlos16Point1Degrees(), getTzais16Point1Degrees());
+      getMinchaKetanaOfDay(getAlos16Point1Degrees(), getTzais16Point1Degrees());
 
   /// This method returns the time of _mincha ketana_ according to the _Magen Avraham_ with the day
   /// starting 72 minutes before sunrise and ending 72 minutes after sunset. This is the preferred earliest time to pray
@@ -1509,7 +1509,7 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   ///         not set, a null will be returned. See detailed explanation on top of the [AstronomicalCalendar]
   ///         documentation.
   DateTime? getMinchaKetana72Minutes() =>
-      getMinchaKetana(getAlos72(), getTzais72());
+      getMinchaKetanaOfDay(getAlos72(), getTzais72());
 
   /// This method returns the time of _plag hamincha_ according to the _Magen Avraham_ with the day
   /// starting 60 minutes before sunrise and ending 60 minutes after sunset. This is calculated as 10.75 hours after
@@ -1523,7 +1523,7 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   ///
   /// _see [getShaahZmanis60Minutes]_
   DateTime? getPlagHamincha60Minutes() =>
-      getPlagHamincha(getAlos60(), getTzais60());
+      getPlagHaminchaOfDay(getAlos60(), getTzais60());
 
   /// This method returns the time of _plag hamincha_ according to the _Magen Avraham_ with the day
   /// starting 72 minutes before sunrise and ending 72 minutes after sunset. This is calculated as 10.75 hours after
@@ -1537,7 +1537,7 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   ///
   /// _see [getShaahZmanis72Minutes]_
   DateTime? getPlagHamincha72Minutes() =>
-      getPlagHamincha(getAlos72(), getTzais72());
+      getPlagHaminchaOfDay(getAlos72(), getTzais72());
 
   /// This method returns the time of _plag hamincha_ according to the _Magen Avraham_ with the day
   /// starting 90 minutes before sunrise and ending 90 minutes after sunset. This is calculated as 10.75 hours after
@@ -1550,7 +1550,7 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   ///
   /// _see [getShaahZmanis90Minutes]_
   DateTime? getPlagHamincha90Minutes() =>
-      getPlagHamincha(getAlos90(), getTzais90());
+      getPlagHaminchaOfDay(getAlos90(), getTzais90());
 
   /// This method returns the time of _plag hamincha_ according to the _Magen Avraham_ with the day
   /// starting 96 minutes before sunrise and ending 96 minutes after sunset. This is calculated as 10.75 hours after
@@ -1563,7 +1563,7 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   ///         [AstronomicalCalendar] documentation.
   /// _see [getShaahZmanis96Minutes]_
   DateTime? getPlagHamincha96Minutes() =>
-      getPlagHamincha(getAlos96(), getTzais96());
+      getPlagHaminchaOfDay(getAlos96(), getTzais96());
 
   /// This method returns the time of _plag hamincha_. This is calculated as 10.75 hours after
   /// [getAlos96Zmanis] dawn. The formula used is
@@ -1574,7 +1574,7 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   ///         does not set, a null will be returned. See detailed explanation on top of the
   ///         [AstronomicalCalendar] documentation.
   DateTime? getPlagHamincha96MinutesZmanis() =>
-      getPlagHamincha(getAlos96Zmanis(), getTzais96Zmanis());
+      getPlagHaminchaOfDay(getAlos96Zmanis(), getTzais96Zmanis());
 
   /// This method returns the time of _plag hamincha_. This is calculated as 10.75 hours after
   /// [getAlos90Zmanis] dawn. The formula used is
@@ -1585,7 +1585,7 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   ///         does not set, a null will be returned. See detailed explanation on top of the
   ///         [AstronomicalCalendar] documentation.
   DateTime? getPlagHamincha90MinutesZmanis() =>
-      getPlagHamincha(getAlos90Zmanis(), getTzais90Zmanis());
+      getPlagHaminchaOfDay(getAlos90Zmanis(), getTzais90Zmanis());
 
   /// This method returns the time of _plag hamincha_. This is calculated as 10.75 hours after
   /// [getAlos72Zmanis] dawn. The formula used is
@@ -1596,7 +1596,7 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   ///         does not set, a null will be returned. See detailed explanation on top of the
   ///         [AstronomicalCalendar] documentation.
   DateTime? getPlagHamincha72MinutesZmanis() =>
-      getPlagHamincha(getAlos72Zmanis(), getTzais72Zmanis());
+      getPlagHaminchaOfDay(getAlos72Zmanis(), getTzais72Zmanis());
 
   /// This method returns the time of _plag hamincha_ based on the opinion that the day starts at
   /// _[getAlos16Point1Degrees] alos 16.1°_ and ends at
@@ -1611,7 +1611,7 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   ///
   /// _see _getShaahZmanis16Point1Degrees]
   DateTime? getPlagHamincha16Point1Degrees() =>
-      getPlagHamincha(getAlos16Point1Degrees(), getTzais16Point1Degrees());
+      getPlagHaminchaOfDay(getAlos16Point1Degrees(), getTzais16Point1Degrees());
 
   /// This method returns the time of _plag hamincha_ based on the opinion that the day starts at
   /// _[getAlos19Point8Degrees] alos 19.8°_ and ends at
@@ -1626,7 +1626,7 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   ///
   /// _see [getShaahZmanis19Point8Degrees]_
   DateTime? getPlagHamincha19Point8Degrees() =>
-      getPlagHamincha(getAlos19Point8Degrees(), getTzais19Point8Degrees());
+      getPlagHaminchaOfDay(getAlos19Point8Degrees(), getTzais19Point8Degrees());
 
   /// This method returns the time of _plag hamincha_ based on the opinion that the day starts at
   /// _[getAlos26Degrees] alos 26°_ and ends at _[getTzais26Degrees] tzais 26°_
@@ -1640,7 +1640,7 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   ///
   /// _see [getShaahZmanis26Degrees]_
   DateTime? getPlagHamincha26Degrees() =>
-      getPlagHamincha(getAlos26Degrees(), getTzais26Degrees());
+      getPlagHaminchaOfDay(getAlos26Degrees(), getTzais26Degrees());
 
   /// This method returns the time of _plag hamincha_ based on the opinion that the day starts at
   /// _[getAlos18Degrees] alos 18°_ and ends at _[getTzais18Degrees] tzais 18°_
@@ -1654,7 +1654,7 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   ///
   /// _see [getShaahZmanis18Degrees]_
   DateTime? getPlagHamincha18Degrees() =>
-      getPlagHamincha(getAlos18Degrees(), getTzais18Degrees());
+      getPlagHaminchaOfDay(getAlos18Degrees(), getTzais18Degrees());
 
   /// This method returns the time of _plag hamincha_ based on the opinion that the day starts at
   /// _[getAlos16Point1Degrees] alos 16.1°_ and ends at [getSunset] sunset. 10.75 shaos
@@ -1672,7 +1672,7 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   /// _see [getAlos16Point1Degrees]_
   /// _see [getSeaLevelSunset]_
   DateTime? getPlagAlosToSunset() =>
-      getPlagHamincha(getAlos16Point1Degrees(), getElevationAdjustedSunset());
+      getPlagHaminchaOfDay(getAlos16Point1Degrees(), getElevationAdjustedSunset());
 
   /// This method returns the time of _plag hamincha_ based on the opinion that the day starts at
   /// _[getAlos16Point1Degrees] alos 16.1°_ and ends at [getTzaisGeonim7Point083Degrees]
@@ -1691,7 +1691,7 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   /// _see [getAlos16Point1Degrees]_
   /// _see [getTzaisGeonim7Point083Degrees]_
   DateTime? getPlagAlos16Point1ToTzaisGeonim7Point083Degrees() =>
-      getPlagHamincha(
+      getPlagHaminchaOfDay(
           getAlos16Point1Degrees(), getTzaisGeonim7Point083Degrees());
 
   /// Method to return the beginning of _bain hashmashos_ of _Rabbeinu Tam_ calculated when the sun is
@@ -2137,7 +2137,7 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   /// _see [setAteretTorahSunsetOffset]_
   /// _see [getShaahZmanisAteretTorah]_
   DateTime? getSofZmanShmaAteretTorah() =>
-      getSofZmanShma(getAlos72Zmanis(), getTzaisAteretTorah());
+      getSofZmanShmaOfDay(getAlos72Zmanis(), getTzaisAteretTorah());
 
   /// This method returns the latest _zman tfila_ (time to recite the morning prayers) based on the calculation
   /// of Chacham Yosef Harari-Raful of Yeshivat Ateret Torah, that the day starts [getAlos72Zmanis] 1/10th of
@@ -2157,7 +2157,7 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   /// _see [getShaahZmanisAteretTorah]_
   /// _see [setAteretTorahSunsetOffset_
   DateTime? getSofZmanTfilahAteretTorah() =>
-      getSofZmanTfila(getAlos72Zmanis(), getTzaisAteretTorah());
+      getSofZmanTfilaOfDay(getAlos72Zmanis(), getTzaisAteretTorah());
 
   /// This method returns the time of _mincha gedola_ based on the calculation of _Chacham Yosef
   /// Harari-Raful_ of _Yeshivat Ateret Torah_, that the day starts [getAlos72Zmanis]
@@ -2183,7 +2183,7 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   ///         not set, a null will be returned. See detailed explanation on top of the [AstronomicalCalendar]
   ///         documentation.
   DateTime? getMinchaGedolaAteretTorah() =>
-      getMinchaGedola(getAlos72Zmanis(), getTzaisAteretTorah());
+      getMinchaGedolaOfDay(getAlos72Zmanis(), getTzaisAteretTorah());
 
   /// This method returns the time of _mincha ketana_ based on the calculation of
   /// _Chacham Yosef Harari-Raful_ of _Yeshivat Ateret Torah_, that the day starts
@@ -2207,7 +2207,7 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   ///         not set, a null will be returned. See detailed explanation on top of the [AstronomicalCalendar]
   ///         documentation.
   DateTime? getMinchaKetanaAteretTorah() =>
-      getMinchaKetana(getAlos72Zmanis(), getTzaisAteretTorah());
+      getMinchaKetanaOfDay(getAlos72Zmanis(), getTzaisAteretTorah());
 
   /// This method returns the time of _plag hamincha_ based on the calculation of Chacham Yosef Harari-Raful of
   /// Yeshivat Ateret Torah, that the day starts [getAlos72Zmanis] 1/10th of the day before sunrise and is
@@ -2226,7 +2226,7 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   /// _see [setAteretTorahSunsetOffset_
   /// _see [getAteretTorahSunsetOffset]_
   DateTime? getPlagHaminchaAteretTorah() =>
-      getPlagHamincha(getAlos72Zmanis(), getTzaisAteretTorah());
+      getPlagHaminchaOfDay(getAlos72Zmanis(), getTzaisAteretTorah());
 
   /// Method to return _tzais_ (dusk) calculated as 72 minutes zmaniyos, or 1/10th of the day after
   /// [getSeaLevelSunset].This is the way that the [Minchas Cohen]
@@ -2860,7 +2860,7 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   ///         not rise, and one where it does not set, a null will be returned. See detailed explanation on top of the
   ///         [AstronomicalCalendar] documentation.
   DateTime? getSofZmanShmaBaalHatanya() =>
-      getSofZmanShma(getSunriseBaalHatanya(), getSunsetBaalHatanya());
+      getSofZmanShmaOfDay(getSunriseBaalHatanya(), getSunsetBaalHatanya());
 
   /// This method returns the latest _zman tfilah_ (time to recite the morning prayers). This time is 4
   /// hours into the day based on the opinion of the _Baal Hatanya_ that the day is
@@ -2874,7 +2874,7 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   ///         not set, a null will be returned. See detailed explanation on top of the [AstronomicalCalendar]
   ///         documentation.
   DateTime? getSofZmanTfilaBaalHatanya() =>
-      getSofZmanTfila(getSunriseBaalHatanya(), getSunsetBaalHatanya());
+      getSofZmanTfilaOfDay(getSunriseBaalHatanya(), getSunsetBaalHatanya());
 
   /// This method returns the latest time one is allowed eating chametz on Erev Pesach according to the opinion of the
   /// _Baal Hatanya_. This time is identical to the [getSofZmanTfilaBaalHatanya] Sof zman
@@ -2924,7 +2924,7 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   ///         not set, a null will be returned. See detailed explanation on top of the [AstronomicalCalendar]
   ///         documentation.
   DateTime? getMinchaGedolaBaalHatanya() =>
-      getMinchaGedola(getSunriseBaalHatanya(), getSunsetBaalHatanya());
+      getMinchaGedolaOfDay(getSunriseBaalHatanya(), getSunsetBaalHatanya());
 
   /// This is a convenience method that returns the later of [getMinchaGedolaBaalHatanya] and
   /// [getMinchaGedola30Minutes]. In the winter when 1/2 of a _[getShaahZmanisBaalHatanya] shaah zmanis_ is
@@ -2964,7 +2964,7 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   ///         not set, a null will be returned. See detailed explanation on top of the [AstronomicalCalendar]
   ///         documentation.
   DateTime? getMinchaKetanaBaalHatanya() =>
-      getMinchaKetana(getSunriseBaalHatanya(), getSunsetBaalHatanya());
+      getMinchaKetanaOfDay(getSunriseBaalHatanya(), getSunsetBaalHatanya());
 
   /// This method returns the time of _plag hamincha_. This is calculated as 10.75 hours after sunrise. This
   /// calculation is based on the opinion of the _Baal Hatanya_ that the day is calculated
@@ -2977,7 +2977,7 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   ///         does not set, a null will be returned. See detailed explanation on top of the
   ///         [AstronomicalCalendar] documentation.
   DateTime? getPlagHaminchaBaalHatanya() =>
-      getPlagHamincha(getSunriseBaalHatanya(), getSunsetBaalHatanya());
+      getPlagHaminchaOfDay(getSunriseBaalHatanya(), getSunsetBaalHatanya());
 
   /// A method that returns _tzais_ (nightfall) when the sun is 6° below the western geometric horizon
   /// (90°) after [getSunset sunset. For information on the source of this calculation see

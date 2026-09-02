@@ -25,12 +25,9 @@ void main() {
       }
     });
 
-    test('sunset is null, which is what makes the day undividable', () {
-      // Sunrise is not: the NOAA calculator still hands back a time on both of these
-      // dates, and on the midwinter one it is a sunrise that does not happen. That is a
-      // separate problem; a null sunset is enough to make a day-proportion zman
-      // uncomputable, which is all these getters need to notice.
+    test('sunrise and sunset are both null, which makes the day undividable', () {
       for (final date in dates) {
+        expect(polarCalendar(date).getSunrise(), isNull, reason: '$date');
         expect(polarCalendar(date).getSunset(), isNull, reason: '$date');
       }
     });
