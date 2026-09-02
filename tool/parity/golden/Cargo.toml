@@ -1,0 +1,11 @@
+[package]
+name = "golden"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+kosher-rust = { path = "../../../../kosher-rust" }
+icu_calendar = "2.2.0"
+jiff = { version = "0.2", features = ["std", "alloc", "tzdb-bundle-always"] }
+
+[workspace]
