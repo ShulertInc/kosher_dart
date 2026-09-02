@@ -80,6 +80,30 @@ class NOAACalculator extends AstronomicalCalculator {
     return sunset;
   }
 
+  /// See also [AstronomicalCalculator.getUTCNoon].
+  @override
+  double getUTCNoon(DateTime dateTime, GeoLocation geoLocation) =>
+      _normalizeHours(_getSolarNoonMidnightUTC(
+              _getJulianDay(dateTime), -geoLocation.getLongitude(), true) /
+          60);
+
+  /// See also [AstronomicalCalculator.getUTCMidnight].
+  @override
+  double getUTCMidnight(DateTime dateTime, GeoLocation geoLocation) =>
+      _normalizeHours(_getSolarNoonMidnightUTC(
+              _getJulianDay(dateTime), -geoLocation.getLongitude(), false) /
+          60);
+
+  static double _normalizeHours(double hours) {
+    while (hours < 0.0) {
+      hours += 24.0;
+    }
+    while (hours >= 24.0) {
+      hours -= 24.0;
+    }
+    return hours;
+  }
+
   /// Return the [Julian day](http://en.wikipedia.org/wiki/Julian_day) from a Java Calendar
   ///
   /// - [calendar]: 
@@ -408,7 +432,7 @@ class NOAACalculator extends AstronomicalCalculator {
     // Find the time of solar noon at the location, and use that declination. This is better than start of the
     // Julian day
 
-    double noonmin = _getSolarNoonUTC(julianCenturies, longitude);
+    double noonmin = _getSolarNoonMidnightUTC(julianDay, longitude, true);
     double tnoon =
         _getJulianCenturiesFromJulianDay(julianDay + noonmin / 1440.0);
 
@@ -439,25 +463,27 @@ class NOAACalculator extends AstronomicalCalculator {
   /// of [solar noon](http://en.wikipedia.org/wiki/Noon#Solar_noon) for the given day at the given location
   /// on earth.
   ///
-  /// - [julianCenturies]: 
-  ///   the number of Julian centuries since J2000.0
-  /// - [longitude]: 
+  /// - [julianDay]:
+  ///   the Julian day
+  /// - [longitude]:
   ///   the longitude of observer in degrees
+  /// - [isNoon]:
+  ///   true for solar noon, false for solar midnight
   /// Returns the time in minutes from zero UTC
-  static double _getSolarNoonUTC(double julianCenturies, double longitude) {
-    // First pass uses approximate solar noon to calculate eqtime
-    double tnoon = _getJulianCenturiesFromJulianDay(
-        _getJulianDayFromJulianCenturies(julianCenturies) + longitude / 360.0);
-    double eqTime = _getEquationOfTime(tnoon);
-    double solNoonUTC = 720 + (longitude * 4) - eqTime; // min
+  static double _getSolarNoonMidnightUTC(
+      double julianDay, double longitude, bool isNoon) {
+    // First pass uses approximate solar noon to calculate the equation of time
+    double eqTime =
+        _getEquationOfTime(_getJulianCenturiesFromJulianDay(julianDay + longitude / 360.0));
+    double solNoonUTC = (longitude * 4) - eqTime; // min
 
-    double newt = _getJulianCenturiesFromJulianDay(
-        _getJulianDayFromJulianCenturies(julianCenturies) -
-            0.5 +
-            solNoonUTC / 1440.0);
-
-    eqTime = _getEquationOfTime(newt);
-    return 720 + (longitude * 4) - eqTime; // min
+    for (int pass = 0; pass < 2; pass++) {
+      double newt =
+          _getJulianCenturiesFromJulianDay(julianDay + solNoonUTC / 1440.0);
+      eqTime = _getEquationOfTime(newt);
+      solNoonUTC = (isNoon ? 720 : 1440) + (longitude * 4) - eqTime; // min
+    }
+    return solNoonUTC;
   }
 
   /// Return the [Universal Coordinated Time](http://en.wikipedia.org/wiki/Universal_Coordinated_Time) (UTC)
@@ -479,7 +505,7 @@ class NOAACalculator extends AstronomicalCalculator {
     // Find the time of solar noon at the location, and use that declination. This is better than start of the
     // Julian day
 
-    double noonmin = _getSolarNoonUTC(julianCenturies, longitude);
+    double noonmin = _getSolarNoonMidnightUTC(julianDay, longitude, true);
     double tnoon =
         _getJulianCenturiesFromJulianDay(julianDay + noonmin / 1440.0);
 

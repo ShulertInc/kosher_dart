@@ -416,12 +416,26 @@ class AstronomicalCalendar {
   /// not set, null will be returned. See detailed explanation on top of the page.
   DateTime? getSunTransit([DateTime? startOfDay, DateTime? endOfDay]) {
     if (startOfDay == null || endOfDay == null) {
-      startOfDay = getSeaLevelSunrise();
-      endOfDay = getSeaLevelSunset();
+      // Astronomical chatzos - the sun actually crossing the meridian - rather
+      // than the midpoint of the day, which the changing declination moves off
+      // the transit by up to a minute or so.
+      return getDateFromTime(
+          getAstronomicalCalculator()
+              .getUTCNoon(getAdjustedCalendar(), getGeoLocation()),
+          false);
     }
     double temporalHour = getTemporalHour(startOfDay, endOfDay);
     return getTimeOffset(startOfDay, temporalHour * 6);
   }
+
+  /// A method that returns astronomical _chatzos halayla_ - solar midnight, the moment the sun crosses the
+  /// meridian on the far side of the earth.
+  ///
+  /// Returns the `DateTime` representing solar midnight, or null when it cannot be calculated.
+  DateTime? getSolarMidnight() => getDateFromTime(
+      getAstronomicalCalculator()
+          .getUTCMidnight(getAdjustedCalendar(), getGeoLocation()),
+      false);
 
   /// A method that returns a `Date` from the time passed in as a parameter.
   ///

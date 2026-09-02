@@ -2741,23 +2741,6 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
       AstronomicalCalendar.getTimeOffset(
           getAlos16Point1Degrees(), getShaahZmanis16Point1Degrees() * 5);
 
-  /// A method that returns "solar" midnight, or the time when the sun is at its [nadir](http://en.wikipedia.org/wiki/Nadir).
-  /// **Note:** this method is experimental and might be removed.
-  ///
-  /// return the `DateTime` of Solar Midnight (chatzos layla). If the calculation can't be computed such as in
-  ///         the Arctic Circle where there is at least one day a year where the sun does not rise, and one where it
-  ///         does not set, a null will be returned. See detailed explanation on top of the
-  ///         [AstronomicalCalendar] documentation.
-  DateTime? getSolarMidnight() {
-    ZmanimCalendar clonedCal = ZmanimCalendar.intGeolocation(geoLocation);
-    clonedCal.setCalendar(DateTime.parse(getCalendar().toIso8601String()));
-    clonedCal.setCalendar(clonedCal.getCalendar().add(const Duration(days: 1)));
-    DateTime? sunset = getSeaLevelSunset();
-    DateTime? sunrise = clonedCal.getSeaLevelSunrise();
-    return AstronomicalCalendar.getTimeOffset(
-        sunset, getTemporalHour(sunset, sunrise) * 6);
-  }
-
   /// A method that returns the _[Baal Hatanya](https://en.wikipedia.org/wiki/Shneur_Zalman_of_Liadi)_'s
   /// _netz amiti_ (sunrise) without [AstronomicalCalculator.getElevationAdjustment]
   /// elevation adjustment. This forms the base for the _Baal Hatanya_'s dawn based calculations that are

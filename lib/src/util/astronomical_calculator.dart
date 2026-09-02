@@ -126,6 +126,40 @@ abstract class AstronomicalCalculator {
   double getUTCSunset(DateTime dateTime, GeoLocation geoLocation, double zenith,
       bool adjustForElevation);
 
+  /// A method that calculates UTC solar transit - astronomical _chatzos_, the moment the sun crosses the
+  /// meridian, which is not quite the midpoint between sunrise and sunset. Subclasses that can compute the
+  /// transit directly should override this; the midpoint here is only a fallback.
+  ///
+  /// - [dateTime]:
+  ///   Used to calculate day of year.
+  /// - [geoLocation]:
+  ///   The location information used for astronomical calculating sun times.
+  /// Returns the UTC time of solar transit in 24 hour format, or double.nan when the sun does not rise or set.
+  double getUTCNoon(DateTime dateTime, GeoLocation geoLocation) {
+    final double sunrise = getUTCSunrise(dateTime, geoLocation, 90, false);
+    final double sunset = getUTCSunset(dateTime, geoLocation, 90, false);
+    if (sunrise.isNaN || sunset.isNaN) {
+      return double.nan;
+    }
+    return sunrise + (sunset - sunrise) / 2;
+  }
+
+  /// A method that calculates UTC solar midnight - astronomical _chatzos halayla_.
+  ///
+  /// - [dateTime]:
+  ///   Used to calculate day of year.
+  /// - [geoLocation]:
+  ///   The location information used for astronomical calculating sun times.
+  /// Returns the UTC time of solar midnight in 24 hour format, or double.nan when it cannot be calculated.
+  double getUTCMidnight(DateTime dateTime, GeoLocation geoLocation) {
+    final double noon = getUTCNoon(dateTime, geoLocation);
+    if (noon.isNaN) {
+      return double.nan;
+    }
+    final double midnight = noon + 12;
+    return midnight >= 24 ? midnight - 24 : midnight;
+  }
+
   /// Method to return the adjustment to the zenith required to account for the elevation. Since a person at a higher
   /// elevation can see farther below the horizon, the calculation for sunrise / sunset is calculated below the horizon
   /// used at sea level. This is only used for sunrise and sunset and not times before or after it such as
