@@ -19,6 +19,7 @@ import 'dart:math';
 import 'package:kosher_dart/src/util/noaa_calculator.dart';
 import 'package:vector_math/vector_math.dart';
 import 'package:kosher_dart/src/util/geo_location.dart';
+import 'package:kosher_dart/src/util/solar_radius.dart';
 
 /// An abstract class that all sun time calculating classes extend. This allows the algorithm used to be changed at
 /// runtime, easily allowing comparison the results of using different algorithms.
@@ -38,14 +39,16 @@ abstract class AstronomicalCalculator {
   /// The commonly used average solar radius in minutes of a degree.
   ///
   /// See also [getSolarRadius].
-  double _solarRadius = 16 / 60;
+  double? _solarRadius;
 
-  /// The commonly used average earth radius in KM. At this time, this only affects elevation adjustment and not the
-  /// sunrise and sunset calculations. The value currently defaults to 6356.9 KM.
+  /// The mean earth radius in KM. At this time, this only affects elevation adjustment and not the
+  /// sunrise and sunset calculations. The value defaults to the IUGG mean radius of 6371.0088 KM;
+  /// the polar radius of 6356.9 KM that KosherJava uses moves sunrise by about a third of a second
+  /// at 750 metres of elevation.
   ///
   /// See also [getEarthRadius].
   /// See also [setEarthRadius].
-  double _earthRadius = 6356.9; // in KM
+  double _earthRadius = 6371.0088; // in KM
 
   /// A method that returns the earth radius in KM. The value currently defaults to 6356.9 KM if not set.
   ///
@@ -220,12 +223,12 @@ abstract class AstronomicalCalculator {
   /// Returns The zenith adjusted to include the [getSolarRadius], [getRefraction] and [getElevationAdjustment] adjustment. This will only be adjusted for
   /// sunrise and sunset (if the zenith == 90°)
   /// See also [getElevationAdjustment].
-  double adjustZenith(double zenith, double elevation) {
+  double adjustZenith(double zenith, double elevation, [DateTime? date]) {
     double adjustedZenith = zenith;
     if (zenith == GEOMETRIC_ZENITH) {
       // only adjust if it is exactly sunrise or sunset
       adjustedZenith = zenith +
-          (getSolarRadius() +
+          ((date == null ? getSolarRadius() : getSolarRadiusForDate(date)) +
               getRefraction() +
               getElevationAdjustment(elevation));
     }
@@ -268,7 +271,18 @@ abstract class AstronomicalCalculator {
   ///
   /// Returns The sun's radius in arc minutes.
   double getSolarRadius() {
-    return _solarRadius;
+    return _solarRadius ?? 16 / 60;
+  }
+
+  /// Method to get the sun's radius on a given date. Unless a radius has been set with
+  /// [setSolarRadius], this is the apparent radius of that day rather than the yearly
+  /// mean of 16 arc minutes.
+  ///
+  /// - [date]:
+  ///   the date whose apparent radius is wanted.
+  /// Returns The sun's radius in degrees.
+  double getSolarRadiusForDate(DateTime date) {
+    return _solarRadius ?? apparentSolarRadius(date);
   }
 
   /// Method to set the sun's radius.

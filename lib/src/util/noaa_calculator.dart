@@ -42,7 +42,7 @@ class NOAACalculator extends AstronomicalCalculator {
       double zenith, bool adjustForElevation) {
     double elevation =
         adjustForElevation ? (geoLocation.getElevation() ?? 0) : 0;
-    double adjustedZenith = adjustZenith(zenith, elevation);
+    double adjustedZenith = adjustZenith(zenith, elevation, dateTime);
 
     double sunrise = _getSunriseUTC(_getJulianDay(dateTime),
         geoLocation.getLatitude(), -geoLocation.getLongitude(), adjustedZenith);
@@ -64,7 +64,7 @@ class NOAACalculator extends AstronomicalCalculator {
       bool adjustForElevation) {
     double elevation =
         adjustForElevation ? (geoLocation.getElevation() ?? 0) : 0;
-    double adjustedZenith = adjustZenith(zenith, elevation);
+    double adjustedZenith = adjustZenith(zenith, elevation, dateTime);
 
     double sunset = _getSunsetUTC(_getJulianDay(dateTime),
         geoLocation.getLatitude(), -geoLocation.getLongitude(), adjustedZenith);

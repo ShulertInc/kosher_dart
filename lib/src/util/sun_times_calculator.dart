@@ -38,7 +38,7 @@ class SunTimesCalculator extends AstronomicalCalculator {
     double doubleTime = double.nan;
     double elevation =
         adjustForElevation ? (geoLocation.getElevation() ?? 0) : 0;
-    double adjustedZenith = adjustZenith(zenith, elevation);
+    double adjustedZenith = adjustZenith(zenith, elevation, dateTime);
     doubleTime = _getTimeUTC(dateTime, geoLocation, adjustedZenith, true);
     return doubleTime;
   }
@@ -50,7 +50,7 @@ class SunTimesCalculator extends AstronomicalCalculator {
     double doubleTime = double.nan;
     double elevation =
         adjustForElevation ? (geoLocation.getElevation() ?? 0) : 0;
-    double adjustedZenith = adjustZenith(zenith, elevation);
+    double adjustedZenith = adjustZenith(zenith, elevation, calendar);
     doubleTime = _getTimeUTC(calendar, geoLocation, adjustedZenith, false);
     return doubleTime;
   }
