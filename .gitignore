@@ -5,3 +5,6 @@
 .pub/
 
 build/
+
+# The parity harness dumps kosher-rust's answers here; see tool/parity/README.md.
+.goldens/
