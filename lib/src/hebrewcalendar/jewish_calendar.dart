@@ -1548,7 +1548,7 @@ class JewishCalendar extends JewishDate {
         break;
       case JewishDate.TAMMUZ:
         // push off the fast day if it falls on Shabbos
-        if ((day == 17 && dayOfWeek != JewishDate.friday) ||
+        if ((day == 17 && dayOfWeek != JewishDate.saturday) ||
             (day == 18 && dayOfWeek == JewishDate.sunday)) {
           return SEVENTEEN_OF_TAMMUZ;
         }
@@ -1860,7 +1860,7 @@ class JewishCalendar extends JewishDate {
     // on 14 Nisan unless that is Shabbos where the fast is moved back to Thursday
     return getJewishMonth() == JewishDate.NISSAN &&
         ((day == 14 && dayOfWeek != JewishDate.saturday) ||
-            (day == 12 && dayOfWeek == JewishDate.tuesday));
+            (day == 12 && dayOfWeek == JewishDate.thursday));
   }
 
   /// Returns true if the day is _BeHaB_ - the Monday, Thursday and Monday after the first
