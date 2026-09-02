@@ -434,18 +434,13 @@ class AstronomicalCalendar {
     if (time.isNaN) {
       return null;
     }
-    double calculatedTime = time;
-
     DateTime adjustedCalendar = getAdjustedCalendar();
-    DateTime cal = DateTime(
+    // The time is UTC, so anchor it to UTC midnight rather than to local midnight
+    // plus an offset: a machine whose own time zone shifts at midnight would
+    // otherwise move every zman by that shift.
+    DateTime cal = DateTime.utc(
         adjustedCalendar.year, adjustedCalendar.month, adjustedCalendar.day);
-    cal = cal.add(cal.timeZoneOffset);
-    int hours = calculatedTime.toInt(); // retain only the hours
-    calculatedTime -= hours;
-    int minutes = (calculatedTime *= 60).toInt(); // retain only the minutes
-    calculatedTime -= minutes;
-    int seconds = (calculatedTime *= 60).toInt(); // retain only the seconds
-    calculatedTime -= seconds; // remaining milliseconds
+    int hours = time.toInt(); // retain only the hours
 
     // Check if a date transition has occurred, or is about to occur - this indicates the date of the event is
     // actually not the target date, but the day prior or after
@@ -455,7 +450,9 @@ class AstronomicalCalendar {
     } else if (!isSunrise && localTimeHours + hours < 6) {
       cal = cal.add(const Duration(days: 1));
     }
-    return cal.add(Duration(hours: hours, minutes: minutes, seconds: seconds));
+    return cal
+        .add(Duration(milliseconds: (time * HOUR_MILLIS).floor()))
+        .toLocal();
   }
 
   /// Returns the dip below the horizon before sunrise that matches the offset minutes on passed in as a parameter. For
