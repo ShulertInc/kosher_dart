@@ -2379,13 +2379,18 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   ///
   /// return the Date representing the local _chatzos_
   /// _see [GeoLocation#getLocalMeanTimeOffset]_
-  DateTime? getFixedLocalChatzos() => AstronomicalCalendar.getTimeOffset(
-      getDateFromTime(
-          12.0 -
-              getGeoLocation().getDateTime().timeZoneOffset.inMilliseconds /
-                  AstronomicalCalendar.HOUR_MILLIS,
-          true),
-      -getGeoLocation().getLocalMeanTimeOffset());
+  DateTime? getFixedLocalChatzos() {
+    // Local mean noon depends only on the longitude, so it is computed straight
+    // from UTC noon. Reading it off the machine's own time zone, as this once
+    // did, moved the answer by a whole day for a location the machine is not in.
+    final DateTime date = getAdjustedCalendar();
+    final DateTime utcNoon = DateTime.utc(date.year, date.month, date.day, 12);
+    final int longitudeOffset = (getGeoLocation().getLongitude() *
+            4 *
+            AstronomicalCalendar.MINUTE_MILLIS)
+        .round();
+    return utcNoon.subtract(Duration(milliseconds: longitudeOffset)).toLocal();
+  }
 
   /// A method that returns the latest _zman krias shema_ (time to recite Shema in the morning) calculated as 3
   /// hours before [getFixedLocalChatzos].
