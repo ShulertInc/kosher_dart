@@ -147,6 +147,22 @@ abstract class AstronomicalCalculator {
     return sunrise + (sunset - sunrise) / 2;
   }
 
+  /// A method that calculates the UTC time the sun stands at a given azimuth. Only due
+  /// east (90) and due west (270) are supported, which are what the _Ben Ish Chai_'s
+  /// polar sunrise and sunset are taken from where the sun neither rises nor sets.
+  /// Subclasses that can compute it should override this.
+  ///
+  /// - [dateTime]:
+  ///   Used to calculate day of year.
+  /// - [geoLocation]:
+  ///   The location information used for astronomical calculating sun times.
+  /// - [azimuth]:
+  ///   90 for due east, 270 for due west.
+  /// Returns the UTC time in 24 hour format, or double.nan when it cannot be calculated.
+  double getUTCTimeAtAzimuth(
+          DateTime dateTime, GeoLocation geoLocation, double azimuth) =>
+      double.nan;
+
   /// A method that calculates UTC solar midnight - astronomical _chatzos halayla_.
   ///
   /// - [dateTime]:

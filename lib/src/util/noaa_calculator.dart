@@ -94,6 +94,35 @@ class NOAACalculator extends AstronomicalCalculator {
               _getJulianDay(dateTime), -geoLocation.getLongitude(), false) /
           60);
 
+  /// See also [AstronomicalCalculator.getUTCTimeAtAzimuth].
+  @override
+  double getUTCTimeAtAzimuth(
+      DateTime dateTime, GeoLocation geoLocation, double azimuth) {
+    if (azimuth != 90 && azimuth != 270) {
+      return double.nan;
+    }
+
+    final double julianDay = _getJulianDay(dateTime);
+    final double solarNoonBase = 0.5 - geoLocation.getLongitude() / 360.0;
+    final double direction = azimuth == 90 ? -1 : 1;
+    double dayFraction = solarNoonBase + (azimuth == 90 ? 0.25 : 0.75);
+
+    for (int pass = 0; pass < 3; pass++) {
+      final double julianCenturies =
+          _getJulianCenturiesFromJulianDay(julianDay + dayFraction);
+      final double ratio = tan(radians(_getSunDeclination(julianCenturies))) /
+          tan(radians(geoLocation.getLatitude()));
+      if (ratio.isNaN || ratio < -1 || ratio > 1) {
+        return double.nan;
+      }
+      dayFraction = solarNoonBase +
+          direction * degrees(acos(ratio)) / 360.0 -
+          _getEquationOfTime(julianCenturies) / 1440.0;
+    }
+
+    return _normalizeHours(dayFraction * 24);
+  }
+
   static double _normalizeHours(double hours) {
     while (hours < 0.0) {
       hours += 24.0;

@@ -244,6 +244,27 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   static const double ZENITH_4_POINT_37 =
       AstronomicalCalculator.GEOMETRIC_ZENITH + 4.37;
 
+  /// The zenith of 4.42° below [GEOMETRIC_ZENITH] geometric zenith (90°), used for
+  /// _tzais_ according to some opinions.
+  ///
+  /// _see [getTzaisGeonim4Point42Degrees]_
+  static const double ZENITH_4_POINT_42 =
+      AstronomicalCalculator.GEOMETRIC_ZENITH + 4.42;
+
+  /// The zenith of 4.66° below [GEOMETRIC_ZENITH] geometric zenith (90°), used for
+  /// _tzais_ according to some opinions.
+  ///
+  /// _see [getTzaisGeonim4Point66Degrees]_
+  static const double ZENITH_4_POINT_66 =
+      AstronomicalCalculator.GEOMETRIC_ZENITH + 4.66;
+
+  /// The zenith of 12.85° below [GEOMETRIC_ZENITH] geometric zenith (90°), used for
+  /// _misheyakir_ according to some opinions.
+  ///
+  /// _see [getMisheyakir12Point85Degrees]_
+  static const double ZENITH_12_POINT_85 =
+      AstronomicalCalculator.GEOMETRIC_ZENITH + 12.85;
+
   /// The zenith of 4.61° below [GEOMETRIC_ZENITH] geometric zenith (90°). This calculation is used for
   /// calculating _tzais_ (nightfall) according to some opinions. This calculation is based on the position of
   /// the sun [getTzaisGeonim4Point37Degrees] 18 minutes after sunset (3/4 of a 24 minute Mil) in Jerusalem on
@@ -3330,5 +3351,181 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
 
   ComplexZmanimCalendar clone() {
     return ComplexZmanimCalendar.intGeoLocation(geoLocation.clone());
+  }
+
+  /// This method returns _chatzos_ taken as the midpoint between [getSeaLevelSunrise]
+  /// and [getSeaLevelSunset], which is a few seconds off the moment the sun actually
+  /// crosses the meridian that [getChatzos] returns.
+  ///
+  /// return the `DateTime` of midday as half the day, or null if it cannot be computed.
+  DateTime? getChatzosAsHalfDay() {
+    final DateTime? sunrise = getSeaLevelSunrise();
+    final DateTime? sunset = getSeaLevelSunset();
+    if (sunrise == null || sunset == null) {
+      return null;
+    }
+    return getSunTransit(sunrise, sunset);
+  }
+
+  /// This method returns _mincha gedola_ according to the _Ahavat Shalom_ calculation:
+  /// half a _shaah zmanis_ after [getChatzos], where the _shaah zmanis_ is measured from
+  /// [getAlos16Point1Degrees] to [getTzaisGeonim3Point7Degrees], or 30 minutes after
+  /// _chatzos_ where that is later.
+  ///
+  /// return the `DateTime` of _mincha gedola_, or null if it cannot be computed.
+  DateTime? getMinchaGedolaAhavatShalom() {
+    final DateTime? chatzos = getChatzos();
+    final DateTime? alos = getAlos16Point1Degrees();
+    final DateTime? tzais = getTzaisGeonim3Point7Degrees();
+    if (chatzos == null || alos == null || tzais == null) {
+      return null;
+    }
+
+    final DateTime? halfShaahZmanis = AstronomicalCalendar.getTimeOffset(
+        chatzos, getTemporalHour(alos, tzais) / 2);
+    final DateTime? thirtyMinutes = AstronomicalCalendar.getTimeOffset(
+        chatzos, 30 * AstronomicalCalendar.MINUTE_MILLIS);
+    if (halfShaahZmanis == null || thirtyMinutes == null) {
+      return null;
+    }
+    return thirtyMinutes.isAfter(halfShaahZmanis) ? thirtyMinutes : halfShaahZmanis;
+  }
+
+  /// This method returns _mincha ketana_ according to the _Ahavat Shalom_ calculation:
+  /// 2.5 _shaos zmaniyos_ before [getTzaisGeonim3Point8Degrees], where the _shaah
+  /// zmanis_ is measured from [getAlos16Point1Degrees] to that _tzais_.
+  ///
+  /// return the `DateTime` of _mincha ketana_, or null if it cannot be computed.
+  DateTime? getMinchaKetanaAhavatShalom() {
+    final DateTime? alos = getAlos16Point1Degrees();
+    final DateTime? tzais = getTzaisGeonim3Point8Degrees();
+    if (alos == null || tzais == null) {
+      return null;
+    }
+    return AstronomicalCalendar.getTimeOffset(
+        tzais, -getTemporalHour(alos, tzais) * 2.5);
+  }
+
+  /// This method returns _plag hamincha_ according to the _Ahavat Shalom_ calculation:
+  /// 1.25 _shaos zmaniyos_ before [getTzaisGeonim3Point8Degrees], where the _shaah
+  /// zmanis_ is measured from [getAlos16Point1Degrees] to that _tzais_.
+  ///
+  /// return the `DateTime` of _plag hamincha_, or null if it cannot be computed.
+  DateTime? getPlagAhavatShalom() {
+    final DateTime? alos = getAlos16Point1Degrees();
+    final DateTime? tzais = getTzaisGeonim3Point8Degrees();
+    if (alos == null || tzais == null) {
+      return null;
+    }
+    return AstronomicalCalendar.getTimeOffset(
+        tzais, -getTemporalHour(alos, tzais) * 1.25);
+  }
+
+  /// This method returns _misheyakir_ based on the sun being [ZENITH_12_POINT_85]
+  /// 12.85° below the eastern horizon before sunrise.
+  ///
+  /// return the `DateTime` of _misheyakir_, or null if it cannot be computed.
+  DateTime? getMisheyakir12Point85Degrees() =>
+      getSunriseOffsetByDegrees(ZENITH_12_POINT_85);
+
+  /// This method returns _tzais_ based on the sun being [ZENITH_4_POINT_42] 4.42°
+  /// below the western horizon after sunset.
+  ///
+  /// return the `DateTime` of _tzais_, or null if it cannot be computed.
+  DateTime? getTzaisGeonim4Point42Degrees() =>
+      getSunsetOffsetByDegrees(ZENITH_4_POINT_42);
+
+  /// This method returns _tzais_ based on the sun being [ZENITH_4_POINT_66] 4.66°
+  /// below the western horizon after sunset.
+  ///
+  /// return the `DateTime` of _tzais_, or null if it cannot be computed.
+  DateTime? getTzaisGeonim4Point66Degrees() =>
+      getSunsetOffsetByDegrees(ZENITH_4_POINT_66);
+
+  /// A generic method for _samuch lemincha ketana_, the half hour before
+  /// [getMinchaKetana] from which one may not start a meal, calculated as 9 _shaos
+  /// zmaniyos_ after the start of the day passed in.
+  ///
+  /// [startOfDay] the start of the day, which can be sunrise or any _alos_.
+  /// [endOfDay] the end of the day, which can be sunset or any _tzais_.
+  /// return the `DateTime` of _samuch lemincha ketana_, or null if either bound is null.
+  DateTime? getSamuchLeMinchaKetanaOfDay(
+          DateTime? startOfDay, DateTime? endOfDay) =>
+      startOfDay == null || endOfDay == null
+          ? null
+          : getShaahZmanisBasedZman(startOfDay, endOfDay, 9);
+
+  /// This method returns _samuch lemincha ketana_ with the day measured from
+  /// [getSunrise] to [getSunset] (depending on the [isUseElevation] setting).
+  ///
+  /// return the `DateTime` of _samuch lemincha ketana_, or null if it cannot be computed.
+  DateTime? getSamuchLeMinchaKetanaGRA() => getSamuchLeMinchaKetanaOfDay(
+      getElevationAdjustedSunrise(), getElevationAdjustedSunset());
+
+  /// This method returns _samuch lemincha ketana_ with the day measured from
+  /// [getAlos16Point1Degrees] to [getTzais16Point1Degrees].
+  ///
+  /// return the `DateTime` of _samuch lemincha ketana_, or null if it cannot be computed.
+  DateTime? getSamuchLeMinchaKetana16Point1Degrees() =>
+      getSamuchLeMinchaKetanaOfDay(
+          getAlos16Point1Degrees(), getTzais16Point1Degrees());
+
+  /// This method returns _samuch lemincha ketana_ with the day measured from [getAlos72]
+  /// to [getTzais72].
+  ///
+  /// return the `DateTime` of _samuch lemincha ketana_, or null if it cannot be computed.
+  DateTime? getSamuchLeMinchaKetana72Minutes() =>
+      getSamuchLeMinchaKetanaOfDay(getAlos72(), getTzais72());
+
+  /// This method returns the latest time one may eat _chametz_ on _erev Pesach_
+  /// according to the opinion of the _MGA_ with the day measured from [getAlos72Zmanis]
+  /// to [getTzais72Zmanis].
+  ///
+  /// return the `DateTime` of _sof zman achilas chametz_, or null if it cannot be computed.
+  DateTime? getSofZmanAchilasChametzMGA72MinutesZmanis() =>
+      getSofZmanTfilaMGA72MinutesZmanis();
+
+  /// This method returns the latest time for burning _chametz_ on _erev Pesach_
+  /// according to the opinion of the _MGA_ with the day measured from [getAlos72Zmanis]
+  /// to [getTzais72Zmanis].
+  ///
+  /// return the `DateTime` of _sof zman biur chametz_, or null if it cannot be computed.
+  DateTime? getSofZmanBiurChametzMGA72MinutesZmanis() {
+    final DateTime? alos = getAlos72Zmanis();
+    final DateTime? tzais = getTzais72Zmanis();
+    if (alos == null || tzais == null) {
+      return null;
+    }
+    return getShaahZmanisBasedZman(alos, tzais, 5);
+  }
+
+  /// This method returns the _Ben Ish Chai_'s sunrise for a day on which the sun does
+  /// not rise or set: the moment it is due east. It answers null on any day that has a
+  /// real sunrise, which is the only day this substitute is for.
+  ///
+  /// return the `DateTime` the sun is due east, or null where the day has a sunrise.
+  DateTime? getPolarSunriseBenIshChai() {
+    if (getSunrise() != null) {
+      return null;
+    }
+    return getDateFromTime(
+        getAstronomicalCalculator()
+            .getUTCTimeAtAzimuth(getAdjustedCalendar(), getGeoLocation(), 90),
+        true);
+  }
+
+  /// This method returns the _Ben Ish Chai_'s sunset for a day on which the sun does not
+  /// rise or set: the moment it is due west. It answers null on any day that has a real
+  /// sunset, which is the only day this substitute is for.
+  ///
+  /// return the `DateTime` the sun is due west, or null where the day has a sunset.
+  DateTime? getPolarSunsetBenIshChai() {
+    if (getSunset() != null) {
+      return null;
+    }
+    return getDateFromTime(
+        getAstronomicalCalculator()
+            .getUTCTimeAtAzimuth(getAdjustedCalendar(), getGeoLocation(), 270),
+        false);
   }
 }

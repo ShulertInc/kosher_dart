@@ -26,6 +26,15 @@ ComplexZmanimCalendar calendarFor(
 ComplexZmanimCalendar jerusalem(DateTime date, {bool useElevation = false}) =>
     calendarFor(31.778, 35.2354, 754, date, useElevation: useElevation);
 
+/// kosher-rust keeps nanoseconds where `DateTime` keeps milliseconds, and a zman built
+/// on a division of the day can land either side of the last one.
+void expectMoment(DateTime? actual, DateTime expected) {
+  expect(actual, isNotNull);
+  expect(actual!.toUtc().millisecondsSinceEpoch,
+      closeTo(expected.millisecondsSinceEpoch, 2),
+      reason: 'expected $expected, got ${actual.toUtc()}');
+}
+
 void main() {
   final DateTime springDay = DateTime(1990, 3, 20);
 
@@ -128,5 +137,84 @@ void main() {
             .difference(calendar.getMidnightLastNight()!)
             .inHours,
         24);
+  });
+
+  group('the zmanim brought over from kosher-rust', () {
+    final ComplexZmanimCalendar calendar = jerusalem(springDay);
+
+    test('the Ahavat Shalom zmanim', () {
+      expectMoment(calendar.getMinchaGedolaAhavatShalom(),
+          DateTime.utc(1990, 3, 20, 10, 20, 28, 580));
+      expectMoment(calendar.getMinchaKetanaAhavatShalom(),
+          DateTime.utc(1990, 3, 20, 13, 14, 52, 738));
+      expectMoment(calendar.getPlagAhavatShalom(),
+          DateTime.utc(1990, 3, 20, 14, 39, 33, 125));
+    });
+
+    test('samuch lemincha ketana is nine shaos zmaniyos into the day', () {
+      expectMoment(calendar.getSamuchLeMinchaKetanaGRA(),
+          DateTime.utc(1990, 3, 20, 12, 48, 34, 9));
+      expect(calendar.getSamuchLeMinchaKetana16Point1Degrees(), isNotNull);
+      expect(calendar.getSamuchLeMinchaKetana72Minutes(), isNotNull);
+    });
+
+    test('the degree based zmanim kosher_dart was missing', () {
+      expect(calendar.getMisheyakir12Point85Degrees()!.toUtc(),
+          DateTime.utc(1990, 3, 20, 2, 46, 49, 561));
+      expect(calendar.getTzaisGeonim4Point42Degrees()!.toUtc(),
+          DateTime.utc(1990, 3, 20, 16, 7, 8, 794));
+      expect(calendar.getTzaisGeonim4Point66Degrees(), isNotNull);
+    });
+
+    test('chatzos as half the day is not quite the transit', () {
+      expectMoment(calendar.getChatzosAsHalfDay(),
+          DateTime.utc(1990, 3, 20, 9, 46, 52, 435));
+      expect(calendar.getChatzosAsHalfDay(), isNot(calendar.getChatzos()));
+      // And null where there is no day to halve.
+      expect(calendarFor(78.22, 15.63, 0, DateTime(1992, 5, 20)).getChatzosAsHalfDay(),
+          isNull);
+    });
+  });
+
+  group('inside the arctic circle', () {
+    // Longyearbyen in a midnight sun, where the sun neither rises nor sets.
+    ComplexZmanimCalendar longyearbyen(DateTime date) =>
+        calendarFor(78.22, 15.63, 0, date);
+
+    final DateTime midnightSun = DateTime(1992, 5, 20);
+    final DateTime polarNight = DateTime(1995, 12, 3);
+
+    test('the Ben Ish Chai substitutes answer where sunrise and sunset do not', () {
+      final ComplexZmanimCalendar calendar = longyearbyen(midnightSun);
+      expect(calendar.getSunrise(), isNull);
+      expect(calendar.getSunset(), isNull);
+
+      expect(calendar.getPolarSunriseBenIshChai()!.toUtc(),
+          DateTime.utc(1992, 5, 20, 5, 11, 25, 151));
+      expect(calendar.getPolarSunsetBenIshChai()!.toUtc(),
+          DateTime.utc(1992, 5, 20, 16, 36, 28, 111));
+
+      final ComplexZmanimCalendar dark = longyearbyen(polarNight);
+      expect(dark.getPolarSunriseBenIshChai()!.toUtc(),
+          DateTime.utc(1995, 12, 3, 4, 27, 40, 165));
+      expect(dark.getPolarSunsetBenIshChai()!.toUtc(),
+          DateTime.utc(1995, 12, 3, 17, 6, 39, 793));
+    });
+
+    test('they answer null on a day that has a real sunrise and sunset', () {
+      expect(jerusalem(springDay).getPolarSunriseBenIshChai(), isNull);
+      expect(jerusalem(springDay).getPolarSunsetBenIshChai(), isNull);
+    });
+
+    test('a day with no sunrise leaves every zman of the day null, not thrown', () {
+      final ComplexZmanimCalendar calendar = longyearbyen(midnightSun);
+
+      // getTemporalHour used to force unwrap the sunrise it fell back on.
+      expect(calendar.getTemporalHour(), isNaN);
+      expect(calendar.getSofZmanTfilaGRA(), isNull);
+      expect(calendar.getAlos72Zmanis(), isNull);
+      expect(calendar.getSofZmanShmaAteretTorah(), isNull);
+      expect(calendar.getPlagHamincha96MinutesZmanis(), isNull);
+    });
   });
 }
