@@ -2178,21 +2178,28 @@ class JewishCalendar extends JewishDate {
     int seconds = moladSeconds.floor();
     int milliseconds = ((moladSeconds - seconds) * 1000).floor();
 
-    DateTime moladTime = DateTime(
-        molad.getGregorianYear(),
-        molad.getGregorianMonth(),
-        molad.getGregorianDayOfMonth(),
-        molad.getMoladHours(),
-        molad.getMoladMinutes(),
-        seconds,
-        milliseconds);
+    // The molad's clock reading is in Yerushalayim standard time, so it is anchored to
+    // GMT+2 rather than to whatever zone the machine is in - reading it as a local time
+    // moved the moment itself by the difference between the two zones.
+    DateTime moladTime = DateTime.utc(
+            molad.getGregorianYear(),
+            molad.getGregorianMonth(),
+            molad.getGregorianDayOfMonth(),
+            molad.getMoladHours(),
+            molad.getMoladMinutes(),
+            seconds,
+            milliseconds)
+        .subtract(_yerushalayimStandardTimeOffset);
 
     // The traditional calculation is in local time at Har Habayis, whose longitude
     // of 35.2354° sits 0.2354° east of the 35° line its GMT+2 timezone is measured
     // from, so local mean time there runs 20 minutes, 56 seconds and 496
     // milliseconds ahead of standard time.
-    return moladTime.subtract(_jerusalemLocalMeanTimeOffset);
+    return moladTime.subtract(_jerusalemLocalMeanTimeOffset).toLocal();
   }
+
+  /// Yerushalayim standard time, which the molad is reckoned in, is GMT+2 the year round.
+  static const Duration _yerushalayimStandardTimeOffset = Duration(hours: 2);
 
   /// How far ahead of Yerushalayim standard time local mean time at Har Habayis runs.
   static const Duration _jerusalemLocalMeanTimeOffset =

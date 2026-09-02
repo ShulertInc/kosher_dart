@@ -10,6 +10,11 @@
 /// returns a new value rather than mutating in place as Java's `Calendar.add` does.
 /// It also lost the sub-second part of the molad, computing the milliseconds as
 /// `1000 * (moladSeconds - moladSeconds)`, which is always zero.
+///
+/// The moments below are written in UTC. Yerushalayim standard time is GMT+2 the
+/// year round, so a molad whose clock reading is 08:15 there is 06:15 UTC; reading
+/// those clock fields as the machine's own local time, as this port also used to,
+/// moved the moment by the gap between the two zones.
 library;
 
 import 'package:test/test.dart';
@@ -30,10 +35,10 @@ void main() {
     expect(molad.getMoladMinutes(), 15);
     expect(molad.getMoladChalakim(), 0);
 
-    expect(jewishCalendar.getMoladAsDateTime(),
-        DateTime(2026, 8, 13, 8, 15).subtract(localMeanTimeOffset));
-    expect(jewishCalendar.getMoladAsDateTime(),
-        DateTime(2026, 8, 13, 7, 54, 3, 504));
+    expect(jewishCalendar.getMoladAsDateTime().toUtc(),
+        DateTime.utc(2026, 8, 13, 6, 15).subtract(localMeanTimeOffset));
+    expect(jewishCalendar.getMoladAsDateTime().toUtc(),
+        DateTime.utc(2026, 8, 13, 5, 54, 3, 504));
   });
 
   test('chalakim that are not whole seconds keep their milliseconds', () {
@@ -47,11 +52,11 @@ void main() {
     expect(molad.getMoladMinutes(), 55);
     expect(molad.getMoladChalakim(), 5);
 
-    expect(jewishCalendar.getMoladAsDateTime(),
-        DateTime(2027, 1, 7, 23, 55, 16, 666).subtract(localMeanTimeOffset));
-    expect(jewishCalendar.getMoladAsDateTime(),
-        DateTime(2027, 1, 7, 23, 34, 20, 170));
-    expect(jewishCalendar.getMoladAsDateTime().millisecond, isNot(0));
+    expect(jewishCalendar.getMoladAsDateTime().toUtc(),
+        DateTime.utc(2027, 1, 7, 21, 55, 16, 666).subtract(localMeanTimeOffset));
+    expect(jewishCalendar.getMoladAsDateTime().toUtc(),
+        DateTime.utc(2027, 1, 7, 21, 34, 20, 170));
+    expect(jewishCalendar.getMoladAsDateTime().toUtc().millisecond, isNot(0));
   });
 
   test('every day of a month reports that month s molad', () {
@@ -63,10 +68,10 @@ void main() {
         JewishCalendar.fromDateTime(DateTime(2026, 6, 10)).getMoladAsDateTime();
 
     expect(fromEarly, fromLate);
-    expect(fromEarly, DateTime(2026, 5, 16, 17, 41, 53, 504));
+    expect(fromEarly.toUtc(), DateTime.utc(2026, 5, 16, 15, 41, 53, 504));
     // 18 hours 2 minutes 15 chalakim, which is 50 whole seconds.
-    expect(fromEarly,
-        DateTime(2026, 5, 16, 18, 2, 50).subtract(localMeanTimeOffset));
+    expect(fromEarly.toUtc(),
+        DateTime.utc(2026, 5, 16, 16, 2, 50).subtract(localMeanTimeOffset));
   });
 
   test('Kiddush Levana zmanim are reckoned from that moment', () {
