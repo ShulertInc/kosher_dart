@@ -2608,8 +2608,10 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   DateTime? getMidnightTonight() {
     DateTime midnight = DateTime(getCalendar().year, getCalendar().month,
         getCalendar().day, 0, 0, 0, 0, 0);
-    midnight.add(const Duration(days: 1));
-    return midnight;
+    // DateTime is immutable, so this has to be the returned value: discarding it left
+    // tonight's midnight equal to last night's, and every molad based zman fell outside
+    // the resulting empty day.
+    return midnight.add(const Duration(days: 1));
   }
 
   /// Returns the earliest time of _Kiddush Levana_ according to the opinions that it should not be said until 7
