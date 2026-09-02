@@ -675,7 +675,7 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   ///
   /// _see [getTzaisGeonim9Point75Degrees]
   DateTime? getAlos60() => AstronomicalCalendar.getTimeOffset(
-      getSunrise(), -60 * AstronomicalCalendar.MINUTE_MILLIS);
+      getElevationAdjustedSunrise(), -60 * AstronomicalCalendar.MINUTE_MILLIS);
 
   /// Method to return _alos_ (dawn) calculated using 72 minutes _zmaniyos_ or 1/10th of the day before
   /// sunrise. This is based on an 18 minute _Mil_ so the time for 4 _Mil_ is 72 minutes which is 1/10th
@@ -3118,7 +3118,7 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   /// See also [getFixedLocalChatzosBasedZmanim].
   DateTime? getSofZmanShmaGRASunriseToFixedLocalChatzos() {
     return getFixedLocalChatzosBasedZmanim(
-        getSunrise(), getFixedLocalChatzos(), 3);
+        getElevationAdjustedSunrise(), getFixedLocalChatzos(), 3);
   }
 
   /// This method returns [Rav Moshe Feinstein's](https://en.wikipedia.org/wiki/Moshe_Feinstein) opinion of the
@@ -3137,7 +3137,7 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   /// See also [getFixedLocalChatzosBasedZmanim].
   DateTime? getSofZmanTfilaGRASunriseToFixedLocalChatzos() {
     return getFixedLocalChatzosBasedZmanim(
-        getSunrise(), getFixedLocalChatzos(), 4);
+        getElevationAdjustedSunrise(), getFixedLocalChatzos(), 4);
   }
 
   /// This method returns returns [Rav Moshe Feinstein's](https://en.wikipedia.org/wiki/Moshe_Feinstein) opinion
@@ -3172,7 +3172,7 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   /// See also [getMinchaGedolaGRAFixedLocalChatzos30Minutes].
   DateTime? getMinchaKetanaGRAFixedLocalChatzosToSunset() {
     return getFixedLocalChatzosBasedZmanim(
-        getFixedLocalChatzos(), getSunset(), 3.5);
+        getFixedLocalChatzos(), getElevationAdjustedSunset(), 3.5);
   }
 
   /// This method returns returns [Rav Moshe Feinstein's](https://en.wikipedia.org/wiki/Moshe_Feinstein) opinion
@@ -3191,7 +3191,7 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   /// See also [getMinchaGedolaGRAFixedLocalChatzos30Minutes].
   DateTime? getPlagHaminchaGRAFixedLocalChatzosToSunset() {
     return getFixedLocalChatzosBasedZmanim(
-        getFixedLocalChatzos(), getSunset(), 4.75);
+        getFixedLocalChatzos(), getElevationAdjustedSunset(), 4.75);
   }
 
   /// Method to return _tzais_ (dusk) calculated as 50 minutes after sea level sunset. This method returns
