@@ -124,15 +124,6 @@ const Map<String, String> parshaAlias = {
   'Parah': 'PARA',
 };
 
-/// Special shabbosim kosher-rust knows about and kosher_dart has no enum for.
-const Set<String> parshaUnsupported = {
-  'Shuva',
-  'Shira',
-  'Hagadol',
-  'Chazon',
-  'Nachamu',
-};
-
 String upperSnake(String camel) {
   final buffer = StringBuffer();
   for (var i = 0; i < camel.length; i++) {
@@ -143,9 +134,8 @@ String upperSnake(String camel) {
   return buffer.toString();
 }
 
-Parsha? parshaFor(String? rustName) {
+Parsha parshaFor(String? rustName) {
   if (rustName == null) return Parsha.NONE;
-  if (parshaUnsupported.contains(rustName)) return null;
   final dartName = parshaAlias[rustName] ?? upperSnake(rustName);
   for (final parsha in Parsha.values) {
     if (parsha.name == dartName) return parsha;
@@ -177,6 +167,8 @@ const Set<String> deliberatelyDifferent = {
   'getSofZmanBiurChametzMGA72Minutes',
   'getSofZmanBiurChametzMGA16Point1Degrees',
   'getSofZmanBiurChametzBaalHatanya',
+  'getSofZmanAchilasChametzMGA72MinutesZmanis',
+  'getSofZmanBiurChametzMGA72MinutesZmanis',
   // kosher_dart answers these only when the moment falls in the current day, and
   // pulls it to alos or tzais when it lands in daylight; kosher-rust returns the
   // molad based moment itself.
@@ -220,14 +212,17 @@ void compareHolidayView(
         '$prefix.aseresYemeiTeshuva', '$date rust=${view['ayt']} dart=${calendar.isAseresYemeiTeshuva()}');
   }
 
-  final todaysParsha = parshaFor(view['tp'] as String?);
-  if (todaysParsha != null && calendar.getParshah() != todaysParsha) {
+  if (calendar.getParshah() != parshaFor(view['tp'] as String?)) {
     report.fail('$prefix.parsha', '$date rust=${view['tp']} dart=${calendar.getParshah().name}');
   }
 
-  final specialParsha = parshaFor(view['sp'] as String?);
-  if (specialParsha != null && calendar.getSpecialShabbos() != specialParsha) {
+  if (calendar.getSpecialShabbos() != parshaFor(view['sp'] as String?)) {
     report.fail('$prefix.specialShabbos', '$date rust=${view['sp']} dart=${calendar.getSpecialShabbos().name}');
+  }
+
+  if (calendar.getUpcomingParshah() != parshaFor(view['up'] as String?)) {
+    report.fail('$prefix.upcomingParsha',
+        '$date rust=${view['up']} dart=${calendar.getUpcomingParshah().name}');
   }
 
   final indexable = <int>{};
@@ -373,8 +368,88 @@ void compareCalendarRecord(Report report, Map<String, dynamic> record) {
     final daf = calendar.getDafYomiYerushalmi();
     return [daf.getYerushlmiMasechtaTransliterated(), daf.getDaf()];
   });
+  compareDaf(report, 'dafHashavua', record['dafHashavua'], date, () {
+    final daf = calendar.getDafHashavuaBavli();
+    return daf == null ? null : [daf.getMasechtaTransliterated(), daf.getDaf()];
+  });
+
+  compareAmud(report, record['amudYomiDirshu'], date, calendar.getAmudYomiBavliDirshu());
+  compareMishnas(report, record['mishnaYomis'], date, calendar.getMishnaYomis());
+  compareTehillim(report, record['tehillim'], date, calendar.getTehillimMonthly());
+
+  calendar.inIsrael = true;
+  comparePirkeiAvos(report, 'israel', record['pirkeiAvosIl'], date, calendar.getPirkeiAvos());
+  calendar.inIsrael = false;
+  comparePirkeiAvos(report, 'diaspora', record['pirkeiAvosCh'], date, calendar.getPirkeiAvos());
 
   report.recordsCompared++;
+}
+
+void compareAmud(Report report, dynamic expected, String date, Amud? actual) {
+  if (expected == null || actual == null) {
+    if (expected != null || actual != null) {
+      report.fail('amudYomiDirshu.presence', '$date rust=$expected dart=$actual');
+    }
+    return;
+  }
+  final side = actual.getSide() == AmudSide.ALEPH ? 'Aleph' : 'Bet';
+  if (normalizeTractate(actual.getMasechtaTransliterated()) !=
+          normalizeTractate(expected['t'] as String) ||
+      actual.getDaf() != expected['p'] ||
+      side != expected['s']) {
+    report.fail('amudYomiDirshu',
+        '$date rust=${expected['t']} ${expected['p']}${expected['s']} dart=$actual');
+  }
+}
+
+void compareMishnas(Report report, dynamic expected, String date, Mishnas? actual) {
+  if (expected == null || actual == null) {
+    if (expected != null || actual != null) {
+      report.fail('mishnaYomis.presence', '$date rust=$expected dart=$actual');
+    }
+    return;
+  }
+  final mishnayos = [actual.first, actual.second];
+  for (var i = 0; i < 2; i++) {
+    final want = expected[i] as Map<String, dynamic>;
+    final got = mishnayos[i];
+    if (normalizeTractate(got.getMasechtaTransliterated()) !=
+            normalizeTractate(want['t'] as String) ||
+        got.getChapter() != want['c'] ||
+        got.getMishna() != want['m']) {
+      report.fail('mishnaYomis',
+          '$date rust=${want['t']} ${want['c']}:${want['m']} dart=$got');
+      return;
+    }
+  }
+}
+
+void comparePirkeiAvos(
+    Report report, String prefix, dynamic expected, String date, PirkeiAvosUnit? actual) {
+  if (expected == null || actual == null) {
+    if (expected != null || actual != null) {
+      report.fail('$prefix.pirkeiAvos.presence', '$date rust=$expected dart=$actual');
+    }
+    return;
+  }
+  final perakim = (expected as List).cast<int>();
+  if (actual.first != perakim.first ||
+      actual.second != (perakim.length > 1 ? perakim[1] : null)) {
+    report.fail('$prefix.pirkeiAvos', '$date rust=$perakim dart=$actual');
+  }
+}
+
+void compareTehillim(Report report, dynamic expected, String date, TehillimUnit actual) {
+  final bool matches = expected['psalm'] == null
+      ? (!actual.isPartialPsalm &&
+          actual.start == expected['start'] &&
+          actual.end == expected['end'])
+      : (actual.psalm == expected['psalm'] &&
+          actual.startVerse == expected['startVerse'] &&
+          actual.endVerse == expected['endVerse']);
+  if (!matches) {
+    report.fail('tehillim', '$date rust=$expected dart=$actual');
+  }
 }
 
 void compareDaf(
@@ -382,7 +457,7 @@ void compareDaf(
   String check,
   dynamic expected,
   String date,
-  List<dynamic> Function() read,
+  List<dynamic>? Function() read,
 ) {
   List<dynamic>? actual;
   try {

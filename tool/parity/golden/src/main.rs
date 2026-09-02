@@ -33,6 +33,8 @@ const PLACES: &[Place] = &[
     Place { key: "vigo", lat: 42.2406, lon: -8.7207, elev: 0.0, tz: "Europe/Madrid" },
     // southern hemisphere, no DST, far from its meridian
     Place { key: "johannesburg", lat: -26.2041, lon: 28.0473, elev: 1753.0, tz: "Africa/Johannesburg" },
+    // inside the arctic circle: months at a time with no sunrise and no sunset
+    Place { key: "longyearbyen", lat: 78.22, lon: 15.63, elev: 0.0, tz: "Arctic/Longyearbyen" },
 ];
 
 fn configs() -> Vec<(&'static str, CalculatorConfig)> {

@@ -37,14 +37,13 @@ and the diaspora with and without the modern ones, assur bemelacha, candle light
 parsha and any special parsha, the omer and Chanukah counts, and Daf Yomi Bavli and
 Yerushalmi.
 
-`zmanim.ndjson` holds 8 locations - including two far enough north for the sun to misbehave
-and two whose longitude is a long way from their meridian - across 3 calculator
-configurations and 60 dates, every one of kosher-rust's 167 zman presets.
+`zmanim.ndjson` holds 9 locations - two far enough north for the sun to misbehave, one
+inside the arctic circle where it neither rises nor sets for months, and two whose
+longitude is a long way from their meridian - across 3 calculator configurations and 60
+dates, every one of kosher-rust's 167 zman presets.
 
 ## What it does not compare
 
-- The 14 presets in `unimplementedZmanim` in `zman_dispatch.dart`, which kosher_dart has
-  no counterpart for.
 - The zmanim in `deliberatelyDifferent` in `parity.dart`, which answer on a different
   contract: candle lighting, the chametz zmanim, and the Kiddush Levana zmanim.
 - Differences of up to `toleranceMillis`, since kosher-rust keeps nanoseconds where
@@ -63,3 +62,10 @@ node tool/parity/gen_dispatch.mjs tool/parity/zman_dispatch.dart
 
 It reads `rust_names.txt` and `dart_names.txt` from the working directory, and fails
 loudly on any preset it cannot place.
+
+`gen_limudim.mjs` does the same for the tables the learning schedules are counted from -
+the dafim and amudim of each masechta of the Bavli, and the mishnayos of each perek:
+
+```bash
+node tool/parity/gen_limudim.mjs ../kosher-rust   lib/src/hebrewcalendar/limudim/limudim_data.dart
+```

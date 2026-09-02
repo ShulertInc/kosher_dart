@@ -22,6 +22,7 @@ const alias = {
   getBainHashmashosYereim2Point1Degrees: 'getBainHasmashosYereim2Point1Degrees',
   getBainHashmashosYereim2Point8Degrees: 'getBainHasmashosYereim2Point8Degrees',
   getBainHashmashosYereim3Point05Degrees: 'getBainHasmashosYereim3Point5Degrees',
+  getChatzosHayomAsHalfDay: 'getChatzosAsHalfDay',
   getChatzosHalayla: 'getSolarMidnight',
   getChatzosHayom: 'getChatzos',
   getFixedLocalChatzosHayom: 'getFixedLocalChatzos',
@@ -43,22 +44,7 @@ const alias = {
 };
 
 // Rust presets with no kosher_dart counterpart at all.
-const missing = {
-  getChatzosHayomAsHalfDay: 'kosher_dart getChatzos is always the sun transit',
-  getMinchaGedolaAhavatShalom: 'Ahavat Shalom opinions absent',
-  getMinchaKetanaAhavatShalom: 'Ahavat Shalom opinions absent',
-  getPlagAhavatShalom: 'Ahavat Shalom opinions absent',
-  getMisheyakir12Point85Degrees: 'no 12.85 degree misheyakir',
-  getPolarSunriseBenIshChai: 'no polar Ben Ish Chai fallback',
-  getPolarSunsetBenIshChai: 'no polar Ben Ish Chai fallback',
-  getSamuchLeMinchaKetana16Point1Degrees: 'samuch lemincha ketana absent',
-  getSamuchLeMinchaKetana72Minutes: 'samuch lemincha ketana absent',
-  getSamuchLeMinchaKetanaGRA: 'samuch lemincha ketana absent',
-  getSofZmanAchilasChametzMGA72MinutesZmanis: 'absent',
-  getSofZmanBiurChametzMGA72MinutesZmanis: 'absent',
-  getTzaisGeonim4Point42Degrees: 'absent',
-  getTzaisGeonim4Point66Degrees: 'absent',
-};
+const missing = {};
 
 const mapped = [];
 const unmapped = [];
