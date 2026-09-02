@@ -706,7 +706,7 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   /// or sunset based. See detailed explanation on top of the [AstronomicalCalendar] documentation.
   DateTime? getZmanisBasedOffset(double hours) {
     double shaahZmanis = getShaahZmanisGra();
-    if (shaahZmanis == double.negativeInfinity || hours == 0) {
+    if (!shaahZmanis.isFinite || hours == 0) {
       return null;
     }
     if (hours > 0) {

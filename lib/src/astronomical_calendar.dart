@@ -251,7 +251,7 @@ class AstronomicalCalendar {
   ///   the offset in milliseconds to add to the time.
   /// Returns the [DateTime] with the offset in milliseconds added to it
   static DateTime? getTimeOffset(DateTime? time, double offset) {
-    if (time == null || offset == double.minPositive) {
+    if (time == null || !offset.isFinite || offset == double.minPositive) {
       return null;
     }
     return time.add(Duration(milliseconds: offset.toInt()));
@@ -395,9 +395,12 @@ class AstronomicalCalendar {
       startOfDay = getSeaLevelSunrise();
       endOfDay = getSeaLevelSunset();
     }
-    return (endOfDay!.millisecondsSinceEpoch -
-            startOfDay!.millisecondsSinceEpoch) /
-        12;
+    if (startOfDay == null || endOfDay == null) {
+      // Where the sun does not rise or set there is no day to divide, and the callers
+      // that offset by a shaah zmanis carry the double.nan through to a null.
+      return double.nan;
+    }
+    return (endOfDay.millisecondsSinceEpoch - startOfDay.millisecondsSinceEpoch) / 12;
   }
 
   /// A method that returns sundial or solarnoon. It occurs when the Sun is [transiting](http://en.wikipedia.org/wiki/Transit_%28astronomy%29) the [celestial meridian](http://en.wikipedia.org/wiki/Meridian_%28astronomy%29). In this class it is
