@@ -89,7 +89,12 @@ enum Parsha {
   SHKALIM,
   ZACHOR,
   PARA,
-  HACHODESH
+  HACHODESH,
+  SHUVA,
+  SHIRA,
+  HAGADOL,
+  CHAZON,
+  NACHAMU
 }
 
 enum DayOfWeek {
@@ -1422,10 +1427,12 @@ class JewishCalendar extends JewishDate {
     return Parsha.NONE; //keep the compiler happy
   }
 
-  ///Returns a _parsha_ enum if the _Shabbos_ is one of the four _parshiyos_ of Parsha.SHKALIM, Parsha.ZACHOR,
-  /// Parsha.PARA, Parsha.HACHODESH or Parsha.NONE for a regular _Shabbos_ (or any weekday).
+  /// Returns a _parsha_ enum if the _Shabbos_ is one of the named ones - the four
+  /// _parshiyos_ of Parsha.SHKALIM, Parsha.ZACHOR, Parsha.PARA and Parsha.HACHODESH, or
+  /// Parsha.SHUVA, Parsha.SHIRA, Parsha.HAGADOL, Parsha.CHAZON and Parsha.NACHAMU - or
+  /// Parsha.NONE for a regular _Shabbos_ (or any weekday).
   ///
-  /// Returns one of the four _parshiyos_ of Parsha.SHKALIM, Parsha.ZACHOR, Parsha.PARA, Parsha.HACHODESH or Parsha.NONE.
+  /// Returns the named _Shabbos_ or Parsha.NONE.
   Parsha getSpecialShabbos() {
     if (DayOfWeek.values[getDayOfWeek() - 1] == DayOfWeek.SATURDAY) {
       if ((getJewishMonth() == JewishDate.SHEVAT && !isJewishLeapYear()) ||
@@ -1459,9 +1466,67 @@ class JewishCalendar extends JewishDate {
           return Parsha.HACHODESH;
         }
       }
-      if (getJewishMonth() == JewishDate.NISSAN && getJewishDayOfMonth() == 1) {
-        return Parsha.HACHODESH;
+      if (getJewishMonth() == JewishDate.NISSAN) {
+        if (getJewishDayOfMonth() == 1) {
+          return Parsha.HACHODESH;
+        }
+        // The Shabbos before Pesach.
+        if (getJewishDayOfMonth() >= 8 && getJewishDayOfMonth() <= 14) {
+          return Parsha.HAGADOL;
+        }
       }
+      if (getJewishMonth() == JewishDate.AV) {
+        // The Shabbos before Tisha B'Av, when the haftara is Yeshaya's chazon.
+        if (getJewishDayOfMonth() >= 4 && getJewishDayOfMonth() <= 9) {
+          return Parsha.CHAZON;
+        }
+        // The Shabbos after it, when the haftara opens nachamu nachamu ami.
+        if (getJewishDayOfMonth() >= 10 && getJewishDayOfMonth() <= 16) {
+          return Parsha.NACHAMU;
+        }
+      }
+      // The Shabbos of the Aseres Yemei Teshuva, whose haftara opens shuva Yisrael.
+      if (getJewishMonth() == JewishDate.TISHREI &&
+          getJewishDayOfMonth() >= 3 &&
+          getJewishDayOfMonth() <= 8) {
+        return Parsha.SHUVA;
+      }
+      // The Shabbos the shiras hayam is read.
+      if (getParshah() == Parsha.BESHALACH) {
+        return Parsha.SHIRA;
+      }
+    }
+    return Parsha.NONE;
+  }
+
+  /// Returns the _parsha_ of the next _Shabbos_, skipping the _Shabbosos_ whose reading a
+  /// _yom tov_ displaces. On a _Shabbos_ this answers the following week's, not today's;
+  /// use [getParshah] for today's.
+  ///
+  /// Returns the _parsha_ of the coming _Shabbos_, or Parsha.NONE if none was found.
+  Parsha getUpcomingParshah() {
+    const Map<int, int> daysToShabbos = {
+      JewishDate.sunday: 6,
+      JewishDate.monday: 5,
+      JewishDate.tuesday: 4,
+      JewishDate.wednesday: 3,
+      JewishDate.thursday: 2,
+      JewishDate.friday: 1,
+      JewishDate.saturday: 7,
+    };
+
+    final JewishCalendar shabbos = JewishCalendar.fromDateTime(
+        getGregorianCalendar().add(Duration(days: daysToShabbos[getDayOfWeek()]!)));
+    shabbos.inIsrael = inIsrael;
+
+    // The longest run of Shabbosos with no parsha of their own is the four of Pesach
+    // and Succos in a year they both fall on one; sixty weeks is far beyond it.
+    for (int week = 0; week < 60; week++) {
+      final Parsha parsha = shabbos.getParshah();
+      if (parsha != Parsha.NONE) {
+        return parsha;
+      }
+      shabbos.forward(Calendar.DATE, 7);
     }
     return Parsha.NONE;
   }

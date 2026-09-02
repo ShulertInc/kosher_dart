@@ -210,6 +210,11 @@ class HebrewDateFormatter {
     Parsha.ZACHOR: "Zachor",
     Parsha.PARA: "Parah",
     Parsha.HACHODESH: "Hachodesh",
+    Parsha.SHUVA: "Shuva",
+    Parsha.SHIRA: "Shira",
+    Parsha.HAGADOL: "Hagadol",
+    Parsha.CHAZON: "Chazon",
+    Parsha.NACHAMU: "Nachamu",
   };
 
   /// list of Hebrew parshiyos.
@@ -280,6 +285,11 @@ class HebrewDateFormatter {
     Parsha.ZACHOR: "זכור",
     Parsha.PARA: "פרה",
     Parsha.HACHODESH: "החדש",
+    Parsha.SHUVA: "שובה",
+    Parsha.SHIRA: "שירה",
+    Parsha.HAGADOL: "הגדול",
+    Parsha.CHAZON: "חזון",
+    Parsha.NACHAMU: "נחמו",
   };
 
   /// List of holidays transliterated into Latin chars. This is used by the
