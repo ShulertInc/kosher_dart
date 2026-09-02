@@ -19,6 +19,11 @@
 import 'package:kosher_dart/src/hebrewcalendar/jewish_date.dart';
 import 'package:kosher_dart/src/hebrewcalendar/daf.dart';
 import 'package:kosher_dart/src/hebrewcalendar/yerushalmi_yomi_calculator.dart';
+import 'package:kosher_dart/src/hebrewcalendar/limudim/amud.dart';
+import 'package:kosher_dart/src/hebrewcalendar/limudim/limudim_calculators.dart';
+import 'package:kosher_dart/src/hebrewcalendar/limudim/mishna.dart';
+import 'package:kosher_dart/src/hebrewcalendar/limudim/pirkei_avos_unit.dart';
+import 'package:kosher_dart/src/hebrewcalendar/limudim/tehillim_unit.dart';
 import 'package:kosher_dart/src/hebrewcalendar/yomi_calculator.dart';
 
 /// List of _parshiyos_. [NONE] indicates a week without a _parsha_, while the enum for the _parsha_ of
@@ -2347,6 +2352,43 @@ class JewishCalendar extends JewishDate {
   /// Returns the daf as a [Daf]
   Daf getDafYomiYerushalmi() {
     return YerushalmiYomiCalculator.getDafYomiYerushalmi(this);
+  }
+
+  /// Returns the [Daf Hashavua](https://en.wikipedia.org/wiki/Daf_Yomi) Bavli of the
+  /// week this day falls in, one daf a week from Sunday through Shabbos.
+  ///
+  /// Returns the daf, or null before the first cycle began on 6 March 2005.
+  Daf? getDafHashavuaBavli() {
+    return DafHashavuaBavliCalculator.getDafHashavuaBavli(this);
+  }
+
+  /// Returns the Dirshu Amud Yomi Bavli of this day, one amud a day.
+  ///
+  /// Returns the amud, or null before the first cycle began on 16 October 2023.
+  Amud? getAmudYomiBavliDirshu() {
+    return AmudYomiBavliDirshuCalculator.getAmudYomiBavliDirshu(this);
+  }
+
+  /// Returns the two mishnayos of [Mishna Yomis](https://en.wikipedia.org/wiki/Mishnah_Yomit)
+  /// for this day.
+  ///
+  /// Returns the mishnayos, or null before the first cycle began on 20 May 1947.
+  Mishnas? getMishnaYomis() {
+    return MishnaYomisCalculator.getMishnaYomis(this);
+  }
+
+  /// Returns the perek or perakim of _Pirkei Avos_ said this Shabbos afternoon, reading
+  /// [inIsrael] for which day the cycle opens on and which Shabbosos it skips.
+  ///
+  /// Returns the perakim, or null on a day the summer cycle does not cover.
+  PirkeiAvosUnit? getPirkeiAvos() {
+    return PirkeiAvosCalculator.getPirkeiAvos(this);
+  }
+
+  /// Returns the Tehillim of the monthly cycle for this day, which divides the sefer
+  /// across the days of the Hebrew month.
+  TehillimUnit getTehillimMonthly() {
+    return TehillimMonthlyCalculator.getTehillimMonthly(this);
   }
 
   bool isMashivHaruach() {
