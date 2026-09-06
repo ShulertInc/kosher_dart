@@ -1218,7 +1218,7 @@ class JewishCalendar extends JewishDate {
   /// Seth the calendar to return modern Israeli national holidays. By default this value is false. The holidays are:
   /// "Yom HaShoah", "Yom Hazikaron", "Yom Ha'atzmaut" and "Yom Yerushalayim"
   ///
-  /// - [useModernHolidays]: 
+  /// - [useModernHolidays]:
   ///   the useModernHolidays to set
   void setUseModernHolidays(bool useModernHolidays) {
     _useModernHolidays = useModernHolidays;
@@ -1229,27 +1229,30 @@ class JewishCalendar extends JewishDate {
 
   /// A constructor that initializes the date to the [Date] parameter.
   ///
-  /// - [date]: 
+  /// - [date]:
   ///   the `Date` to set the calendar to
   JewishCalendar.fromDateTime(super.dateTime) : super.fromDateTime();
 
   /// Creates a Jewish date based on a Jewish date and whether in Israel
   ///
-  /// - [jewishYear]: 
+  /// - [jewishYear]:
   ///   the Jewish year
-  /// - [jewishMonth]: 
+  /// - [jewishMonth]:
   ///   the Jewish month. The method expects a 1 for Nissan ... 12 for Adar and 13 for Adar II. Use the
   ///   constants [NISSAN] ... [ADAR] (or [ADAR_II] for a leap year Adar II) to avoid any
   ///   confusion.
-  /// - [jewishDayOfMonth]: 
+  /// - [jewishDayOfMonth]:
   ///   the Jewish day of month. If 30 is passed in for a month with only 29 days (for example [IYAR],
   ///   or [KISLEV] in a year that [isKislevShort]), the 29th (last valid date of the month)
   ///   will be set
-  /// - [inIsrael]: 
+  /// - [inIsrael]:
   ///   whether in Israel. This affects Yom Tov calculations
   JewishCalendar.initDate(int jewishYear, int jewishMonth, int jewishDayOfMonth,
-      {this.inIsrael = false}) 
-  : super.initDate(jewishYear: jewishYear, jewishMonth: jewishMonth, jewishDayOfMonth: jewishDayOfMonth);
+      {this.inIsrael = false})
+      : super.initDate(
+            jewishYear: jewishYear,
+            jewishMonth: jewishMonth,
+            jewishDayOfMonth: jewishDayOfMonth);
 
   /// [Birkas Hachamah](https://en.wikipedia.org/wiki/Birkat_Hachama) is recited every 28 years based on
   /// Tekufas Shmulel (Julian years) that a year is 365.25 days. The [Rambam](https://en.wikipedia.org/wiki/Maimonides)
@@ -1521,7 +1524,8 @@ class JewishCalendar extends JewishDate {
     };
 
     final JewishCalendar shabbos = JewishCalendar.fromDateTime(
-        getGregorianCalendar().add(Duration(days: daysToShabbos[getDayOfWeek()]!)));
+        getGregorianCalendar()
+            .add(Duration(days: daysToShabbos[getDayOfWeek()]!)));
     shabbos.inIsrael = inIsrael;
 
     // The longest run of Shabbosos with no parsha of their own is the four of Pesach
@@ -1573,10 +1577,8 @@ class JewishCalendar extends JewishDate {
       case JewishDate.IYAR:
         if (isUseModernHolidays() &&
             ((day == 4 && dayOfWeek == JewishDate.tuesday) ||
-                ((day == 3 || day == 2) &&
-                    dayOfWeek == JewishDate.wednesday) ||
-                ((day == 5 || day == 6) &&
-                    dayOfWeek == JewishDate.monday))) {
+                ((day == 3 || day == 2) && dayOfWeek == JewishDate.wednesday) ||
+                ((day == 5 || day == 6) && dayOfWeek == JewishDate.monday))) {
           return YOM_HAZIKARON;
         }
         // if 5 Iyar falls on Tue, Wed or Thu, Yom Haatzmaut is that day.
@@ -1589,10 +1591,8 @@ class JewishCalendar extends JewishDate {
                     dayOfWeek != JewishDate.saturday &&
                     dayOfWeek != JewishDate.sunday &&
                     dayOfWeek != JewishDate.monday) ||
-                ((day == 4 || day == 3) &&
-                    dayOfWeek == JewishDate.thursday) ||
-                ((day == 6 || day == 7) &&
-                    dayOfWeek == JewishDate.tuesday))) {
+                ((day == 4 || day == 3) && dayOfWeek == JewishDate.thursday) ||
+                ((day == 6 || day == 7) && dayOfWeek == JewishDate.tuesday))) {
           return YOM_HAATZMAUT;
         }
         if (day == 14) {
@@ -2181,6 +2181,81 @@ class JewishCalendar extends JewishDate {
     int month = getJewishMonth();
     return month == JewishDate.ELUL ||
         (month == JewishDate.TISHREI && getJewishDayOfMonth() <= 21);
+  }
+
+  /// Returns if the day is _erev Rosh Hashana_, the 29th of Elul.
+  bool isErevRoshHashana() {
+    return getYomTovIndex() == EREV_ROSH_HASHANA;
+  }
+
+  /// Returns which numbered day of the Elul _selichos_ this is, or -1 if it is not one.
+  ///
+  /// The Ashkenazi _minhag_ of the Rema 581:1: _selichos_ begin on the _motzei Shabbos_
+  /// before _Rosh Hashana_, and a week earlier when _Rosh Hashana_ falls on Monday or
+  /// Tuesday, so there are never fewer than four days of them. The count runs from that
+  /// Sunday and skips _Shabbos_, on which none are said, which leaves between three and
+  /// seven numbered days. _Erev Rosh Hashana_ answers -1: it has an order of its own
+  /// rather than a numbered one, and [isErevRoshHashana] is that day.
+  ///
+  /// The Sephardi _minhag_ runs from the 1st of Elul and is a different count, which this
+  /// does not answer.
+  ///
+  /// See also [getDayOfSelichosOfTeshuva].
+  int getDayOfSelichos() {
+    if (getJewishMonth() != JewishDate.ELUL ||
+        getJewishDayOfMonth() == 29 ||
+        isShabbos()) {
+      return -1;
+    }
+
+    final JewishCalendar roshHashana = clone()
+      ..setJewishDate(getJewishYear() + 1, JewishDate.TISHREI, 1);
+    final int falls = roshHashana.getDayOfWeek();
+
+    const int daysInElul = 29;
+    final int sundayOfThatWeek = daysInElul + 2 - falls;
+    final int aWeekEarlier =
+        falls == JewishDate.monday || falls == JewishDate.tuesday ? 7 : 0;
+    final int opens = sundayOfThatWeek - aWeekEarlier;
+
+    final int daysSinceOpening = getJewishDayOfMonth() - opens + 1;
+    if (daysSinceOpening < 1) {
+      return -1;
+    }
+
+    final int shabbosos = daysSinceOpening ~/ 7;
+    return daysSinceOpening - shabbosos;
+  }
+
+  /// Returns which numbered day of the _selichos_ of the _Aseres Yemei Teshuva_ this is,
+  /// or -1 if it is not one. The first is _Tzom Gedalyah_, wherever the fast lands, and
+  /// _Shabbos_ is skipped, which leaves exactly five in every year.
+  ///
+  /// _Erev Yom Kippur_ answers -1: like _erev Rosh Hashana_ it has an order of its own,
+  /// and [isErevYomKippur] is that day.
+  ///
+  /// See also [getDayOfSelichos].
+  int getDayOfSelichosOfTeshuva() {
+    final int today = getJewishDayOfMonth();
+
+    if (getJewishMonth() != JewishDate.TISHREI ||
+        today < 3 ||
+        today > 8 ||
+        isShabbos()) {
+      return -1;
+    }
+
+    final JewishCalendar walk = clone();
+    int counted = 0;
+
+    for (int day = 3; day <= today; day++) {
+      walk.setJewishDate(getJewishYear(), JewishDate.TISHREI, day);
+      if (!walk.isShabbos()) {
+        counted++;
+      }
+    }
+
+    return counted;
   }
 
   /// Returns if the day is Rosh Chodesh. Rosh Hashana will return false

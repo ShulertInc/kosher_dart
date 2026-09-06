@@ -60,9 +60,6 @@ import 'package:kosher_dart/kosher_dart.dart';
 ///
 /// TODO The following items may be added at a future date.
 /// - *Lamnatzaiach*
-/// - *Mizmor Lesoda*
-/// - *Behab*
-/// - *Selichos*
 /// - ...
 class TefilaRules {
   /// Whether or not _tachanun_ recited at the end Of [JewishDate.TISHREI].
@@ -636,5 +633,80 @@ class TefilaRules {
         jewishCalendar.isRoshChodesh() ||
         jewishCalendar.isYomTovAssurBemelacha() ||
         jewishCalendar.isCholHamoed();
+  }
+
+  /// Returns if _vihi noam_ and the _seder kedusha_ after it are said on the _motzei
+  /// Shabbos_ the day in question opened with.
+  ///
+  /// _Vihi noam_ asks that the work of our hands be established, so it is said only where
+  /// the week ahead holds six days of work: the Rema 295:1 omits it when a yom tov falls
+  /// anywhere from that Sunday through the Friday, even on the Friday itself. A yom tov on
+  /// the _Shabbos_ that closes the week leaves every working day intact, so it is said.
+  ///
+  /// It is also omitted on the _motzei Shabbos_ of _Tisha B'Av_, the fast being kept on
+  /// the Sunday whether it is the 9th of Av or pushed off _Shabbos_ to the 10th.
+  ///
+  /// Like [JewishCalendar.isMotzeiShabbos] this answers for the day the night opened and
+  /// says nothing about the hour.
+  bool isVihiNoamRecited(JewishCalendar jewishCalendar) {
+    if (!jewishCalendar.isMotzeiShabbos() || jewishCalendar.isTishaBav()) {
+      return false;
+    }
+
+    final JewishCalendar week = jewishCalendar.clone();
+
+    for (int day = 0; day < 6; day++) {
+      if (week.isYomTovAssurBemelacha()) {
+        return false;
+      }
+      week.forward(Calendar.DATE, 1);
+    }
+
+    return true;
+  }
+
+  /// Returns if _selichos_ are said on the day in question, from the opening of the Elul
+  /// _selichos_ through _erev Yom Kippur_.
+  ///
+  /// This is the Ashkenazi _minhag_, which [JewishCalendar.getDayOfSelichos] carries; it
+  /// does not answer for the Sephardi one, which runs from the 1st of Elul.
+  bool isSelichosRecited(JewishCalendar jewishCalendar) {
+    return jewishCalendar.getDayOfSelichos() != -1 ||
+        jewishCalendar.isErevRoshHashana() ||
+        jewishCalendar.getDayOfSelichosOfTeshuva() != -1 ||
+        jewishCalendar.isErevYomKippur();
+  }
+
+  /// Returns if the day in question is the numbered day of the Elul _selichos_ asked
+  /// about, which is what a print that sets an order per day needs.
+  ///
+  /// - [jewishCalendar]: the Jewish calendar day.
+  /// - [dayOfSelichos]: which numbered day of the Elul _selichos_, 1 through 7.
+  ///
+  /// See also [JewishCalendar.getDayOfSelichos].
+  bool isSelichosDayRecited(JewishCalendar jewishCalendar, int dayOfSelichos) {
+    if (dayOfSelichos < 1 || dayOfSelichos > 7) {
+      throw ArgumentError.value(dayOfSelichos, 'dayOfSelichos',
+          'the Elul selichos run to at most seven numbered days');
+    }
+
+    return jewishCalendar.getDayOfSelichos() == dayOfSelichos;
+  }
+
+  /// Returns if the day in question is the numbered day of the _selichos_ of the _Aseres
+  /// Yemei Teshuva_ asked about, the first being _Tzom Gedalyah_.
+  ///
+  /// - [jewishCalendar]: the Jewish calendar day.
+  /// - [dayOfSelichos]: which numbered day of those _selichos_, 1 through 5.
+  ///
+  /// See also [JewishCalendar.getDayOfSelichosOfTeshuva].
+  bool isSelichosDayOfTeshuvaRecited(
+      JewishCalendar jewishCalendar, int dayOfSelichos) {
+    if (dayOfSelichos < 1 || dayOfSelichos > 5) {
+      throw ArgumentError.value(dayOfSelichos, 'dayOfSelichos',
+          'the Aseres Yemei Teshuva hold five days of selichos');
+    }
+
+    return jewishCalendar.getDayOfSelichosOfTeshuva() == dayOfSelichos;
   }
 }
