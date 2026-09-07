@@ -2171,6 +2171,22 @@ class JewishCalendar extends JewishDate {
     return getDayOfOmer() != -1;
   }
 
+  /// Returns if the day in question is the numbered day of the omer asked about, which is
+  /// what a print that sets a count per day needs.
+  ///
+  /// - [dayOfOmer]: which of the forty-nine days, 1 through 49, the first being the 16th
+  ///   of Nissan.
+  ///
+  /// See also [getDayOfOmer].
+  bool isOmerDay(int dayOfOmer) {
+    if (dayOfOmer < 1 || dayOfOmer > 49) {
+      throw ArgumentError.value(
+          dayOfOmer, 'dayOfOmer', 'the omer runs to forty-nine days');
+    }
+
+    return getDayOfOmer() == dayOfOmer;
+  }
+
   /// Returns if _LeDavid Hashem Ori_ is said, from the 1st of Elul through _Hoshana
   /// Rabba_, the 21st of Tishrei.
   ///
