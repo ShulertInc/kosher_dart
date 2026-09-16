@@ -601,6 +601,23 @@ class TefilaRules {
     return yesterday.isTishaBav() && yesterday.isMotzeiShabbos();
   }
 
+  bool isHavdalahBesamimRecited(JewishCalendar jewishCalendar) {
+    return jewishCalendar.isMotzeiShabbos() &&
+        !jewishCalendar.isTishaBav() &&
+        !jewishCalendar.isAssurBemelacha();
+  }
+
+  bool isHavdalahNerRecited(JewishCalendar jewishCalendar) {
+    if (jewishCalendar.isAssurBemelacha()) {
+      return false;
+    }
+
+    final JewishCalendar yesterday = jewishCalendar.clone();
+    yesterday.back();
+
+    return jewishCalendar.isMotzeiShabbos() || yesterday.isYomKippur();
+  }
+
   bool isKiddushLevanaRecited(JewishCalendar jewishCalendar) {
     final int month = jewishCalendar.getJewishMonth();
     final int day = jewishCalendar.getJewishDayOfMonth();

@@ -308,6 +308,43 @@ void main() {
       expect(
           rules.isHavdalahRecited(cal(5784, JewishDate.CHESHVAN, 16)), isFalse);
     });
+
+    test('spices only after shabbos, never on or after tisha b\'av', () {
+      bool besamim(int year, int month, int day) =>
+          rules.isHavdalahBesamimRecited(cal(year, month, day));
+
+      expect(besamim(5784, JewishDate.CHESHVAN, 14), isTrue);
+      expect(besamim(5785, JewishDate.TISHREI, 11), isTrue,
+          reason: 'Yom Kippur on Shabbos');
+      expect(besamim(5786, JewishDate.TISHREI, 11), isFalse,
+          reason: 'Yom Kippur on Thursday');
+      expect(besamim(5784, JewishDate.SIVAN, 8), isFalse,
+          reason: 'after Shavuos');
+      expect(besamim(5785, JewishDate.AV, 9), isFalse);
+      expect(besamim(5782, JewishDate.AV, 10), isFalse);
+      expect(besamim(5782, JewishDate.AV, 11), isFalse);
+      expect(besamim(5784, JewishDate.TISHREI, 16), isFalse,
+          reason: 'Shabbos into yom tov');
+    });
+
+    test('the flame after shabbos and yom kippur, not after yom tov', () {
+      bool ner(int year, int month, int day) =>
+          rules.isHavdalahNerRecited(cal(year, month, day));
+
+      expect(ner(5784, JewishDate.CHESHVAN, 14), isTrue);
+      expect(ner(5786, JewishDate.TISHREI, 11), isTrue,
+          reason: 'Yom Kippur on Thursday');
+      expect(ner(5784, JewishDate.SIVAN, 8), isFalse, reason: 'after Shavuos');
+      expect(ner(5785, JewishDate.AV, 9), isTrue,
+          reason: 'the night tisha b\'av opens');
+      expect(ner(5782, JewishDate.AV, 10), isTrue,
+          reason: 'the night a put off tisha b\'av opens');
+      expect(ner(5782, JewishDate.AV, 11), isFalse,
+          reason: 'havdalah after the fast');
+      expect(ner(5784, JewishDate.TISHREI, 16), isFalse,
+          reason: 'Shabbos into yom tov');
+      expect(ner(5784, JewishDate.CHESHVAN, 16), isFalse);
+    });
   });
 
   group('TefilaRules - kiddush levana', () {
