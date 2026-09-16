@@ -246,4 +246,44 @@ void main() {
       );
     });
   });
+
+  group('isEruvTavshilin', () {
+    bool eruv(int year, int month, int day, {required bool inIsrael}) =>
+        (cal(inIsrael: inIsrael)..setJewishDate(year, month, day))
+            .isEruvTavshilin();
+
+    test('before a yom tov that runs into Shabbos, everywhere', () {
+      for (final inIsrael in [false, true]) {
+        expect(eruv(5784, JewishDate.ELUL, 29, inIsrael: inIsrael), isTrue,
+            reason: 'Rosh Hashana on Thursday and Friday');
+        expect(eruv(5782, JewishDate.NISSAN, 20, inIsrael: inIsrael), isTrue,
+            reason: 'the seventh day of Pesach on Friday');
+        expect(eruv(5786, JewishDate.SIVAN, 5, inIsrael: inIsrael), isTrue,
+            reason: 'Shavuos on Friday');
+      }
+    });
+
+    test('before a Thursday yom tov only where it lasts two days', () {
+      expect(eruv(5785, JewishDate.TISHREI, 14, inIsrael: false), isTrue);
+      expect(eruv(5785, JewishDate.TISHREI, 14, inIsrael: true), isFalse);
+      expect(eruv(5785, JewishDate.TISHREI, 21, inIsrael: false), isTrue);
+      expect(eruv(5785, JewishDate.TISHREI, 21, inIsrael: true), isFalse);
+      expect(eruv(5786, JewishDate.NISSAN, 14, inIsrael: false), isTrue);
+      expect(eruv(5786, JewishDate.NISSAN, 14, inIsrael: true), isFalse);
+    });
+
+    test('never on the yom tov itself', () {
+      expect(eruv(5785, JewishDate.TISHREI, 15, inIsrael: false), isFalse);
+      expect(eruv(5785, JewishDate.TISHREI, 1, inIsrael: false), isFalse);
+    });
+
+    test('not before a yom tov that ends before Friday', () {
+      expect(eruv(5785, JewishDate.TISHREI, 9, inIsrael: false), isFalse,
+          reason: 'erev Yom Kippur');
+      expect(eruv(5784, JewishDate.NISSAN, 14, inIsrael: false), isFalse,
+          reason: 'Pesach on Tuesday');
+      expect(eruv(5784, JewishDate.CHESHVAN, 11, inIsrael: false), isFalse,
+          reason: 'an ordinary Thursday');
+    });
+  });
 }

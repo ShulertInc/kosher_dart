@@ -2117,6 +2117,24 @@ class JewishCalendar extends JewishDate {
     return getYomTovIndex() == EREV_YOM_KIPPUR;
   }
 
+  bool isEruvTavshilin() {
+    if (isAssurBemelacha()) {
+      return false;
+    }
+
+    final JewishCalendar day = clone();
+    day.forward(Calendar.DATE, 1);
+
+    while (day.isYomTovAssurBemelacha()) {
+      if (day.isFriday()) {
+        return true;
+      }
+      day.forward(Calendar.DATE, 1);
+    }
+
+    return false;
+  }
+
   /// Returns if the day is _Hoshana Rabba_.
   bool isHoshanaRabba() {
     return getYomTovIndex() == HOSHANA_RABBA;
