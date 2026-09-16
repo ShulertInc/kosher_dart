@@ -586,6 +586,42 @@ class TefilaRules {
     return jewishCalendar.isMotzeiShabbos() || jewishCalendar.isMotzeiYomTov();
   }
 
+  bool isHavdalahRecited(JewishCalendar jewishCalendar) {
+    if (jewishCalendar.isAssurBemelacha() || jewishCalendar.isTishaBav()) {
+      return false;
+    }
+
+    if (jewishCalendar.isMotzeiShabbos() || jewishCalendar.isMotzeiYomTov()) {
+      return true;
+    }
+
+    final JewishCalendar yesterday = jewishCalendar.clone();
+    yesterday.back();
+
+    return yesterday.isTishaBav() && yesterday.isMotzeiShabbos();
+  }
+
+  bool isKiddushLevanaRecited(JewishCalendar jewishCalendar) {
+    final DateTime date = jewishCalendar.getGregorianCalendar();
+    final DateTime noonBeforeTonight =
+        DateTime(date.year, date.month, date.day - 1, 12);
+    final DateTime noonAfterTonight =
+        DateTime(date.year, date.month, date.day, 12);
+
+    return jewishCalendar
+            .getTchilasZmanKidushLevana3Days()
+            .isBefore(noonAfterTonight) &&
+        jewishCalendar
+            .getSofZmanKidushLevana15Days()
+            .isAfter(noonBeforeTonight);
+  }
+
+  bool isTashlichRecited(JewishCalendar jewishCalendar) {
+    return jewishCalendar.getJewishMonth() == JewishDate.TISHREI &&
+        (jewishCalendar.getJewishDayOfMonth() <= 22 ||
+            jewishCalendar.isSimchasTorah());
+  }
+
   /// Returns if _mizmor lesoda_ is recited on the day in question. It is not recited on a
   /// day with a prohibition of work, and by default not on _erev Yom Kippur_, _erev
   /// Pesach_ or _chol hamoed Pesach_ either.

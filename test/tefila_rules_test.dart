@@ -231,13 +231,15 @@ void main() {
     });
 
     test('said on those days when the minhag says so', () {
-      final saying = TefilaRules(mizmorLesodaRecitedErevYomKippurAndPesach: true);
+      final saying =
+          TefilaRules(mizmorLesodaRecitedErevYomKippurAndPesach: true);
       final c = cal()..setJewishDate(5784, JewishDate.NISSAN, 14);
       expect(saying.isMizmorLesodaRecited(c), isTrue);
     });
 
     test('the minhag does not override a day work is forbidden', () {
-      final saying = TefilaRules(mizmorLesodaRecitedErevYomKippurAndPesach: true);
+      final saying =
+          TefilaRules(mizmorLesodaRecitedErevYomKippurAndPesach: true);
       final c = cal()..setJewishDate(5784, JewishDate.TISHREI, 15);
       expect(saying.isMizmorLesodaRecited(c), isFalse);
     });
@@ -262,6 +264,78 @@ void main() {
     test('not said on an ordinary weekday', () {
       final c = cal()..setJewishDate(5784, JewishDate.CHESHVAN, 16);
       expect(rules.isAtaChonantanuRecited(c), isFalse);
+    });
+  });
+
+  group('TefilaRules - havdalah', () {
+    JewishCalendar cal(int year, int month, int day, {bool inIsrael = false}) =>
+        JewishCalendar()
+          ..inIsrael = inIsrael
+          ..setJewishDate(year, month, day);
+
+    test('said on motzei shabbos and motzei yom tov', () {
+      expect(
+          rules.isHavdalahRecited(cal(5784, JewishDate.CHESHVAN, 14)), isTrue);
+      expect(rules.isHavdalahRecited(cal(5784, JewishDate.SIVAN, 8)), isTrue,
+          reason: 'the Friday after Shavuos');
+      expect(rules.isHavdalahRecited(cal(5786, JewishDate.TISHREI, 11)), isTrue,
+          reason: 'the Friday after Yom Kippur');
+    });
+
+    test('not said where the night opens shabbos or yom tov', () {
+      expect(rules.isHavdalahRecited(cal(5785, JewishDate.TISHREI, 3)), isFalse,
+          reason: 'Rosh Hashana into Shabbos');
+      expect(rules.isHavdalahRecited(cal(5785, JewishDate.TISHREI, 4)), isTrue);
+      expect(
+          rules.isHavdalahRecited(cal(5784, JewishDate.TISHREI, 16)), isFalse,
+          reason: 'Shabbos into the second day of Succos');
+      expect(
+          rules.isHavdalahRecited(
+              cal(5784, JewishDate.TISHREI, 16, inIsrael: true)),
+          isTrue,
+          reason: 'Shabbos into chol hamoed');
+    });
+
+    test('put off to the night after a fast that opened on motzei shabbos', () {
+      expect(rules.isHavdalahRecited(cal(5782, JewishDate.AV, 10)), isFalse);
+      expect(rules.isHavdalahRecited(cal(5782, JewishDate.AV, 11)), isTrue);
+      expect(rules.isHavdalahRecited(cal(5785, JewishDate.AV, 9)), isFalse);
+      expect(rules.isHavdalahRecited(cal(5785, JewishDate.AV, 10)), isTrue);
+      expect(rules.isHavdalahRecited(cal(5786, JewishDate.AV, 10)), isFalse);
+    });
+
+    test('not said on an ordinary weekday', () {
+      expect(
+          rules.isHavdalahRecited(cal(5784, JewishDate.CHESHVAN, 16)), isFalse);
+    });
+  });
+
+  group('TefilaRules - kiddush levana', () {
+    bool levana(int day) => rules.isKiddushLevanaRecited(
+        JewishCalendar()..setJewishDate(5785, JewishDate.TISHREI, day));
+
+    test('from three days after the molad to fifteen days after it', () {
+      expect(levana(2), isFalse);
+      expect(levana(5), isTrue);
+      expect(levana(15), isTrue);
+      expect(levana(17), isFalse);
+    });
+  });
+
+  group('TefilaRules - tashlich', () {
+    bool tashlich(int month, int day, {bool inIsrael = false}) =>
+        rules.isTashlichRecited(JewishCalendar()
+          ..inIsrael = inIsrael
+          ..setJewishDate(5785, month, day));
+
+    test('from Rosh Hashana through Shemini Atzeres', () {
+      expect(tashlich(JewishDate.ELUL, 29), isFalse);
+      expect(tashlich(JewishDate.TISHREI, 1), isTrue);
+      expect(tashlich(JewishDate.TISHREI, 21), isTrue);
+      expect(tashlich(JewishDate.TISHREI, 22, inIsrael: true), isTrue);
+      expect(tashlich(JewishDate.TISHREI, 23), isTrue);
+      expect(tashlich(JewishDate.TISHREI, 23, inIsrael: true), isFalse);
+      expect(tashlich(JewishDate.TISHREI, 24), isFalse);
     });
   });
 }
