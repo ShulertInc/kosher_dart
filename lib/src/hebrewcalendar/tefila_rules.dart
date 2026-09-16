@@ -177,6 +177,8 @@ class TefilaRules {
   /// See also [isMizmorLesodaRecited].
   final bool mizmorLesodaRecitedErevYomKippurAndPesach;
 
+  final bool selichosRecitedAllElul;
+
   TefilaRules({
     this.tachanunRecitedEndOfTishrei = true,
     this.tachanunRecitedWeekAfterShavuos = false,
@@ -191,6 +193,7 @@ class TefilaRules {
     this.tachanunRecitedSundays = true,
     this.tachanunRecitedMinchaAllYear = true,
     this.mizmorLesodaRecitedErevYomKippurAndPesach = false,
+    this.selichosRecitedAllElul = false,
   });
 
   /// Returns if _tachanun_ is recited during _shacharis_ on the day in question. See the many
@@ -667,12 +670,14 @@ class TefilaRules {
 
   /// Returns if _selichos_ are said on the day in question, from the opening of the Elul
   /// _selichos_ through _erev Yom Kippur_.
-  ///
-  /// This is the Ashkenazi _minhag_, which [JewishCalendar.getDayOfSelichos] carries; it
-  /// does not answer for the Sephardi one, which runs from the 1st of Elul.
   bool isSelichosRecited(JewishCalendar jewishCalendar) {
-    return jewishCalendar.getDayOfSelichos() != -1 ||
-        jewishCalendar.isErevRoshHashana() ||
+    final bool inElul = selichosRecitedAllElul
+        ? jewishCalendar.getJewishMonth() == JewishDate.ELUL &&
+            !jewishCalendar.isShabbos()
+        : jewishCalendar.getDayOfSelichos() != -1 ||
+            jewishCalendar.isErevRoshHashana();
+
+    return inElul ||
         jewishCalendar.getDayOfSelichosOfTeshuva() != -1 ||
         jewishCalendar.isErevYomKippur();
   }

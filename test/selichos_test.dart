@@ -184,5 +184,28 @@ void main() {
       expect(said.length, equals(elul(5783).length + 1 + 5 + 1));
       expect(said.last, equals('9/${JewishDate.TISHREI}'));
     });
+
+    test('all Elul opens on the 1st of Elul and still skips shabbos', () {
+      final allElul = TefilaRules(selichosRecitedAllElul: true);
+
+      for (var year = 5781; year < 5831; year++) {
+        expect(allElul.isSelichosRecited(day(year, JewishDate.AV, 30)), isFalse,
+            reason: '30 Av $year');
+
+        for (var of = 1; of <= 29; of++) {
+          final calendar = day(year, JewishDate.ELUL, of);
+          expect(allElul.isSelichosRecited(calendar),
+              equals(!calendar.isShabbos()),
+              reason: '$of Elul $year');
+        }
+
+        for (var of = 1; of <= 10; of++) {
+          final calendar = day(year, JewishDate.TISHREI, of);
+          expect(allElul.isSelichosRecited(calendar),
+              equals(rules.isSelichosRecited(calendar)),
+              reason: '$of Tishrei $year');
+        }
+      }
+    });
   });
 }
