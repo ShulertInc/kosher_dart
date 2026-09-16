@@ -311,31 +311,39 @@ void main() {
   });
 
   group('TefilaRules - kiddush levana', () {
-    bool levana(int day) => rules.isKiddushLevanaRecited(
-        JewishCalendar()..setJewishDate(5785, JewishDate.TISHREI, day));
+    bool levana(int year, int month, int day) => rules.isKiddushLevanaRecited(
+        JewishCalendar()..setJewishDate(year, month, day));
 
-    test('from three days after the molad to fifteen days after it', () {
-      expect(levana(2), isFalse);
-      expect(levana(5), isTrue);
-      expect(levana(15), isTrue);
-      expect(levana(17), isFalse);
+    test('from seven days after the molad to fifteen days after it', () {
+      expect(levana(5785, JewishDate.CHESHVAN, 5), isFalse);
+      expect(levana(5785, JewishDate.CHESHVAN, 10), isTrue);
+      expect(levana(5785, JewishDate.CHESHVAN, 15), isTrue);
+      expect(levana(5785, JewishDate.CHESHVAN, 17), isFalse);
+    });
+
+    test('not before Yom Kippur', () {
+      expect(levana(5785, JewishDate.TISHREI, 10), isFalse);
+      expect(levana(5785, JewishDate.TISHREI, 11), isTrue);
+    });
+
+    test('not before Tisha B\'Av, wherever the fast falls', () {
+      expect(levana(5785, JewishDate.AV, 9), isFalse);
+      expect(levana(5785, JewishDate.AV, 10), isTrue);
+      expect(levana(5782, JewishDate.AV, 10), isFalse,
+          reason: 'the fast put off from Shabbos');
+      expect(levana(5782, JewishDate.AV, 11), isTrue);
     });
   });
 
   group('TefilaRules - tashlich', () {
-    bool tashlich(int month, int day, {bool inIsrael = false}) =>
-        rules.isTashlichRecited(JewishCalendar()
-          ..inIsrael = inIsrael
-          ..setJewishDate(5785, month, day));
+    bool tashlich(int month, int day) => rules
+        .isTashlichRecited(JewishCalendar()..setJewishDate(5785, month, day));
 
-    test('from Rosh Hashana through Shemini Atzeres', () {
+    test('from Rosh Hashana through Hoshana Rabba', () {
       expect(tashlich(JewishDate.ELUL, 29), isFalse);
       expect(tashlich(JewishDate.TISHREI, 1), isTrue);
       expect(tashlich(JewishDate.TISHREI, 21), isTrue);
-      expect(tashlich(JewishDate.TISHREI, 22, inIsrael: true), isTrue);
-      expect(tashlich(JewishDate.TISHREI, 23), isTrue);
-      expect(tashlich(JewishDate.TISHREI, 23, inIsrael: true), isFalse);
-      expect(tashlich(JewishDate.TISHREI, 24), isFalse);
+      expect(tashlich(JewishDate.TISHREI, 22), isFalse);
     });
   });
 }

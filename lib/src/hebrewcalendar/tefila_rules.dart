@@ -602,6 +602,17 @@ class TefilaRules {
   }
 
   bool isKiddushLevanaRecited(JewishCalendar jewishCalendar) {
+    final int month = jewishCalendar.getJewishMonth();
+    final int day = jewishCalendar.getJewishDayOfMonth();
+
+    final bool beforeTishaBav =
+        month == JewishDate.AV && (day <= 9 || jewishCalendar.isTishaBav());
+    final bool beforeYomKippur = month == JewishDate.TISHREI && day <= 10;
+
+    if (beforeTishaBav || beforeYomKippur) {
+      return false;
+    }
+
     final DateTime date = jewishCalendar.getGregorianCalendar();
     final DateTime noonBeforeTonight =
         DateTime(date.year, date.month, date.day - 1, 12);
@@ -609,7 +620,7 @@ class TefilaRules {
         DateTime(date.year, date.month, date.day, 12);
 
     return jewishCalendar
-            .getTchilasZmanKidushLevana3Days()
+            .getTchilasZmanKidushLevana7Days()
             .isBefore(noonAfterTonight) &&
         jewishCalendar
             .getSofZmanKidushLevana15Days()
@@ -618,8 +629,7 @@ class TefilaRules {
 
   bool isTashlichRecited(JewishCalendar jewishCalendar) {
     return jewishCalendar.getJewishMonth() == JewishDate.TISHREI &&
-        (jewishCalendar.getJewishDayOfMonth() <= 22 ||
-            jewishCalendar.isSimchasTorah());
+        jewishCalendar.getJewishDayOfMonth() <= 21;
   }
 
   /// Returns if _mizmor lesoda_ is recited on the day in question. It is not recited on a
