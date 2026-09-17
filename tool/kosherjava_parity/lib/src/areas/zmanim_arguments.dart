@@ -72,6 +72,9 @@ void runArgumentChecks(
       dart.getSofZmanShma);
   pair('getPlagHamincha(s,e,synchronous) / getPlagHamincha', (s, e) => java.getPlagHamincha(s, e, true),
       dart.getPlagHamincha);
+  pair('getSofZmanBiurChametz(s,e)', (s, e) => java.getSofZmanBiurChametz(s, e, false), dart.getSofZmanBiurChametz);
+  pair('getSofZmanAchilasChametz(s,e)', (s, e) => java.getSofZmanAchilasChametz(s, e, false),
+      dart.getSofZmanAchilasChametz);
 
   pair('getSofZmanKidushLevanaBetweenMoldos(alos,tzais)', java.getSofZmanKidushLevanaBetweenMoldos,
       dart.getSofZmanKidushLevanaBetweenMoldos);
@@ -105,13 +108,12 @@ void runArgumentChecks(
           attempt(() => millisOrNull(java.getShaahZmanisBasedZman(start.java, end.java, hours))),
           attempt(() => dart.getShaahZmanisBasedZman(start.dart!, end.dart!, hours)?.flooredMillis));
     }
-    if (hours < 0) {
-      report.note('contract: getFixedLocalChatzosBasedZmanim keeps 2.x negative hours, counted from the start of the half day');
-    } else {
-      report.instant('$prefix.getHalfDayBasedZman(s,e,hours) / getFixedLocalChatzosBasedZmanim', input,
-          attempt(() => millisOrNull(java.getHalfDayBasedZman(start.java, end.java, hours))),
-          attempt(() => dart.getFixedLocalChatzosBasedZmanim(start.dart, end.dart, hours)?.flooredMillis));
-    }
+    report.instant('$prefix.getHalfDayBasedZman(s,e,hours)', input,
+        attempt(() => millisOrNull(java.getHalfDayBasedZman(start.java, end.java, hours))),
+        attempt(() => dart.getHalfDayBasedZman(start.dart, end.dart, hours)?.flooredMillis));
+    report.instant('$prefix.getHalfDayBasedZman(s,e,hours) / getFixedLocalChatzosBasedZmanim', input,
+        attempt(() => millisOrNull(java.getHalfDayBasedZman(start.java, end.java, hours))),
+        attempt(() => dart.getFixedLocalChatzosBasedZmanim(start.dart, end.dart, hours)?.flooredMillis));
     report.instant('$prefix.getZmanisBasedOffset(hours)', input,
         attempt(() => millisOrNull(java.getZmanisBasedOffset(hours))),
         attempt(() => dart.getZmanisBasedOffset(hours)?.flooredMillis));

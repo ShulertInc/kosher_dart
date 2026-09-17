@@ -422,6 +422,7 @@ class CalendarArea extends Area {
           final daf = useStatic
               ? kd.YerushalmiYomiCalculator.getDafYomiYerushalmi(pair.dart)
               : pair.dart.getDafYomiYerushalmi();
+          if (daf == null) return null;
           return '${daf.getMasechtaNumber()}:${daf.getDaf()} '
               '${daf.getYerushlmiMasechtaTransliterated()} ${daf.getYerushalmiMasechta()}';
         }));
@@ -452,27 +453,27 @@ class CalendarArea extends Area {
         case 'plusDays':
           detail = '$op($amount)';
           javaResult = attempt(() => java.plusDays(amount));
-          dartResult = attempt(() => dart.forward(kd.Calendar.DATE, amount));
+          dartResult = attempt(() => dart.plusDays(amount));
         case 'minusDays':
           detail = '$op($amount)';
           javaResult = attempt(() => java.minusDays(amount));
-          dartResult = attempt(() => dart.back(kd.Calendar.DATE, amount));
+          dartResult = attempt(() => dart.minusDays(amount));
         case 'plusMonths':
           detail = '$op($amount)';
           javaResult = attempt(() => java.plusMonths(amount));
-          dartResult = attempt(() => dart.forward(kd.Calendar.MONTH, amount));
+          dartResult = attempt(() => dart.plusMonths(amount));
         case 'minusMonths':
           detail = '$op($amount)';
           javaResult = attempt(() => java.minusMonths(amount));
-          dartResult = attempt(() => dart.back(kd.Calendar.MONTH, amount));
+          dartResult = attempt(() => dart.minusMonths(amount));
         case 'plusYears':
           detail = '$op($amount, adarAleph=$adarAleph)';
           javaResult = attempt(() => java.plusYears(amount, adarAleph));
-          dartResult = attempt(() => dart.forward(kd.Calendar.YEAR, amount));
+          dartResult = attempt(() => dart.plusYears(amount, adarAleph));
         case 'minusYears':
           detail = '$op($amount, adarAleph=$adarAleph)';
           javaResult = attempt(() => java.minusYears(amount, adarAleph));
-          dartResult = attempt(() => dart.back(kd.Calendar.YEAR, amount));
+          dartResult = attempt(() => dart.minusYears(amount, adarAleph));
         case 'setJewishYear':
           final year = small ? dart.getJewishYear() + between(rng, -2, 2) : between(rng, 3762, 13000);
           detail = '$op($year)';

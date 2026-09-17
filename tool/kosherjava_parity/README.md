@@ -42,8 +42,6 @@ KosherJava keeps nanoseconds, `DateTime` keeps microseconds. Both sides throwing
 
 ## Known contract differences
 
-These are counted in notes or left out, not reported as divergences:
+Counted in notes, not reported as divergences:
 
 - Candle lighting is compared only on Fridays and weekday erev yom tov. kosher_dart answers by the day.
-- Chametz zmanim are compared only on 14 Nissan, where KosherJava answers.
-- `getFixedLocalChatzosBasedZmanim` keeps the 2.x meaning of negative hours.

@@ -15,8 +15,7 @@ import 'zmanim_arguments.dart';
 import 'zmanim_removed.dart';
 
 class ZmanimCase {
-  ZmanimCase(Random rng, Zones zones)
-      : date = randomDate(rng, 1900, 2300) {
+  ZmanimCase(Random rng, Zones zones) : date = chance(rng, 0.05) ? erevPesach(rng) : randomDate(rng, 1900, 2300) {
     place = randomPlace(rng, zones, date);
     useElevation = chance(rng, 0.5);
     candleLightingOffset = chance(rng, 0.5) ? 18.0 : between(rng, 0, 60).toDouble();
@@ -37,11 +36,13 @@ class ZmanimCase {
 
 const day = 86400000;
 
+CivilDate erevPesach(Random rng) {
+  final jewishDate =
+      kd.JewishDate.initDate(jewishYear: between(rng, 5661, 6060), jewishMonth: kd.JewishDate.NISSAN, jewishDayOfMonth: 14);
+  return CivilDate(jewishDate.getGregorianYear(), jewishDate.getGregorianMonth(), jewishDate.getGregorianDayOfMonth());
+}
+
 String? contractFor(String getter, kd.JewishCalendar jewishDay) {
-  if (getter.contains('Chametz')) {
-    final erevPesach = jewishDay.getJewishMonth() == kd.JewishDate.NISSAN && jewishDay.getJewishDayOfMonth() == 14;
-    return erevPesach ? null : 'contract: chametz zmanim compared on 14 Nissan only (KosherJava answers null on other days)';
-  }
   if (getter == 'getCandleLighting') {
     final friday = jewishDay.getDayOfWeek() == 6;
     final weekdayErevYomTov = jewishDay.isErevYomTov() &&
