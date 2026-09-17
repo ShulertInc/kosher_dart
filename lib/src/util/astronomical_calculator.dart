@@ -161,7 +161,8 @@ abstract class AstronomicalCalculator {
   /// Returns the UTC time in 24 hour format, or double.nan when it cannot be calculated.
   double getUTCTimeAtAzimuth(
           DateTime dateTime, GeoLocation geoLocation, double azimuth) =>
-      double.nan;
+      throw UnsupportedError(
+          "${getCalculatorName()} does not calculate the time at an azimuth. Use the NOAACalculator instead.");
 
   /// A method that calculates UTC solar midnight - astronomical _chatzos halayla_.
   ///

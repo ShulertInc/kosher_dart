@@ -543,6 +543,9 @@ class AstronomicalCalendar {
       return !continues;
     }
 
+    if (offsetByDegrees(GEOMETRIC_ZENITH + step) == null) {
+      return double.nan;
+    }
     int low = 1;
     int high = (30.0 / incrementor).ceil() + 1;
     while (low < high) {

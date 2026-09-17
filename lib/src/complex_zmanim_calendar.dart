@@ -2695,7 +2695,8 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   ///         such as in the Arctic Circle where there is at least one day a year where the sun does not rise, and one
   ///         where it does not set, a null will be returned. See detailed explanation on top of the
   ///         [AstronomicalCalendar] documentation.
-  DateTime? getSofZmanAchilasChametzGRA() => getSofZmanTfilaGRA();
+  DateTime? getSofZmanAchilasChametzGRA() => getSofZmanAchilasChametz(
+      getElevationAdjustedSunrise(), getElevationAdjustedSunset());
 
   /// This method returns the latest time one is allowed eating chametz on Erev Pesach according to the opinion of the
   /// _[Magen Avraham (MGA)](https://en.wikipedia.org/wiki/Avraham_Gombinern)_ based on _alos_
@@ -2711,7 +2712,7 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   /// _see [getAlos72]_
   /// _see [getSofZmanTfilaMGA72Minutes]_
   DateTime? getSofZmanAchilasChametzMGA72Minutes() =>
-      getSofZmanTfilaMGA72Minutes();
+      getSofZmanAchilasChametz(getAlos72(), getTzais72());
 
   /// This method returns the latest time one is allowed eating chametz on Erev Pesach according to the opinion of the
   ///  _[Magen Avraham (MGA)](https://en.wikipedia.org/wiki/Avraham_Gombinern)_ based on _alos_
@@ -2730,7 +2731,8 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   /// _see [getAlos16Point1Degrees]_
   /// _see [getSofZmanTfilaMGA16Point1Degrees]_
   DateTime? getSofZmanAchilasChametzMGA16Point1Degrees() =>
-      getSofZmanTfilaMGA16Point1Degrees();
+      getSofZmanAchilasChametz(
+          getAlos16Point1Degrees(), getTzais16Point1Degrees());
 
   /// This method returns the latest time for burning chametz on Erev Pesach according to the opinion of the
   /// _[GRA](https://en.wikipedia.org/wiki/Vilna_Gaon)_ This time is 5 hours into the day based on the
@@ -2742,8 +2744,8 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   ///         computed such as in the Arctic Circle where there is at least one day a year where the sun does not rise,
   ///         and one where it does not set, a null will be returned. See detailed explanation on top of the
   ///         [AstronomicalCalendar] documentation.
-  DateTime? getSofZmanBiurChametzGRA() => AstronomicalCalendar.getTimeOffset(
-      getElevationAdjustedSunrise(), getShaahZmanisGra() * 5);
+  DateTime? getSofZmanBiurChametzGRA() => getSofZmanBiurChametz(
+      getElevationAdjustedSunrise(), getElevationAdjustedSunset());
 
   /// This method returns the latest time for burning chametz on Erev Pesach according to the opinion of the
   /// _[Magen Avraham (MGA)](https://en.wikipedia.org/wiki/Avraham_Gombinern)_ based on _alos_
@@ -2760,7 +2762,7 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   /// _see [getShaahZmanisMGA]_
   /// _see [getAlos72]_
   DateTime? getSofZmanBiurChametzMGA72Minutes() =>
-      AstronomicalCalendar.getTimeOffset(getAlos72(), getShaahZmanisMGA() * 5);
+      getSofZmanBiurChametz(getAlos72(), getTzais72());
 
   /// This method returns the latest time for burning _chametz_ on _Erev Pesach_ according to the opinion
   /// of the _[Magen Avraham (MGA)](https://en.wikipedia.org/wiki/Avraham_Gombinern)_ based on _alos_
@@ -2777,8 +2779,7 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   /// _see [getShaahZmanis16Point1Degrees]_
   /// _see [getAlos16Point1Degrees]_
   DateTime? getSofZmanBiurChametzMGA16Point1Degrees() =>
-      AstronomicalCalendar.getTimeOffset(
-          getAlos16Point1Degrees(), getShaahZmanis16Point1Degrees() * 5);
+      getSofZmanBiurChametz(getAlos16Point1Degrees(), getTzais16Point1Degrees());
 
   /// A method that returns the _[Baal Hatanya](https://en.wikipedia.org/wiki/Shneur_Zalman_of_Liadi)_'s
   /// _netz amiti_ (sunrise) without [AstronomicalCalculator.getElevationAdjustment]
@@ -2928,7 +2929,7 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   ///         where it does not set, a null will be returned. See detailed explanation on top of the
   ///         [AstronomicalCalendar] documentation.
   DateTime? getSofZmanAchilasChametzBaalHatanya() =>
-      getSofZmanTfilaBaalHatanya();
+      getSofZmanAchilasChametz(getSunriseBaalHatanya(), getSunsetBaalHatanya());
 
   /// This method returns the latest time for burning chametz on Erev Pesach according to the opinion of the
   /// _Baal Hatanya_. This time is 5 hours into the day based on the opinion of the
@@ -2941,8 +2942,7 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   ///         and one where it does not set, a null will be returned. See detailed explanation on top of the
   ///         [AstronomicalCalendar] documentation.
   DateTime? getSofZmanBiurChametzBaalHatanya() =>
-      AstronomicalCalendar.getTimeOffset(
-          getSunriseBaalHatanya(), getShaahZmanisBaalHatanya() * 5);
+      getSofZmanBiurChametz(getSunriseBaalHatanya(), getSunsetBaalHatanya());
 
   /// This method returns the time of _mincha gedola_. _Mincha gedola_ is the earliest time one can pray
   /// mincha. The _[Rambam](https://en.wikipedia.org/wiki/Maimonides)_ is of the opinion that it is
@@ -3042,22 +3042,13 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   ///   The end of the half day. This would be fixed local _chatzos_ for morning based times and sunset
   ///   or _tzais_ for afternoon based times.
   /// - [hours]: 
-  ///   the number of hours to offset the beginning of the first or second half of the day
-  ///
-  /// Returns the `Date` of the later of [getMinchaGedolaBaalHatanya] and [getMinchaGedola30Minutes].
-  /// If the calculation can't be computed such as in the Arctic Circle where there is at least one day a year
-  /// where the sun does not rise, and one where it does not set, a null will be returned. See detailed
-  /// explanation on top of the [AstronomicalCalendar] documentation.
+  ///   the number of hours to offset the beginning of the first or second half of the day, or when negative,
+  ///   to count back from its end
   ///
   /// See also [ComplexZmanimCalendar.getFixedLocalChatzos].
   DateTime? getFixedLocalChatzosBasedZmanim(
-      DateTime? startOfHalfDay, DateTime? endOfHalfDay, double hours) {
-    if (startOfHalfDay == null || endOfHalfDay == null) {
-      return null;
-    }
-    return AstronomicalCalendar.offsetByParts(
-        startOfHalfDay, startOfHalfDay, endOfHalfDay, 6, hours);
-  }
+          DateTime? startOfHalfDay, DateTime? endOfHalfDay, double hours) =>
+      getHalfDayBasedZman(startOfHalfDay, endOfHalfDay, hours);
 
   /// This method returns [Rav Moshe Feinstein's](https://en.wikipedia.org/wiki/Moshe_Feinstein) opinion of the
   /// claculation of _sof zman krias shema_ (latest time to recite _Shema_ in the morning) according to the
@@ -3491,21 +3482,15 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   ///
   /// return the `DateTime` of _sof zman achilas chametz_, or null if it cannot be computed.
   DateTime? getSofZmanAchilasChametzMGA72MinutesZmanis() =>
-      getSofZmanTfilaMGA72MinutesZmanis();
+      getSofZmanAchilasChametz(getAlos72Zmanis(), getTzais72Zmanis());
 
   /// This method returns the latest time for burning _chametz_ on _erev Pesach_
   /// according to the opinion of the _MGA_ with the day measured from [getAlos72Zmanis]
   /// to [getTzais72Zmanis].
   ///
   /// return the `DateTime` of _sof zman biur chametz_, or null if it cannot be computed.
-  DateTime? getSofZmanBiurChametzMGA72MinutesZmanis() {
-    final DateTime? alos = getAlos72Zmanis();
-    final DateTime? tzais = getTzais72Zmanis();
-    if (alos == null || tzais == null) {
-      return null;
-    }
-    return getShaahZmanisBasedZman(alos, tzais, 5);
-  }
+  DateTime? getSofZmanBiurChametzMGA72MinutesZmanis() =>
+      getSofZmanBiurChametz(getAlos72Zmanis(), getTzais72Zmanis());
 
   /// This method returns the _Ben Ish Chai_'s sunrise for a day on which the sun does
   /// not rise or set: the moment it is due east. It answers null on any day that has a

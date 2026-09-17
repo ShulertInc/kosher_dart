@@ -99,7 +99,8 @@ class NOAACalculator extends AstronomicalCalculator {
   double getUTCTimeAtAzimuth(
       DateTime dateTime, GeoLocation geoLocation, double azimuth) {
     if (azimuth != 90 && azimuth != 270) {
-      return double.nan;
+      throw ArgumentError(
+          "The azimuth must be 90 or 270. Other azimuth values are not supported");
     }
 
     final double julianDay = _getJulianDay(dateTime);

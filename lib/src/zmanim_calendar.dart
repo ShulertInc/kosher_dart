@@ -15,6 +15,7 @@
  */
 
 import 'package:kosher_dart/src/hebrewcalendar/jewish_calendar.dart';
+import 'package:kosher_dart/src/hebrewcalendar/jewish_date.dart';
 import 'package:kosher_dart/src/util/geo_location.dart';
 import 'package:kosher_dart/src/astronomical_calendar.dart';
 import 'package:kosher_dart/src/complex_zmanim_calendar.dart';
@@ -579,5 +580,35 @@ class ZmanimCalendar extends AstronomicalCalendar {
   DateTime? getShaahZmanisBasedZman(
       DateTime startOfDay, DateTime endOfDay, double hours) {
     return AstronomicalCalendar.offsetByParts(startOfDay, startOfDay, endOfDay, 12, hours);
+  }
+
+  /// Negative [hours] count back from [endOfHalfDay].
+  DateTime? getHalfDayBasedZman(
+      DateTime? startOfHalfDay, DateTime? endOfHalfDay, double hours) {
+    if (startOfHalfDay == null || endOfHalfDay == null) {
+      return null;
+    }
+    return AstronomicalCalendar.offsetByParts(hours >= 0 ? startOfHalfDay : endOfHalfDay,
+        startOfHalfDay, endOfHalfDay, 6, hours);
+  }
+
+  /// Five _shaos zmaniyos_ into the day, on _Erev Pesach_ only. Null on any other day.
+  DateTime? getSofZmanBiurChametz(DateTime? startOfDay, DateTime? endOfDay) {
+    if (!_isErevPesach() || startOfDay == null || endOfDay == null) {
+      return null;
+    }
+    return getShaahZmanisBasedZman(startOfDay, endOfDay, 5);
+  }
+
+  /// Four _shaos zmaniyos_ into the day, on _Erev Pesach_ only. Null on any other day.
+  DateTime? getSofZmanAchilasChametz(DateTime? startOfDay, DateTime? endOfDay) =>
+      _isErevPesach() ? getSofZmanTfilaOfDay(startOfDay, endOfDay) : null;
+
+  bool _isErevPesach() {
+    final DateTime day = getCalendar();
+    final JewishCalendar jewishCalendar = JewishCalendar()
+      ..setGregorianDate(day.year, day.month, day.day);
+    return jewishCalendar.getJewishMonth() == JewishDate.NISSAN &&
+        jewishCalendar.getJewishDayOfMonth() == 14;
   }
 }
