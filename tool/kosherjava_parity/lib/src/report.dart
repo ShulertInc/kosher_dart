@@ -189,4 +189,4 @@ extension FlooredMillis on DateTime {
 }
 
 String withKosherDartMonthNames(String text) =>
-    text.replaceAll('Cheshvan', 'Marcheshvan').replaceAll('חשון', 'מרחשון');
+    text.replaceAll(RegExp('(?<!Mar)Cheshvan'), 'Marcheshvan').replaceAll(RegExp('(?<!מר)חשון'), 'מרחשון');

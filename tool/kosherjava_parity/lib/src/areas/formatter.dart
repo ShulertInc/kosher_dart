@@ -15,36 +15,74 @@ const hebrewNumberInvalid = [-1, -1000, 10000, 12345, 2147483647];
 
 class FormatterFlags {
   FormatterFlags(this.hebrewFormat, this.useGershGershayim, this.longWeekFormat, this.useFinalFormLetters,
-      this.useLongHebrewYears);
+      this.useLongHebrewYears,
+      {this.omerPrefix, this.shabbosName, this.customMonths = false, this.customHolidays = false});
 
   factory FormatterFlags.random(Random rng) => FormatterFlags(
-      chance(rng, 0.5), chance(rng, 0.7), chance(rng, 0.7), chance(rng, 0.5), chance(rng, 0.5));
+      chance(rng, 0.5), chance(rng, 0.7), chance(rng, 0.7), chance(rng, 0.5), chance(rng, 0.5),
+      omerPrefix: chance(rng, 0.2) ? pick(rng, const ['ל', '', 'ביום ']) : null,
+      shabbosName: chance(rng, 0.2) ? pick(rng, const ['Shabbat', 'Sabbath', 'Sh']) : null,
+      customMonths: chance(rng, 0.15),
+      customHolidays: chance(rng, 0.15));
 
   final bool hebrewFormat;
   final bool useGershGershayim;
   final bool longWeekFormat;
   final bool useFinalFormLetters;
   final bool useLongHebrewYears;
+  final String? omerPrefix;
+  final String? shabbosName;
+  final bool customMonths;
+  final bool customHolidays;
 
   String get mode => hebrewFormat ? 'hebrew' : 'transliterated';
 
   @override
   String toString() => 'hebrew=$hebrewFormat gersh=$useGershGershayim longWeek=$longWeekFormat '
-      'finalForms=$useFinalFormLetters longYears=$useLongHebrewYears';
+      'finalForms=$useFinalFormLetters longYears=$useLongHebrewYears'
+      '${omerPrefix == null ? '' : ' omerPrefix="$omerPrefix"'}${shabbosName == null ? '' : ' shabbos=$shabbosName'}'
+      '${customMonths ? ' customMonths' : ''}${customHolidays ? ' customHolidays' : ''}';
 
-  kj.HebrewDateFormatter java() => kj.HebrewDateFormatter()
-    ..hebrewFormat = hebrewFormat
-    ..useGershGershayim = useGershGershayim
-    ..longWeekFormat = longWeekFormat
-    ..useFinalFormLetters = useFinalFormLetters
-    ..useLongHebrewYears = useLongHebrewYears;
+  static List<String> marked(List<String> names) => [for (final name in names) '$name°'];
 
-  kd.HebrewDateFormatter dart() => kd.HebrewDateFormatter()
-    ..hebrewFormat = hebrewFormat
-    ..useGershGershayim = useGershGershayim
-    ..longWeekFormat = longWeekFormat
-    ..useFinalFormLetters = useFinalFormLetters
-    ..useLongHebrewYears = useLongHebrewYears;
+  static JArray<JString?> javaArray(List<String> names) => JArray.of<JString?>(JString.type, [
+        for (final name in names) name.toJString(),
+      ]);
+
+  kj.HebrewDateFormatter java() {
+    final formatter = kj.HebrewDateFormatter()
+      ..hebrewFormat = hebrewFormat
+      ..useGershGershayim = useGershGershayim
+      ..longWeekFormat = longWeekFormat
+      ..useFinalFormLetters = useFinalFormLetters
+      ..useLongHebrewYears = useLongHebrewYears;
+    if (omerPrefix != null) formatter.hebrewOmerPrefix = omerPrefix!.toJString();
+    if (shabbosName != null) formatter.transliteratedShabbosDayOfWeek = shabbosName!.toJString();
+    final defaults = kd.HebrewDateFormatter();
+    if (customMonths) {
+      formatter.transliteratedMonthList = javaArray(marked(defaults.transliteratedMonths));
+      formatter.hebrewMonthList = javaArray(marked(defaults.hebrewMonths));
+    }
+    if (customHolidays) formatter.transliteratedHolidayList = javaArray(marked(defaults.transliteratedHolidays));
+    return formatter;
+  }
+
+  kd.HebrewDateFormatter dart() {
+    final formatter = kd.HebrewDateFormatter()
+      ..hebrewFormat = hebrewFormat
+      ..useGershGershayim = useGershGershayim
+      ..longWeekFormat = longWeekFormat
+      ..useFinalFormLetters = useFinalFormLetters
+      ..useLongHebrewYears = useLongHebrewYears;
+    if (omerPrefix != null) formatter.hebrewOmerPrefix = omerPrefix!;
+    if (shabbosName != null) formatter.transliteratedShabbosDayOfWeek = shabbosName!;
+    if (customMonths) {
+      formatter.transliteratedMonths = marked(formatter.transliteratedMonths);
+      formatter.hebrewMonths = marked(formatter.hebrewMonths);
+    }
+    if (customHolidays) formatter.transliteratedHolidays = marked(formatter.transliteratedHolidays);
+    return formatter;
+  }
 }
 
 class FormatterInput {
