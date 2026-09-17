@@ -543,6 +543,17 @@ class CalendarArea extends Area {
         break;
       }
       report.record(check, Outcome.same, input, '');
+      if (step == operations - 1) {
+        final israel = chance(rng, 0.5);
+        final modern = chance(rng, 0.5);
+        java
+          ..inIsrael = israel
+          ..useModernHolidays = modern;
+        dart
+          ..inIsrael = israel
+          ..setUseModernHolidays(modern);
+        compareCalendar(report, 'calendar.afterArithmetic', CalendarPair(java, dart, '$input inIsrael=$israel modern=$modern'));
+      }
     }
     java.release();
   }
