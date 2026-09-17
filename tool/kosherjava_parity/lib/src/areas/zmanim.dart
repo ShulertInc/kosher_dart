@@ -14,24 +14,74 @@ import 'zman_getters.dart';
 import 'zmanim_arguments.dart';
 import 'zmanim_removed.dart';
 
+class CalculatorSettings {
+  CalculatorSettings(Random rng)
+      : refraction = chance(rng, 0.5) ? null : uniform(rng, 0, 1.2),
+        solarRadius = chance(rng, 0.5) ? null : uniform(rng, 0.2, 0.3),
+        earthRadius = chance(rng, 0.5) ? null : uniform(rng, 6350, 6400);
+
+  final double? refraction;
+  final double? solarRadius;
+  final double? earthRadius;
+
+  @override
+  String toString() => 'refraction=$refraction solarRadius=$solarRadius earthRadius=$earthRadius';
+}
+
 class ZmanimCase {
-  ZmanimCase(Random rng, Zones zones) : date = chance(rng, 0.05) ? erevPesach(rng) : randomDate(rng, 1900, 2300) {
-    place = randomPlace(rng, zones, date);
+  ZmanimCase(Random rng, Zones zones) {
+    final roll = rng.nextDouble();
+    String? zone;
+    CivilDate? chosen;
+    if (roll < 0.05) {
+      chosen = erevPesach(rng);
+    } else if (roll < 0.2) {
+      final picked = pick(rng, zones.names);
+      zone = picked;
+      final day = zones.transitionDay(picked, between(rng, 1900, 2300), rng.nextDouble());
+      if (day != null) chosen = CivilDate(day.$1, day.$2, day.$3);
+    } else if (roll < 0.3) {
+      chosen = randomDate(rng, 1000, 3000);
+    }
+    date = chosen ?? randomDate(rng, 1900, 2300);
+    place = extremePlace(rng, zones) ?? randomPlace(rng, zones, date, chosenZone: zone);
     useElevation = chance(rng, 0.5);
-    candleLightingOffset = chance(rng, 0.5) ? 18.0 : between(rng, 0, 60).toDouble();
-    ateretTorahSunsetOffset = chance(rng, 0.5) ? 40.0 : between(rng, 0, 60).toDouble();
+    candleLightingOffset = offset(rng, 18);
+    ateretTorahSunsetOffset = offset(rng, 40);
     sunTimes = chance(rng, 0.15);
+    settings = chance(rng, 0.2) ? CalculatorSettings(rng) : null;
+    timeOfDay = chance(rng, 0.5) ? null : rng.nextDouble();
+    cloned = chance(rng, 0.1);
   }
 
-  final CivilDate date;
+  late final CivilDate date;
   late final Place place;
   late final bool useElevation;
   late final double candleLightingOffset;
   late final double ateretTorahSunsetOffset;
   late final bool sunTimes;
+  late final CalculatorSettings? settings;
+  late final double? timeOfDay;
+  late final bool cloned;
+
+  static double offset(Random rng, double usual) {
+    final roll = rng.nextDouble();
+    if (roll < 0.5) return usual;
+    if (roll < 0.9) return between(rng, 0, 60).toDouble();
+    return uniform(rng, -30, 90);
+  }
+
+  static Place? extremePlace(Random rng, Zones zones) {
+    if (!chance(rng, 0.05)) return null;
+    return Place(pick(rng, const [0.0, 90.0, -90.0, 89.9999, -89.9999, 66.5, -66.5]),
+        pick(rng, const [0.0, 180.0, -180.0, 179.9999, -179.9999, 7.5, -172.5]),
+        pick(rng, const [0.0, 0.001, 8848.0]), pick(rng, zones.names));
+  }
 
   String describe(String id) => '$id date=$date $place useElevation=$useElevation '
-      'candle=$candleLightingOffset ateret=$ateretTorahSunsetOffset calculator=${sunTimes ? 'SunTimes' : 'NOAA'}';
+      'candle=$candleLightingOffset ateret=$ateretTorahSunsetOffset calculator=${sunTimes ? 'SunTimes' : 'NOAA'}'
+      '${settings == null ? '' : ' $settings'}${timeOfDay == null ? '' : ' timeOfDay=$timeOfDay'}'
+      '${cloned ? ' cloned' : ''}';
 }
 
 const day = 86400000;
@@ -62,7 +112,6 @@ class ZmanimArea extends Area {
   @override
   String get name => 'zmanim';
 
-
   @override
   void run(int seed, Iterable<int> indexes, Report report) {
     for (final index in indexes) {
@@ -77,17 +126,24 @@ class ZmanimArea extends Area {
         report.note('package:timezone disagrees with java.time about midnight, zone rebuilt from java.time');
       }
       final location = zones.dartFromJava(zone, javaMidnight - 3 * day, javaMidnight + 4 * day);
-      final dartDate = tz.TZDateTime.fromMillisecondsSinceEpoch(location, javaMidnight);
-      if (dartDate.year != input.date.year || dartDate.month != input.date.month || dartDate.day != input.date.day) {
+      final midnight = tz.TZDateTime.fromMillisecondsSinceEpoch(location, javaMidnight);
+      if (midnight.year != input.date.year || midnight.month != input.date.month || midnight.day != input.date.day) {
         throw StateError('rebuilt zone $zone disagrees about midnight of ${input.date}');
       }
       if (tz.TZDateTime(location, input.date.year, input.date.month, input.date.day).millisecondsSinceEpoch !=
           javaMidnight) {
         report.note('midnight repeats or is skipped, TZDateTime picks a different instant than java.time');
       }
+      final dartDate = input.timeOfDay == null ? midnight : withinDay(location, midnight, input.timeOfDay!);
 
-      final javaCalendar = javaCalendarFor(input);
-      final dartCalendar = dartCalendarFor(input, dartDate);
+      var javaCalendar = javaCalendarFor(input);
+      var dartCalendar = dartCalendarFor(input, dartDate);
+      if (input.cloned) {
+        final javaClone = javaCalendar.clone() as JavaCalendar;
+        javaCalendar.release();
+        javaCalendar = javaClone;
+        dartCalendar = dartCalendar.clone();
+      }
       final prefix = 'zmanim.${input.sunTimes ? 'suntimes' : 'noaa'}';
       for (final getter in [...zmanGetters, ...removedZmanGetters]) {
         final name = '$prefix.${getter.name}';
@@ -107,6 +163,13 @@ class ZmanimArea extends Area {
     }
   }
 
+  tz.TZDateTime withinDay(tz.Location location, tz.TZDateTime midnight, double fraction) {
+    final next = midnight.add(const Duration(hours: 36));
+    final nextMidnight = zones.javaStartOfDay(midnight.location.name, next.year, next.month, next.day);
+    final span = nextMidnight - midnight.millisecondsSinceEpoch;
+    return tz.TZDateTime.fromMillisecondsSinceEpoch(location, midnight.millisecondsSinceEpoch + (span * fraction).floor());
+  }
+
   JavaCalendar javaCalendarFor(ZmanimCase input) {
     final place = input.place;
     final name = 'case'.toJString();
@@ -124,6 +187,14 @@ class ZmanimArea extends Area {
       calendar.astronomicalCalculator = calculator;
       calculator.release();
     }
+    final settings = input.settings;
+    if (settings != null) {
+      final calculator = calendar.astronomicalCalculator!;
+      if (settings.refraction != null) calculator.refraction = settings.refraction!;
+      if (settings.solarRadius != null) calculator.solarRadius = settings.solarRadius!;
+      if (settings.earthRadius != null) calculator.earthRadius = settings.earthRadius!;
+      calculator.release();
+    }
     return calendar;
   }
 
@@ -135,6 +206,13 @@ class ZmanimArea extends Area {
       ..setCandleLightingOffset(input.candleLightingOffset)
       ..setAteretTorahSunsetOffset(input.ateretTorahSunsetOffset);
     if (input.sunTimes) calendar.setAstronomicalCalculator(kd.SunTimesCalculator());
+    final settings = input.settings;
+    if (settings != null) {
+      final calculator = calendar.getAstronomicalCalculator();
+      if (settings.refraction != null) calculator.setRefraction(settings.refraction!);
+      if (settings.solarRadius != null) calculator.setSolarRadius(settings.solarRadius!);
+      if (settings.earthRadius != null) calculator.setEarthRadius(settings.earthRadius!);
+    }
     return calendar;
   }
 }

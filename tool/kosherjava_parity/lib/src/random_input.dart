@@ -60,8 +60,8 @@ class Place {
 
 double wrapLongitude(double longitude) => (longitude + 180) % 360 - 180;
 
-Place randomPlace(Random rng, Zones zones, CivilDate date) {
-  final zone = pick(rng, zones.names);
+Place randomPlace(Random rng, Zones zones, CivilDate date, {String? chosenZone}) {
+  final String zone = chosenZone ?? pick<String>(rng, zones.names);
   final elevation = chance(rng, 0.5) ? 0.0 : uniform(rng, 0, 4000);
   final roll = rng.nextDouble();
   if (roll < 0.2) {

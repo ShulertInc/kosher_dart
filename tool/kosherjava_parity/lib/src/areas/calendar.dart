@@ -152,6 +152,11 @@ class CalendarArea extends Area {
       compareCalendar(report, 'calendar', random);
       compareDafYomi(rng, report, random, path);
       compareMolad(report, random);
+      if (chance(rng, 0.2)) {
+        final javaClone = random.java.clone() as kj.JewishCalendar;
+        compareCalendar(report, 'calendar.clone', CalendarPair(javaClone, random.dart.clone(), '${random.describe} cloned'));
+        javaClone.release();
+      }
       random.java.release();
 
       compareArithmetic(rng, report, id);
@@ -558,6 +563,13 @@ class CalendarArea extends Area {
     final javaDate = java.value;
     final dartDate = dart.value;
     compareDate(report, 'calendar.JewishDate(molad)', input, javaDate, dartDate);
+    final javaClone = javaDate.clone() as kj.JewishDate;
+    final dartClone = dartDate.clone();
+    compareDate(report, 'calendar.JewishDate(molad).clone', input, javaClone, dartClone);
+    report.exact('calendar.JewishDate(molad).clone molad time', input,
+        attempt(() => '${javaClone.moladHours}:${javaClone.moladMinutes}:${javaClone.moladChalakim}'),
+        attempt(() => '${dartClone.getMoladHours()}:${dartClone.getMoladMinutes()}:${dartClone.getMoladChalakim()}'));
+    javaClone.release();
     report.exact('calendar.JewishDate(molad).getMoladHours', input, attempt(() => javaDate.moladHours),
         attempt(() => dartDate.getMoladHours()));
     report.exact('calendar.JewishDate(molad).getMoladMinutes', input, attempt(() => javaDate.moladMinutes),

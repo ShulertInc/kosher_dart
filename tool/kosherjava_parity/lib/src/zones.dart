@@ -26,6 +26,22 @@ class Zones {
 
   tz.Location dart(String name) => tz.getLocation(name);
 
+  (int, int, int)? transitionDay(String name, int year, double fractionOfYear) {
+    final from = DateTime.utc(year).add(Duration(milliseconds: (fractionOfYear * 365 * 86400000).round()));
+    final rules = java(name).rules!;
+    final cursor = kj.Instant.ofEpochMilli(from.millisecondsSinceEpoch)!;
+    final transition = rules.nextTransition(cursor);
+    cursor.release();
+    rules.release();
+    if (transition == null) return null;
+    final instant = transition.instant!;
+    transition.release();
+    final at = instant.toEpochMilli();
+    instant.release();
+    final local = DateTime.fromMillisecondsSinceEpoch(at + javaOffsetMillis(name, at - 1), isUtc: true);
+    return local.year > 9999 ? null : (local.year, local.month, local.day);
+  }
+
   tz.Location dartFromJava(String name, int fromMillis, int toMillis) {
     final rules = java(name).rules!;
     final transitionAt = <int>[tz.minTime];
