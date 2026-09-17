@@ -107,6 +107,9 @@ class GeoLocation {
     if (elevation < 0) {
       throw ArgumentError("Elevation cannot be negative");
     }
+    if (!elevation.isFinite) {
+      throw ArgumentError("Elevation cannot be NaN or infinite");
+    }
     _elevation = elevation;
   }
 
@@ -128,7 +131,7 @@ class GeoLocation {
       String? direction,
       double? latitude}) {
     if (latitude != null) {
-      if (latitude > 90 || latitude < -90) {
+      if (latitude > 90 || latitude < -90 || latitude.isNaN) {
         throw ArgumentError("Latitude must be between -90 and  90");
       }
       _latitude = latitude;
@@ -141,7 +144,6 @@ class GeoLocation {
     } else {
       double tempLat = degrees + ((minutes + (seconds / 60.0)) / 60.0);
       if (tempLat > 90 || tempLat < 0) {
-        //FIXME An exception should be thrown if degrees, minutes or seconds are negative
         throw ArgumentError(
             "Latitude must be between 0 and  90. Use direction of S instead of negative.");
       }
@@ -179,7 +181,7 @@ class GeoLocation {
       String? direction,
       double? longitude}) {
     if (longitude != null) {
-      if (longitude > 180 || longitude < -180) {
+      if (longitude > 180 || longitude < -180 || longitude.isNaN) {
         throw ArgumentError("Longitude must be between -180 and  180");
       }
       _longitude = longitude;
@@ -191,8 +193,7 @@ class GeoLocation {
           "Longitude must be between 0 and  180.  Use a direction of W instead of negative.");
     } else {
       double longTemp = degrees + ((minutes + (seconds / 60.0)) / 60.0);
-      if (longTemp > 180 || _longitude < 0) {
-        //FIXME An exception should be thrown if degrees, minutes or seconds are negative
+      if (longTemp > 180 || longTemp < 0) {
         throw ArgumentError(
             "Longitude must be between 0 and  180.  Use a direction of W instead of negative.");
       }

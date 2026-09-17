@@ -307,6 +307,9 @@ abstract class AstronomicalCalculator {
   ///   The sun's radius in arc minutes.
   /// See also [getSolarRadius].
   void setSolarRadius(double solarRadius) {
+    if (solarRadius < 0 || solarRadius.isNaN) {
+      throw ArgumentError("Solar radius must be a non-negative number");
+    }
     _solarRadius = solarRadius;
   }
 /*

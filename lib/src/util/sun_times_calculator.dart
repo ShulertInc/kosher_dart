@@ -139,14 +139,7 @@ class SunTimesCalculator extends AstronomicalCalculator {
         (0.020 * _sinDeg(2 * sunMeanAnomaly)) +
         282.634;
 
-    // get longitude into 0-360 degree range
-    if (l >= 360.0) {
-      l = l - 360.0;
-    }
-    if (l < 0) {
-      l = l + 360.0;
-    }
-    return l;
+    return l % 360;
   }
 
   /// Calculates the Sun's right ascension in hours.
@@ -210,8 +203,10 @@ class SunTimesCalculator extends AstronomicalCalculator {
   /// double.nan will be returned.
   static double _getTimeUTC(DateTime dateTime, GeoLocation geoLocation,
       double zenith, bool isSunrise) {
-    int dayOfYear =
-        dateTime.difference(DateTime(dateTime.year, 1, 1)).inDays;
+    int dayOfYear = DateTime.utc(dateTime.year, dateTime.month, dateTime.day)
+            .difference(DateTime.utc(dateTime.year, 1, 1))
+            .inDays +
+        1;
     double sunMeanAnomaly =
         _getMeanAnomaly(dayOfYear, geoLocation.getLongitude(), isSunrise);
     double sunTrueLong = _getSunTrueLongitude(sunMeanAnomaly);
@@ -235,12 +230,21 @@ class SunTimesCalculator extends AstronomicalCalculator {
             _getHoursFromMeridian(geoLocation.getLongitude()), isSunrise));
     double pocessedTime =
         localMeanTime - _getHoursFromMeridian(geoLocation.getLongitude());
-    while (pocessedTime < 0.0) {
-      pocessedTime += 24.0;
-    }
-    while (pocessedTime >= 24.0) {
-      pocessedTime -= 24.0;
-    }
-    return pocessedTime;
+    return pocessedTime % 24;
   }
+
+  @override
+  double getUTCNoon(DateTime dateTime, GeoLocation geoLocation) {
+    double sunrise = getUTCSunrise(dateTime, geoLocation, 90, false);
+    double sunset = getUTCSunset(dateTime, geoLocation, 90, false);
+    double noon = sunrise + ((sunset - sunrise) / 2);
+    if (noon < sunrise) {
+      noon -= 12;
+    }
+    return noon % 24;
+  }
+
+  @override
+  double getUTCMidnight(DateTime dateTime, GeoLocation geoLocation) =>
+      (getUTCNoon(dateTime, geoLocation) + 12) % 24;
 }

@@ -381,67 +381,69 @@ class NOAACalculator extends AstronomicalCalculator {
     return -hourAngle; // in radians
   }
 
-  /// Return the [Solar Elevation](http://en.wikipedia.org/wiki/Celestial_coordinate_system) for the
-  /// horizontal coordinate system at the given location at the given time. Can be negative if the sun is below the
-  /// horizon. Not corrected for altitude.
-  ///
-  /// - [cal]: 
-  ///   time of calculation
-  /// - [lat]: 
-  ///   latitude of location for calculation
-  /// - [lon]: 
-  ///   longitude of location for calculation
-  /// Returns solar elevation in degrees - horizon is 0 degrees, civil twilight is -6 degrees
+  /// Degrees above the horizon, corrected for refraction.
+  static double getSolarElevation(DateTime dateTime, double lat, double lon) =>
+      _getSolarElevationAzimuth(dateTime, lat, lon, false);
 
-  static double getSolarElevation(DateTime dateTime, double lat, double lon) {
-    double julianDay = _getJulianDay(dateTime);
-    double julianCenturies = _getJulianCenturiesFromJulianDay(julianDay);
+  /// Degrees clockwise from true north.
+  static double getSolarAzimuth(DateTime dateTime, double lat, double lon) =>
+      _getSolarElevationAzimuth(dateTime, lat, lon, true);
 
-    double eot = _getEquationOfTime(julianCenturies);
-
-    double longitude = (dateTime.hour + 12.0) +
-        (dateTime.minute + eot + dateTime.second / 60.0) / 60.0;
-
-    longitude = -(longitude * 360.0 / 24.0) % 360.0;
-    double hourAngleRad = radians(lon - longitude);
-    double declination = _getSunDeclination(julianCenturies);
-    double decRad = radians(declination);
-    double latRad = radians(lat);
-    return degrees(asin((sin(latRad) * sin(decRad)) +
-        (cos(latRad) * cos(decRad) * cos(hourAngleRad))));
+  static double _getSolarElevationAzimuth(
+      DateTime dateTime, double lat, double lon, bool isAzimuth) {
+    final DateTime utc = dateTime.toUtc();
+    final double fractionalDay = (utc.hour +
+            (utc.minute +
+                    (utc.second +
+                            (utc.millisecond * 1000 + utc.microsecond) /
+                                1000000.0) /
+                        60.0) /
+                60.0) /
+        24.0;
+    final double julianCenturies =
+        _getJulianCenturiesFromJulianDay(_getJulianDay(utc) + fractionalDay);
+    final double declination = _getSunDeclination(julianCenturies);
+    final double equationOfTime = _getEquationOfTime(julianCenturies);
+    final double trueSolarTime =
+        ((fractionalDay + equationOfTime / 1440.0 + lon / 360.0) + 2) % 1;
+    final double hourAngle = trueSolarTime * 2 * pi - pi;
+    final double cosZenith = sin(radians(lat)) * sin(radians(declination)) +
+        cos(radians(lat)) * cos(radians(declination)) * cos(hourAngle);
+    final double zenith = degrees(acos(max(-1.0, min(1.0, cosZenith))));
+    if (!isAzimuth) {
+      return (90.0 - zenith) + _refractionCorrection(90.0 - zenith);
+    }
+    final double denominator = cos(radians(lat)) * sin(radians(zenith));
+    double azimuth;
+    if (denominator.abs() > 0.001) {
+      final double ratio = (sin(radians(lat)) * cos(radians(zenith)) -
+              sin(radians(declination))) /
+          denominator;
+      azimuth = 180 -
+          degrees(acos(max(-1.0, min(1.0, ratio)))) * (hourAngle > 0 ? -1 : 1);
+    } else {
+      azimuth = lat > 0 ? 180 : 0;
+    }
+    return (azimuth + 360) % 360;
   }
 
-  /// Return the [Solar Azimuth](http://en.wikipedia.org/wiki/Celestial_coordinate_system) for the
-  /// horizontal coordinate system at the given location at the given time. Not corrected for altitude. True south is 0
-  /// degrees.
-  ///
-  /// - [cal]: 
-  ///   time of calculation
-  /// - [lat]: 
-  ///   latitude of location for calculation
-  /// - [lon]: 
-  ///   longitude of location for calculation
-  /// Returns FIXME
-
-  static double getSolarAzimuth(DateTime dateTime, double lat, double lon) {
-    double julianDay = _getJulianDay(dateTime);
-    double julianCenturies = _getJulianCenturiesFromJulianDay(julianDay);
-
-    double eot = _getEquationOfTime(julianCenturies);
-
-    double longitude = (dateTime.hour + 12.0) +
-        (dateTime.minute + eot + dateTime.second / 60.0) / 60.0;
-
-    longitude = -(longitude * 360.0 / 24.0) % 360.0;
-    double hourAngleRad = radians(lon - longitude);
-    double declination = _getSunDeclination(julianCenturies);
-    double decRad = radians(declination);
-    double latRad = radians(lat);
-
-    return degrees(atan(sin(hourAngleRad) /
-            ((cos(hourAngleRad) * sin(latRad)) -
-                (tan(decRad) * cos(latRad))))) +
-        180;
+  static double _refractionCorrection(double elevation) {
+    if (elevation > 85.0) {
+      return 0.0;
+    }
+    final double te = tan(radians(elevation));
+    final double correction;
+    if (elevation > 5.0) {
+      correction = 58.1 / te - 0.07 / pow(te, 3) + 0.000086 / pow(te, 5);
+    } else if (elevation > -0.575) {
+      correction = 1735.0 +
+          elevation *
+              (-518.2 +
+                  elevation * (103.4 + elevation * (-12.79 + 0.711 * elevation)));
+    } else {
+      correction = -20.774 / te;
+    }
+    return correction / 3600.0;
   }
 
   /// Return the [Universal Coordinated Time](http://en.wikipedia.org/wiki/Universal_Coordinated_Time) (UTC)
