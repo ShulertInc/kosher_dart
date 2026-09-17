@@ -196,6 +196,7 @@ class CalendarArea extends Area {
   }
 
   void applyFlags(Random rng, kj.JewishCalendar java, kd.JewishCalendar dart) {
+    if (chance(rng, 0.2)) return;
     final inIsrael = chance(rng, 0.5);
     final mukafChoma = chance(rng, 0.3);
     final modern = chance(rng, 0.5);
@@ -229,6 +230,12 @@ class CalendarArea extends Area {
       final shifted = DateTime.utc(edge.year, edge.month, edge.day).add(Duration(days: between(rng, -2, 1)));
       return CivilDate(shifted.year, shifted.month, shifted.day);
     }
+    if (chance(rng, 0.05)) {
+      final cycles = between(rng, -68, 285);
+      return CivilDate(1925 + 28 * cycles, pick(rng, const [3, 4, 4, 4]), between(rng, 1, 31).clamp(1, 30));
+    }
+    if (chance(rng, 0.04)) return CivilDate(between(rng, 1, 9999), 12, between(rng, 1, 10));
+    if (chance(rng, 0.01)) return CivilDate(1, 1, between(rng, 1, 31));
     final roll = rng.nextDouble();
     if (roll < 0.65) return randomDate(rng, 1900, 2300);
     if (roll < 0.9) return randomDate(rng, 1, 9999);
@@ -236,21 +243,31 @@ class CalendarArea extends Area {
   }
 
   JewishDateFields randomJewish(Random rng) {
-    final year = chance(rng, 0.6) ? between(rng, 5660, 6060) : between(rng, 3762, 13000);
+    final yearRoll = rng.nextDouble();
+    final year = yearRoll < 0.03
+        ? pick(rng, const [3761, 3762])
+        : yearRoll < 0.6
+            ? between(rng, 5660, 6060)
+            : between(rng, 3762, 13000);
     final leap = kj.JewishDate.isJewishLeapYear(year);
     final int month;
     final monthRoll = rng.nextDouble();
-    if (monthRoll < 0.15) {
+    if (year == 3761) {
+      month = monthRoll < 0.5 ? kd.JewishDate.TEVES : pick(rng, [11, 12, if (leap) 13, 1, 2, 3, 4, 5, 6]);
+    } else if (monthRoll < 0.1) {
+      month = kd.JewishDate.IYAR;
+    } else if (monthRoll < 0.25) {
       month = leap ? pick(rng, const [kd.JewishDate.ADAR, kd.JewishDate.ADAR_II]) : kd.JewishDate.ADAR;
     } else if (monthRoll < 0.3) {
       month = pick(rng, const [kd.JewishDate.CHESHVAN, kd.JewishDate.KISLEV, kd.JewishDate.ELUL, kd.JewishDate.TISHREI]);
     } else {
       month = between(rng, 1, leap ? 13 : 12);
     }
-    final first = kj.JewishDate.new$1(year, month, 1);
+    final firstValid = year == 3761 && month == kd.JewishDate.TEVES ? 18 : 1;
+    final first = kj.JewishDate.new$1(year, month, firstValid);
     final length = first.daysInJewishMonth;
     first.release();
-    final day = chance(rng, 0.25) ? length : between(rng, 1, length);
+    final day = chance(rng, 0.25) ? length : between(rng, firstValid, length);
     return JewishDateFields(year, month, day);
   }
 
@@ -633,9 +650,14 @@ class CalendarArea extends Area {
   }
 
   void compareInvalid(Random rng, Report report, String id) {
-    final year = chance(rng, 0.8) ? between(rng, 5700, 5800) : between(rng, 3755, 3765);
-    final month = between(rng, 0, 14);
-    final day = chance(rng, 0.5) ? pick(rng, const [0, 29, 30, 31]) : between(rng, 1, 30);
+    final epoch = chance(rng, 0.15);
+    final year = epoch ? 3761 : chance(rng, 0.8) ? between(rng, 5700, 5800) : between(rng, 3755, 3765);
+    final month = epoch ? pick(rng, const [7, 8, 9, 10, 10, 10, 11]) : between(rng, 0, 14);
+    final day = epoch
+        ? between(rng, 15, 20)
+        : chance(rng, 0.5)
+            ? pick(rng, const [0, 29, 30, 31])
+            : between(rng, 1, 30);
     final input = '$id jewishDateValidation jewish=$year-$month-$day';
     report.exact('calendar.JewishCalendar(y,m,d) validation', input, orThrows(() {
       final java = kj.JewishCalendar.new1(year, month, day);
