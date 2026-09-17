@@ -40,8 +40,7 @@ KosherJava keeps nanoseconds, `DateTime` keeps microseconds. Both sides throwing
   arithmetic.
 - Machine zone: kosher_dart must not depend on it. Run with `TZ=JST-9` or `TZ=HST10` to check.
 
-## Known contract differences
+## Known differences
 
-Counted in notes, not reported as divergences:
-
-- Candle lighting is compared only on Fridays and weekday erev yom tov. kosher_dart answers by the day.
+kosher_dart names the month Marcheshvan / מרחשון where KosherJava says Cheshvan / חשון. KosherJava's output is
+mapped to the full name before comparing.

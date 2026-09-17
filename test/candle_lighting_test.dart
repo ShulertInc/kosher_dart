@@ -5,7 +5,7 @@
 /// candles are actually lit (Friday evening or Yom Tov eve); the method
 /// returns `null` on Shabbat itself, regular weekdays, and Chol Hamoed.
 ///
-/// [ComplexZmanimCalendar.getCandleLighting] returns a `DateTime` that is correct as an
+/// [ComplexZmanimCalendar.getCandleLightingTonight] returns a `DateTime` that is correct as an
 /// instant but is not flagged UTC, so formatting it directly renders it in whatever zone
 /// the machine running the test happens to be in. These tests therefore format through
 /// [DateTime.toUtc] and state their expectations in UTC, with the local time of the
@@ -33,6 +33,12 @@ void main() {
     // Saturday
     complexZmanimCalendar.setCalendar(DateTime.utc(2021, 12, 25));
     expect(_getCandleLighting(complexZmanimCalendar), null);
+  });
+
+  test('getCandleLighting answers every day, before sea level sunset', () async {
+    complexZmanimCalendar.setCalendar(DateTime.utc(2021, 12, 25));
+    expect(complexZmanimCalendar.getCandleLighting(),
+        complexZmanimCalendar.getSeaLevelSunset()!.subtract(const Duration(minutes: 18)));
   });
 
   // Verifies candle lighting on Rosh Hashana (two-day Yom Tov), and the edge
@@ -92,7 +98,8 @@ void main() {
       expect(jewishCalendar.isErevYomTovSheni(), isTrue,
           reason: 'and the first day of Shavuos');
 
-      final DateTime? candleLighting = complexZmanimCalendar.getCandleLighting();
+      final DateTime? candleLighting =
+          complexZmanimCalendar.getCandleLightingTonight();
       final DateTime sunset = complexZmanimCalendar.getSeaLevelSunset()!;
 
       expect(candleLighting!.isBefore(sunset), isTrue,
@@ -114,7 +121,7 @@ void main() {
     expect(JewishCalendar.fromDateTime(date).isErevYomTovSheni(), isTrue);
     expect(
         complexZmanimCalendar
-            .getCandleLighting()!
+            .getCandleLightingTonight()!
             .isAfter(complexZmanimCalendar.getSeaLevelSunset()!),
         isTrue,
         reason: 'lit from an existing flame once the stars are out');
@@ -129,6 +136,6 @@ void main() {
 /// so formatting it as it comes renders it in the machine's own time zone.
 String? _getCandleLighting(ComplexZmanimCalendar complexZmanimCalendar) {
   DateFormat dateFormat = DateFormat("HH:mm");
-  DateTime? candleLighting = complexZmanimCalendar.getCandleLighting();
+  DateTime? candleLighting = complexZmanimCalendar.getCandleLightingTonight();
   return candleLighting != null ? dateFormat.format(candleLighting.toUtc()) : null;
 }

@@ -302,31 +302,19 @@ class ZmanimCalendar extends AstronomicalCalendar {
   DateTime? getTzais72() => AstronomicalCalendar.getTimeOffset(
       getElevationAdjustedSunset(), 72 * AstronomicalCalendar.MINUTE_MILLIS);
 
-  /// A method to return candle lighting time, calculated as [getCandleLightingOffset] minutes before
-  /// [getSeaLevelSunset] sea level sunset for Erev Shabat & Yom Tov, and calculated as after
-  /// TZEIT HACOCHAVIM for secand Yom Tov or Erev Yom Tov after Shabat. Else This method will return null.
-  /// Elevation adjustments are intentionally not performed by this method, but you can calculate it by
-  /// passing the elevation adjusted sunset to [getTimeOffset].
-  ///
-  /// return candle lighting time. If the calculation can't be computed such as in the Arctic Circle where there is at
-  ///         least one day a year where the sun does not rise, and one where it does not set, a null will be returned.
-  ///         See detailed explanation on top of the [AstronomicalCalendar] documentation.
-  ///
-  /// _see [getSeaLevelSunset]_
-  /// _see [getCandleLightingOffset]_
-  /// _see [setCandleLightingOffset]_
-  DateTime? getCandleLighting() {
+  /// [getCandleLightingOffset] minutes before sea level sunset, for any day. Whether candles are lit that day is
+  /// the caller's to check, with [JewishCalendar.hasCandleLighting] or [getCandleLightingTonight].
+  DateTime? getCandleLighting() => AstronomicalCalendar.getTimeOffset(
+      getSeaLevelSunset(),
+      -getCandleLightingOffset() * AstronomicalCalendar.MINUTE_MILLIS);
+
+  /// When candles are lit tonight: [getCandleLighting] on a Friday or a weekday erev yom tov, after dark on the
+  /// second night of yom tov, a yom tov that follows Shabbos and a weekday night of Chanukah, and null otherwise.
+  DateTime? getCandleLightingTonight() {
     JewishCalendar today = JewishCalendar.fromDateTime(getCalendar());
     int dayOfWeek = today.getDayOfWeek();
-
-    // A Friday is erev shabbos whatever else it is, and candles have to be lit
-    // before sunset. The tzais based time below is for lighting from a flame that
-    // is already burning, which shabbos does not allow, so it can never apply
-    // here - as it wrongly did when the first day of Shavuos fell on a Friday,
-    // where it returned a time 25 minutes after shkia.
     if (dayOfWeek == 6) {
-      return AstronomicalCalendar.getTimeOffset(getSeaLevelSunset(),
-          -getCandleLightingOffset() * AstronomicalCalendar.MINUTE_MILLIS);
+      return getCandleLighting();
     }
     if ((dayOfWeek == 7 && today.isErevYomTov()) ||
         today.isErevYomTovSheni() ||
@@ -336,8 +324,7 @@ class ZmanimCalendar extends AstronomicalCalendar {
           -13.5 * AstronomicalCalendar.MINUTE_MILLIS);
     }
     if (today.isErevYomTov()) {
-      return AstronomicalCalendar.getTimeOffset(getSeaLevelSunset(),
-          -getCandleLightingOffset() * AstronomicalCalendar.MINUTE_MILLIS);
+      return getCandleLighting();
     }
     return null;
   }

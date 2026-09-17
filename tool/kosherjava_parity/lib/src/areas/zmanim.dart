@@ -42,20 +42,6 @@ CivilDate erevPesach(Random rng) {
   return CivilDate(jewishDate.getGregorianYear(), jewishDate.getGregorianMonth(), jewishDate.getGregorianDayOfMonth());
 }
 
-String? contractFor(String getter, kd.JewishCalendar jewishDay) {
-  if (getter == 'getCandleLighting') {
-    final friday = jewishDay.getDayOfWeek() == 6;
-    final weekdayErevYomTov = jewishDay.isErevYomTov() &&
-        jewishDay.getDayOfWeek() != 7 &&
-        !jewishDay.isErevYomTovSheni() &&
-        !jewishDay.isChanukah();
-    return friday || weekdayErevYomTov
-        ? null
-        : 'contract: candle lighting compared on Fridays and weekday erev yom tov only (kosher_dart answers by the day)';
-  }
-  return null;
-}
-
 int? millisOf(kj.Instant? instant) {
   if (instant == null) return null;
   final millis = instant.toEpochMilli();
@@ -103,14 +89,8 @@ class ZmanimArea extends Area {
       final javaCalendar = javaCalendarFor(input);
       final dartCalendar = dartCalendarFor(input, dartDate);
       final prefix = 'zmanim.${input.sunTimes ? 'suntimes' : 'noaa'}';
-      final jewishDay = kd.JewishCalendar.fromDateTime(dartDate);
       for (final getter in [...zmanGetters, ...removedZmanGetters]) {
         final name = '$prefix.${getter.name}';
-        final contract = contractFor(getter.name, jewishDay);
-        if (contract != null) {
-          report.note(contract);
-          continue;
-        }
         switch (getter) {
           case InstantZman(:final java, :final dart):
             report.instant(name, describe, attempt(() => millisOf(java(javaCalendar))),
