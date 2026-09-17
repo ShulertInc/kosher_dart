@@ -1217,7 +1217,7 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
           getAlos16Point1Degrees(), getTzaisGeonim7Point083Degrees());
 
   /// From the GRA in Kol Eliyahu on Berachos #173 that states that _zman krias shema_ is calculated as half the
-  /// time from [getSeaLevelSunrise] sea level sunrise to [getFixedLocalChatzos] fixed local chatzos.
+  /// time from [getElevationAdjustedSunrise] sunrise to [getFixedLocalChatzos] fixed local chatzos.
   /// The GRA himself seems to contradict this when he stated that _zman krias shema_ is 1/4 of the day from
   /// sunrise to sunset. See _Sarah Lamoed_ #25 in Yisroel Vehazmanim Vol. III page 1016.
   ///
@@ -1231,11 +1231,14 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   ///         confirmation from Rabbi Harfenes.
   DateTime? getSofZmanShmaKolEliyahu() {
     DateTime? chatzos = getFixedLocalChatzos();
-    if (chatzos == null || getSunrise() == null) {
+    DateTime? sunrise = getElevationAdjustedSunrise();
+    if (chatzos == null || getSunrise() == null || sunrise == null) {
       return null;
     }
-    double diff = chatzos.difference(getSeaLevelSunrise()!).inMilliseconds / 2;
-    return AstronomicalCalendar.getTimeOffset(chatzos, -diff);
+    return chatzos.subtract(Duration(
+        milliseconds: (chatzos.millisecondsSinceEpoch -
+                sunrise.millisecondsSinceEpoch) ~/
+            2));
   }
 
   /// This method returns the latest _zman tfila_ (time to recite the morning prayers) according to the opinion
@@ -1783,7 +1786,7 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
       return null;
     }
     return AstronomicalCalendar.getTimeOffset(getElevationAdjustedSunset(),
-        (sunrise.difference(alos19Point8)).inMilliseconds * (5 / 18));
+        sunrise.difference(alos19Point8).inMicroseconds * (5 / 18) / 1000);
   }
 
   /// This method returns the beginning of _bain hashmashos_ (twilight) according to the [Yereim (Rabbi Eliezer of Metz)]
@@ -2401,16 +2404,14 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   /// return the Date representing the local _chatzos_
   /// _see [GeoLocation#getLocalMeanTimeOffset]_
   DateTime? getFixedLocalChatzos() {
-    // Local mean noon depends only on the longitude, so it is computed straight
-    // from UTC noon. Reading it off the machine's own time zone, as this once
-    // did, moved the answer by a whole day for a location the machine is not in.
     final DateTime date = getAdjustedCalendar();
     final DateTime utcNoon = DateTime.utc(date.year, date.month, date.day, 12);
     final int longitudeOffset = (getGeoLocation().getLongitude() *
             4 *
-            AstronomicalCalendar.MINUTE_MILLIS)
-        .round();
-    return utcNoon.subtract(Duration(milliseconds: longitudeOffset)).toLocal();
+            AstronomicalCalendar.MINUTE_MILLIS *
+            1000)
+        .truncate();
+    return utcNoon.subtract(Duration(microseconds: longitudeOffset)).toLocal();
   }
 
   /// A method that returns the latest _zman krias shema_ (time to recite Shema in the morning) calculated as 3
@@ -2491,22 +2492,17 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   ///  return the _molad_ based time. If the _zman_ does not occur during the current date, null will be returned.
   DateTime? getMoladBasedTime(
       DateTime moladBasedTime, DateTime? alos, DateTime? tzais, bool techila) {
-    DateTime? lastMidnight = getMidnightLastNight();
-    DateTime? midnightTonigh = getMidnightTonight();
-    if (!(moladBasedTime.isBefore(lastMidnight!) ||
-        moladBasedTime.isAfter(midnightTonigh!))) {
-      if (alos != null || tzais != null) {
-        if (techila &&
-            !(moladBasedTime.isBefore(tzais!) ||
-                moladBasedTime.isAfter(alos!))) {
-          return tzais;
-        } else {
-          return alos;
-        }
-      }
+    if (moladBasedTime.isBefore(getMidnightLastNight()!) ||
+        moladBasedTime.isAfter(getMidnightTonight()!)) {
+      return null;
+    }
+    if (alos == null || tzais == null) {
       return moladBasedTime;
     }
-    return null;
+    if (moladBasedTime.isAfter(alos) && moladBasedTime.isBefore(tzais)) {
+      return techila ? tzais : alos;
+    }
+    return moladBasedTime;
   }
 
   /// Returns the latest time of _Kiddush Levana_ calculated as 15 days after the _molad_. This is the
@@ -2617,22 +2613,37 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   /// Used by Molad based zmanim to determine if zmanim occur during the current day.
   /// _see [getMoladBasedTime]_
   /// return previous midnight
-  DateTime? getMidnightLastNight() {
-    DateTime midnight = DateTime(getCalendar().year, getCalendar().month,
-        getCalendar().day, 0, 0, 0, 0, 0);
-    return midnight;
-  }
+  DateTime? getMidnightLastNight() => _startOfDay(getCalendar());
 
   /// Used by Molad based zmanim to determine if zmanim occur during the current day.
   /// _see [getMoladBasedTime]_
   /// return following midnight
-  DateTime? getMidnightTonight() {
-    DateTime midnight = DateTime(getCalendar().year, getCalendar().month,
-        getCalendar().day, 0, 0, 0, 0, 0);
-    // DateTime is immutable, so this has to be the returned value: discarding it left
-    // tonight's midnight equal to last night's, and every molad based zman fell outside
-    // the resulting empty day.
-    return midnight.add(const Duration(days: 1));
+  DateTime? getMidnightTonight() =>
+      _startOfDay(_startOfDay(getCalendar()).add(const Duration(hours: 36)));
+
+  static DateTime _startOfDay(DateTime day) {
+    final DateTime target = DateTime.utc(day.year, day.month, day.day);
+    Duration wallClockPastMidnight(DateTime instant) => DateTime.utc(instant.year,
+            instant.month, instant.day, instant.hour, instant.minute,
+            instant.second, instant.millisecond, instant.microsecond)
+        .difference(target);
+    DateTime midnight = day.subtract(wallClockPastMidnight(day));
+    for (var attempt = 0; attempt < 3; attempt++) {
+      final Duration drift = wallClockPastMidnight(midnight);
+      if (drift == Duration.zero) break;
+      final DateTime corrected = midnight.subtract(drift);
+      if (drift.isNegative && wallClockPastMidnight(corrected) > Duration.zero) {
+        return corrected;
+      }
+      midnight = corrected;
+    }
+    final DateTime earlier = midnight.subtract(const Duration(hours: 3));
+    final Duration fallBack = earlier.timeZoneOffset - midnight.timeZoneOffset;
+    if (fallBack > Duration.zero &&
+        wallClockPastMidnight(midnight.subtract(fallBack)) == Duration.zero) {
+      return midnight.subtract(fallBack);
+    }
+    return midnight;
   }
 
   /// Returns the earliest time of _Kiddush Levana_ according to the opinions that it should not be said until 7
@@ -3044,11 +3055,8 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
     if (startOfHalfDay == null || endOfHalfDay == null) {
       return null;
     }
-    double shaahZmanis = (endOfHalfDay.millisecondsSinceEpoch -
-            startOfHalfDay.millisecondsSinceEpoch) /
-        6;
-    return DateTime.fromMillisecondsSinceEpoch(
-        (startOfHalfDay.millisecondsSinceEpoch + shaahZmanis * hours).toInt());
+    return AstronomicalCalendar.offsetByParts(
+        startOfHalfDay, startOfHalfDay, endOfHalfDay, 6, hours);
   }
 
   /// This method returns [Rav Moshe Feinstein's](https://en.wikipedia.org/wiki/Moshe_Feinstein) opinion of the
@@ -3505,13 +3513,13 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   ///
   /// return the `DateTime` the sun is due east, or null where the day has a sunrise.
   DateTime? getPolarSunriseBenIshChai() {
-    if (getSunrise() != null) {
+    if (getElevationAdjustedSunrise() != null) {
       return null;
     }
     return getDateFromTime(
         getAstronomicalCalculator()
             .getUTCTimeAtAzimuth(getAdjustedCalendar(), getGeoLocation(), 90),
-        true);
+        SolarEvent.sunrise);
   }
 
   /// This method returns the _Ben Ish Chai_'s sunset for a day on which the sun does not
@@ -3520,12 +3528,12 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   ///
   /// return the `DateTime` the sun is due west, or null where the day has a sunset.
   DateTime? getPolarSunsetBenIshChai() {
-    if (getSunset() != null) {
+    if (getElevationAdjustedSunset() != null) {
       return null;
     }
     return getDateFromTime(
         getAstronomicalCalculator()
             .getUTCTimeAtAzimuth(getAdjustedCalendar(), getGeoLocation(), 270),
-        false);
+        SolarEvent.sunset);
   }
 }

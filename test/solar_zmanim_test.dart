@@ -35,6 +35,12 @@ void expectMoment(DateTime? actual, DateTime expected) {
       reason: 'expected $expected, got ${actual.toUtc()}');
 }
 
+void expectMillisecond(DateTime? actual, DateTime expected) {
+  expect(actual, isNotNull);
+  expect(actual!.toUtc().millisecondsSinceEpoch, expected.millisecondsSinceEpoch,
+      reason: 'expected $expected, got ${actual.toUtc()}');
+}
+
 void main() {
   final DateTime springDay = DateTime(1990, 3, 20);
 
@@ -43,14 +49,11 @@ void main() {
       // 35.2354° east is 2 hours 20 minutes 56.496 seconds of longitude, so local mean
       // noon there is that much before noon UTC. Reading the offset off the machine's
       // own time zone, as this once did, put the answer on the wrong day entirely.
-      expect(jerusalem(springDay).getFixedLocalChatzos()!.toUtc(),
-          DateTime.utc(1990, 3, 20, 9, 39, 3, 504));
+      expectMillisecond(jerusalem(springDay).getFixedLocalChatzos(), DateTime.utc(1990, 3, 20, 9, 39, 3, 504));
     });
 
     test('is noon UTC on the prime meridian', () {
-      expect(
-          calendarFor(51.4772, 0, 0, springDay).getFixedLocalChatzos()!.toUtc(),
-          DateTime.utc(1990, 3, 20, 12));
+      expectMillisecond(calendarFor(51.4772, 0, 0, springDay).getFixedLocalChatzos(), DateTime.utc(1990, 3, 20, 12));
     });
   });
 
@@ -58,13 +61,11 @@ void main() {
     test('is the sun crossing the meridian, not the middle of the day', () {
       // The midpoint of sunrise and sunset misses the transit by up to a minute or so,
       // by more the further from the equator.
-      expect(jerusalem(springDay).getChatzos()!.toUtc(),
-          DateTime.utc(1990, 3, 20, 9, 46, 37, 603));
+      expectMillisecond(jerusalem(springDay).getChatzos(), DateTime.utc(1990, 3, 20, 9, 46, 37, 603));
 
       final ComplexZmanimCalendar reykjavik =
           calendarFor(64.1466, -21.9426, 0, DateTime(1992, 5, 20));
-      expect(reykjavik.getChatzos()!.toUtc(),
-          DateTime.utc(1992, 5, 20, 13, 24, 17, 206));
+      expectMillisecond(reykjavik.getChatzos(), DateTime.utc(1992, 5, 20, 13, 24, 17, 206));
 
       final DateTime midpoint = reykjavik.getSunTransit(
           reykjavik.getSeaLevelSunrise(), reykjavik.getSeaLevelSunset())!;
@@ -73,11 +74,8 @@ void main() {
     });
 
     test('solar midnight is the transit on the far side of the earth', () {
-      expect(
-          calendarFor(64.1466, -21.9426, 0, DateTime(1992, 5, 20))
-              .getSolarMidnight()!
-              .toUtc(),
-          DateTime.utc(1992, 5, 21, 1, 24, 19, 111));
+      expectMillisecond(calendarFor(64.1466, -21.9426, 0, DateTime(1992, 5, 20))
+              .getSolarMidnight(), DateTime.utc(1992, 5, 21, 1, 24, 19, 111));
     });
   });
 
@@ -85,8 +83,7 @@ void main() {
     test('alos 60 follows the elevation setting like the other offsets do', () {
       // It used to read visual sunrise whatever the setting said, so at 754 metres it
       // came out four minutes early.
-      expect(jerusalem(springDay).getAlos60()!.toUtc(),
-          DateTime.utc(1990, 3, 20, 2, 43, 29, 286));
+      expectMillisecond(jerusalem(springDay).getAlos60(), DateTime.utc(1990, 3, 20, 2, 43, 29, 286));
       expect(
           jerusalem(springDay).getAlos60(),
           jerusalem(springDay)
@@ -101,8 +98,7 @@ void main() {
   });
 
   test('zmanim keep their milliseconds', () {
-    expect(jerusalem(springDay).getSunrise()!.toUtc(),
-        DateTime.utc(1990, 3, 20, 3, 39, 20, 645));
+    expectMillisecond(jerusalem(springDay).getSunrise(), DateTime.utc(1990, 3, 20, 3, 39, 20, 645));
   });
 
   group('where the sun never reaches the dip', () {
@@ -125,7 +121,7 @@ void main() {
     });
 
     test('sunrise and sunset themselves still answer', () {
-      expect(london.getSunrise()!.toUtc(), DateTime.utc(1993, 6, 27, 3, 45, 9, 411));
+      expectMillisecond(london.getSunrise(), DateTime.utc(1993, 6, 27, 3, 45, 9, 411));
       expect(london.getSunset(), isNotNull);
     });
   });
@@ -159,10 +155,8 @@ void main() {
     });
 
     test('the degree based zmanim kosher_dart was missing', () {
-      expect(calendar.getMisheyakir12Point85Degrees()!.toUtc(),
-          DateTime.utc(1990, 3, 20, 2, 46, 49, 561));
-      expect(calendar.getTzaisGeonim4Point42Degrees()!.toUtc(),
-          DateTime.utc(1990, 3, 20, 16, 7, 8, 794));
+      expectMillisecond(calendar.getMisheyakir12Point85Degrees(), DateTime.utc(1990, 3, 20, 2, 46, 49, 561));
+      expectMillisecond(calendar.getTzaisGeonim4Point42Degrees(), DateTime.utc(1990, 3, 20, 16, 7, 8, 794));
       expect(calendar.getTzaisGeonim4Point66Degrees(), isNotNull);
     });
 
@@ -189,16 +183,12 @@ void main() {
       expect(calendar.getSunrise(), isNull);
       expect(calendar.getSunset(), isNull);
 
-      expect(calendar.getPolarSunriseBenIshChai()!.toUtc(),
-          DateTime.utc(1992, 5, 20, 5, 11, 25, 151));
-      expect(calendar.getPolarSunsetBenIshChai()!.toUtc(),
-          DateTime.utc(1992, 5, 20, 16, 36, 28, 111));
+      expectMillisecond(calendar.getPolarSunriseBenIshChai(), DateTime.utc(1992, 5, 20, 5, 11, 25, 151));
+      expectMillisecond(calendar.getPolarSunsetBenIshChai(), DateTime.utc(1992, 5, 20, 16, 36, 28, 111));
 
       final ComplexZmanimCalendar dark = longyearbyen(polarNight);
-      expect(dark.getPolarSunriseBenIshChai()!.toUtc(),
-          DateTime.utc(1995, 12, 3, 4, 27, 40, 165));
-      expect(dark.getPolarSunsetBenIshChai()!.toUtc(),
-          DateTime.utc(1995, 12, 3, 17, 6, 39, 793));
+      expectMillisecond(dark.getPolarSunriseBenIshChai(), DateTime.utc(1995, 12, 3, 4, 27, 40, 165));
+      expectMillisecond(dark.getPolarSunsetBenIshChai(), DateTime.utc(1995, 12, 3, 17, 6, 39, 793));
     });
 
     test('they answer null on a day that has a real sunrise and sunset', () {

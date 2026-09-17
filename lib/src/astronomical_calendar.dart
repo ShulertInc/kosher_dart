@@ -18,6 +18,9 @@ import 'dart:core';
 
 import 'package:kosher_dart/src/util/astronomical_calculator.dart';
 import 'package:kosher_dart/src/util/geo_location.dart';
+import 'package:kosher_dart/src/util/omitted.dart';
+
+enum SolarEvent { sunrise, sunset, noon, midnight }
 
 /// A Java calendar that calculates astronomical times such as [getSunrise], [getSunset] and twilight times. This class contains a [getCalendar] and can therefore use the standard
 /// Calendar functionality to change dates etc... The calculation engine used to calculate the astronomical times can be
@@ -118,7 +121,7 @@ class AstronomicalCalendar {
     if (sunrise.isNaN) {
       return null;
     } else {
-      return getDateFromTime(sunrise, true);
+      return getDateFromTime(sunrise, SolarEvent.sunrise);
     }
   }
 
@@ -137,7 +140,7 @@ class AstronomicalCalendar {
     if (sunrise.isNaN) {
       return null;
     } else {
-      return getDateFromTime(sunrise, true);
+      return getDateFromTime(sunrise, SolarEvent.sunrise);
     }
   }
 
@@ -190,7 +193,7 @@ class AstronomicalCalendar {
     if (sunset.isNaN) {
       return null;
     } else {
-      return getDateFromTime(sunset, false);
+      return getDateFromTime(sunset, SolarEvent.sunset);
     }
   }
 
@@ -208,7 +211,7 @@ class AstronomicalCalendar {
     if (sunset.isNaN) {
       return null;
     } else {
-      return getDateFromTime(sunset, false);
+      return getDateFromTime(sunset, SolarEvent.sunset);
     }
   }
 
@@ -254,8 +257,20 @@ class AstronomicalCalendar {
     if (time == null || !offset.isFinite || offset == double.minPositive) {
       return null;
     }
-    return time.add(Duration(milliseconds: offset.toInt()));
+    return time.add(Duration(microseconds: (offset * 1000).truncate()));
   }
+
+  static DateTime offsetByParts(
+      DateTime origin, DateTime start, DateTime end, int parts, double count) {
+    final int partNanos =
+        (end.microsecondsSinceEpoch - start.microsecondsSinceEpoch) * 1000 ~/
+            parts;
+    final int offsetNanos = (partNanos * count).truncate();
+    return origin.add(Duration(microseconds: _floorDivide(offsetNanos, 1000)));
+  }
+
+  static int _floorDivide(int dividend, int divisor) =>
+      (dividend - dividend % divisor) ~/ divisor;
 
   /// A utility method that returns the time of an offset by degrees below or above the horizon of
   /// [getSunrise]. Note that the degree offset is from the vertical, so for a calculation of 14°
@@ -275,7 +290,7 @@ class AstronomicalCalendar {
     if (dawn.isNaN) {
       return null;
     } else {
-      return getDateFromTime(dawn, true);
+      return getDateFromTime(dawn, SolarEvent.sunrise);
     }
   }
 
@@ -295,7 +310,7 @@ class AstronomicalCalendar {
     if (sunset.isNaN) {
       return null;
     } else {
-      return getDateFromTime(sunset, false);
+      return getDateFromTime(sunset, SolarEvent.sunset);
     }
   }
 
@@ -390,17 +405,15 @@ class AstronomicalCalendar {
   /// double.nan will be returned. See detailed explanation on top of the page.
   ///
   /// See also [getTemporalHour].
-  double getTemporalHour([DateTime? startOfDay, DateTime? endOfDay]) {
-    if (startOfDay == null || endOfDay == null) {
+  double getTemporalHour([DateTime? startOfDay = omitted, DateTime? endOfDay = omitted]) {
+    if (isOmitted(startOfDay) && isOmitted(endOfDay)) {
       startOfDay = getSeaLevelSunrise();
       endOfDay = getSeaLevelSunset();
     }
-    if (startOfDay == null || endOfDay == null) {
-      // Where the sun does not rise or set there is no day to divide, and the callers
-      // that offset by a shaah zmanis carry the double.nan through to a null.
+    if (startOfDay == null || endOfDay == null || isOmitted(startOfDay) || isOmitted(endOfDay)) {
       return double.nan;
     }
-    return (endOfDay.millisecondsSinceEpoch - startOfDay.millisecondsSinceEpoch) / 12;
+    return (endOfDay.microsecondsSinceEpoch - startOfDay.microsecondsSinceEpoch) / 12000;
   }
 
   /// A method that returns sundial or solarnoon. It occurs when the Sun is [transiting](http://en.wikipedia.org/wiki/Transit_%28astronomy%29) the [celestial meridian](http://en.wikipedia.org/wiki/Meridian_%28astronomy%29). In this class it is
@@ -417,18 +430,15 @@ class AstronomicalCalendar {
   /// Returns the `Date` representing Sun's transit. If the calculation can't be computed such as in the
   /// Arctic Circle where there is at least one day a year where the sun does not rise, and one where it does
   /// not set, null will be returned. See detailed explanation on top of the page.
-  DateTime? getSunTransit([DateTime? startOfDay, DateTime? endOfDay]) {
-    if (startOfDay == null || endOfDay == null) {
-      // Astronomical chatzos - the sun actually crossing the meridian - rather
-      // than the midpoint of the day, which the changing declination moves off
-      // the transit by up to a minute or so.
+  DateTime? getSunTransit([DateTime? startOfDay = omitted, DateTime? endOfDay = omitted]) {
+    if (isOmitted(startOfDay) && isOmitted(endOfDay)) {
       return getDateFromTime(
           getAstronomicalCalculator()
               .getUTCNoon(getAdjustedCalendar(), getGeoLocation()),
-          false);
+          SolarEvent.noon);
     }
     double temporalHour = getTemporalHour(startOfDay, endOfDay);
-    return getTimeOffset(startOfDay, temporalHour * 6);
+    return temporalHour.isNaN ? null : getTimeOffset(startOfDay, temporalHour * 6);
   }
 
   /// A method that returns astronomical _chatzos halayla_ - solar midnight, the moment the sun crosses the
@@ -438,37 +448,38 @@ class AstronomicalCalendar {
   DateTime? getSolarMidnight() => getDateFromTime(
       getAstronomicalCalculator()
           .getUTCMidnight(getAdjustedCalendar(), getGeoLocation()),
-      false);
+      SolarEvent.midnight);
 
   /// A method that returns a `Date` from the time passed in as a parameter.
   ///
   /// - [time]: 
   ///   The time to be set as the time for the `Date`. The time expected is in the format: 18.75
   ///   for 6:45:00 PM.time is sunrise and false if it is sunset
-  /// - [isSunrise]: true if the
   /// Returns The Date.
-  DateTime? getDateFromTime(double time, bool isSunrise) {
+  DateTime? getDateFromTime(double time, SolarEvent solarEvent) {
     if (time.isNaN) {
       return null;
     }
     DateTime adjustedCalendar = getAdjustedCalendar();
-    // The time is UTC, so anchor it to UTC midnight rather than to local midnight
-    // plus an offset: a machine whose own time zone shifts at midnight would
-    // otherwise move every zman by that shift.
-    DateTime cal = DateTime.utc(
-        adjustedCalendar.year, adjustedCalendar.month, adjustedCalendar.day);
-    int hours = time.toInt(); // retain only the hours
-
-    // Check if a date transition has occurred, or is about to occur - this indicates the date of the event is
-    // actually not the target date, but the day prior or after
-    int localTimeHours = getGeoLocation().getLongitude() ~/ 15;
-    if (isSunrise && localTimeHours + hours > 18) {
-      cal = cal.add(const Duration(days: -1));
-    } else if (!isSunrise && localTimeHours + hours < 6) {
-      cal = cal.add(const Duration(days: 1));
+    int dayShift = 0;
+    double localTimeHours = getGeoLocation().getLongitude() / 15 + time;
+    if (solarEvent == SolarEvent.sunrise && localTimeHours > 18) {
+      dayShift = -1;
+    } else if (solarEvent == SolarEvent.sunset && localTimeHours < 6) {
+      dayShift = 1;
+    } else if (solarEvent == SolarEvent.midnight && localTimeHours < 12) {
+      dayShift = 1;
+    } else if (solarEvent == SolarEvent.noon) {
+      if (localTimeHours < 0) {
+        dayShift = 1;
+      } else if (localTimeHours > 24) {
+        dayShift = -1;
+      }
     }
+    DateTime cal = DateTime.utc(adjustedCalendar.year, adjustedCalendar.month,
+        adjustedCalendar.day + dayShift);
     return cal
-        .add(Duration(milliseconds: (time * HOUR_MILLIS).floor()))
+        .add(Duration(microseconds: (time * HOUR_MILLIS * 1000).round()))
         .toLocal();
   }
 
@@ -481,43 +492,8 @@ class AstronomicalCalendar {
   ///   offset
   /// Returns the degrees below the horizon before sunrise that match the offset in minutes passed it as a parameter.
   /// See also [getSunsetSolarDipFromOffset].
-  double getSunriseSolarDipFromOffset(double minutes) {
-    DateTime? seaLevelSunrise = getSeaLevelSunrise();
-    DateTime? offsetByTime =
-        getTimeOffset(seaLevelSunrise, -(minutes * MINUTE_MILLIS));
-    if (seaLevelSunrise == null || offsetByTime == null) return 0.0;
-
-    double low = minutes > 0.0 ? 0.0 : -90.0;
-    double high = minutes > 0.0 ? 90.0 : 0.0;
-
-    while ((high - low) > 0.0001) {
-      double mid = (low + high) / 2.0;
-      DateTime? offsetByDegrees =
-          getSunriseOffsetByDegrees(GEOMETRIC_ZENITH + mid);
-      bool conditionContinues;
-      if (offsetByDegrees == null) {
-        conditionContinues = false;
-      } else if (minutes > 0.0) {
-        conditionContinues = offsetByDegrees.isAfter(offsetByTime);
-      } else {
-        conditionContinues = offsetByDegrees.isBefore(offsetByTime);
-      }
-      if (minutes > 0.0) {
-        if (conditionContinues) {
-          low = mid;
-        } else {
-          high = mid;
-        }
-      } else {
-        if (conditionContinues) {
-          high = mid;
-        } else {
-          low = mid;
-        }
-      }
-    }
-    return minutes > 0.0 ? high : low;
-  }
+  double getSunriseSolarDipFromOffset(double minutes) =>
+      _solarDipFromOffset(minutes, getSeaLevelSunrise(), -1, getSunriseOffsetByDegrees);
 
   /// Returns the dip below the horizon after sunset that matches the offset minutes on passed in as a parameter. For
   /// example passing in 72 minutes for a calendar set to the equinox in Jerusalem returns a value close to 16.1°
@@ -528,42 +504,58 @@ class AstronomicalCalendar {
   ///   offset
   /// Returns the degrees below the horizon after sunset that match the offset in minutes passed it as a parameter.
   /// See also [getSunriseSolarDipFromOffset].
-  double getSunsetSolarDipFromOffset(double minutes) {
-    DateTime? seaLevelSunset = getSeaLevelSunset();
-    DateTime? offsetByTime =
-        getTimeOffset(seaLevelSunset, minutes * MINUTE_MILLIS);
-    if (seaLevelSunset == null || offsetByTime == null) return 0.0;
+  double getSunsetSolarDipFromOffset(double minutes) =>
+      _solarDipFromOffset(minutes, getSeaLevelSunset(), 1, getSunsetOffsetByDegrees);
 
-    double low = minutes > 0.0 ? 0.0 : -90.0;
-    double high = minutes > 0.0 ? 90.0 : 0.0;
-
-    while ((high - low) > 0.0001) {
-      double mid = (low + high) / 2.0;
-      DateTime? offsetByDegrees =
-          getSunsetOffsetByDegrees(GEOMETRIC_ZENITH + mid);
-      bool conditionContinues;
-      if (offsetByDegrees == null) {
-        conditionContinues = false;
-      } else if (minutes > 0.0) {
-        conditionContinues = offsetByDegrees.isBefore(offsetByTime);
-      } else {
-        conditionContinues = offsetByDegrees.isAfter(offsetByTime);
+  double _solarDipFromOffset(double minutes, DateTime? event, int direction,
+      DateTime? Function(double zenith) offsetByDegrees) {
+    if (minutes == 0.0) {
+      return 0.0;
+    }
+    if (minutes.isNaN || event == null) {
+      return double.nan;
+    }
+    const double incrementor = 0.0001;
+    final int offsetByTimeMillis = _floorDivide(
+        event.microsecondsSinceEpoch +
+            (direction * minutes * MINUTE_MILLIS * 1000).truncate(),
+        1000);
+    final double step = minutes > 0.0 ? incrementor : -incrementor;
+    double degreesAfter(int steps) {
+      double degrees = 0.0;
+      for (int i = 0; i < steps; i++) {
+        degrees += step;
       }
-      if (minutes > 0.0) {
-        if (conditionContinues) {
-          low = mid;
-        } else {
-          high = mid;
-        }
+      return degrees;
+    }
+
+    bool stops(double degrees) {
+      final DateTime? time = offsetByDegrees(GEOMETRIC_ZENITH + degrees);
+      if (time == null || degrees.abs() > 30.0) {
+        return true;
+      }
+      final int millis = _floorDivide(time.microsecondsSinceEpoch, 1000);
+      final bool earlierThanOffset = millis < offsetByTimeMillis;
+      final bool laterThanOffset = millis > offsetByTimeMillis;
+      final bool continues = (minutes > 0.0) == (direction < 0)
+          ? laterThanOffset
+          : earlierThanOffset;
+      return !continues;
+    }
+
+    int low = 1;
+    int high = (30.0 / incrementor).ceil() + 1;
+    while (low < high) {
+      final int middle = (low + high) ~/ 2;
+      if (stops(degreesAfter(middle))) {
+        high = middle;
       } else {
-        if (conditionContinues) {
-          high = mid;
-        } else {
-          low = mid;
-        }
+        low = middle + 1;
       }
     }
-    return minutes > 0.0 ? high : low;
+    final double degrees = degreesAfter(low);
+    final DateTime? time = offsetByDegrees(GEOMETRIC_ZENITH + degrees);
+    return time == null || degrees.abs() > 30.0 ? double.nan : degrees;
   }
 
   /// Adjusts the `Calendar` to deal with edge cases where the location crosses the antimeridian.
@@ -575,7 +567,8 @@ class AstronomicalCalendar {
     if (offset == 0) {
       return getCalendar();
     }
-    return getCalendar().add(Duration(days: offset));
+    DateTime calendar = getCalendar();
+    return DateTime.utc(calendar.year, calendar.month, calendar.day + offset);
   }
 
 /*
