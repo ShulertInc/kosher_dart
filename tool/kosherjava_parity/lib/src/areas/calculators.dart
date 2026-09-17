@@ -145,7 +145,7 @@ class CalculatorsArea extends Area {
     kd.AstronomicalCalculator dart,
   ) {
     final rng = setup.rng;
-    final zenith = chance(rng, 0.7) ? pick(rng, _zeniths) : uniform(rng, 80, 120);
+    final zenith = chance(rng, 0.7) ? pick(rng, _zeniths) : (chance(rng, 0.8) ? uniform(rng, 80, 120) : uniform(rng, -10, 200));
     final adjust = chance(rng, 0.5);
     final input = '${setup.input} zenith=$zenith adjustForElevation=$adjust';
     final prefix = 'calculators.$calculatorName';
@@ -339,7 +339,7 @@ class CalculatorsArea extends Area {
       dart.setAstronomicalCalculator(kd.SunTimesCalculator());
     }
     final prefix = 'calculators.calendar.${sunTimes ? 'suntimes' : 'noaa'}';
-    final zenith = chance(rng, 0.6) ? pick(rng, _zeniths) : uniform(rng, 80, 120);
+    final zenith = chance(rng, 0.6) ? pick(rng, _zeniths) : (chance(rng, 0.8) ? uniform(rng, 80, 120) : uniform(rng, -10, 200));
     final input = '${setup.input} calculator=${sunTimes ? 'SunTimes' : 'NOAA'} zenith=$zenith';
 
     report.instant(
