@@ -364,6 +364,9 @@ class JewishDate implements Comparable<JewishDate> {
   /// Computes the Gregorian date from the absolute date. ND+ER
   /// - [absDate]: the absolute date
   void _absDateToDate(int absDate) {
+    if (absDate <= 0) {
+      throw ArgumentError("Dates in the BC era are not supported");
+    }
     int year =
         absDate ~/ 366; // Search forward year by year from approximate year
     while (absDate >= _gregorianDateToAbsDate(year + 1, 1, 1)) {
