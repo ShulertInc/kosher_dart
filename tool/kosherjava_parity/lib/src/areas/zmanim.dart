@@ -187,7 +187,11 @@ class ZmanimArea extends Area {
       if (named.millisecondsSinceEpoch != javaMidnight) {
         report.note('midnight repeats or is skipped, the DateTime constructor picks a different instant than java.time');
       }
-      final dartDate = input.timeOfDay == null ? midnight : withinDay(zone, at, midnight, input.timeOfDay!);
+      var dartDate = input.timeOfDay == null ? midnight : withinDay(zone, at, midnight, input.timeOfDay!);
+      if (dartDate.day != midnight.day) {
+        report.note('the clocks went back past midnight, so the time of day named the previous date; used midnight');
+        dartDate = midnight;
+      }
       final builtOn = other == null ? dartDate : dartMidnight(input, otherMidnight);
       if (input.machineLocal) report.note('compared as a plain local DateTime in the machine zone');
 
