@@ -16,6 +16,7 @@
  */
 
 import 'dart:core';
+import 'dart:math';
 import 'package:kosher_dart/src/hebrewcalendar/hebrew_date_formatter.dart';
 
 enum Calendar { DATE, MONTH, YEAR }
@@ -162,13 +163,13 @@ class JewishDate implements Comparable<JewishDate> {
   late int _jewishYear;
 
   /// the internal count of _molad_ hours.
-  late int _moladHours;
+  int _moladHours = 0;
 
   /// the internal count of _molad_ minutes.
-  late int _moladMinutes;
+  int _moladMinutes = 0;
 
   /// the internal count of _molad_ _chalakim_.
-  late int _moladChalakim;
+  int _moladChalakim = 0;
 
   int? _hour;
   int? _minute;
@@ -219,7 +220,7 @@ class JewishDate implements Comparable<JewishDate> {
       int minute = 0,
       int second = 0}) {
     _hour = hour;
-    _minute = _minute;
+    _minute = minute;
     _second = second;
     setJewishDate(jewishYear, jewishMonth, jewishDayOfMonth);
   }
@@ -1027,11 +1028,12 @@ class JewishDate implements Comparable<JewishDate> {
   ///             17. For larger a larger number of chalakim such as 793 (TaShTzaG) break the chalakim into minutes (18
   ///             chalakim per minutes, so it would be 44 minutes and 1 chelek in the case of 793 (TaShTzaG).
   void setJewishDate(int year, int month, int dayOfMonth,
-      [int hours = 0, int minutes = 0, int chalakim = 0]) {
+      [int? hours, int? minutes, int? chalakim]) {
+    hours ??= _moladHours;
+    minutes ??= _moladMinutes;
+    chalakim ??= _moladChalakim;
     _validateJewishDate(year, month, dayOfMonth, hours, minutes, chalakim);
 
-    // if 30 is passed for a month that only has 29 days (for example by rolling the month from a month that had 30
-    // days to a month that only has 29) set the date to 29th
     if (dayOfMonth > _getDaysInJewishMonth(month, year)) {
       dayOfMonth = _getDaysInJewishMonth(month, year);
     }
@@ -1165,17 +1167,20 @@ class JewishDate implements Comparable<JewishDate> {
       throw ArgumentError(
           "the amount of months to forward has to be greater than zero.");
     }
+    int year = getJewishYear();
+    int month = getJewishMonth();
     for (int i = 0; i < amount; i++) {
-      if (getJewishMonth() == ELUL) {
-        setJewishMonth(TISHREI);
-        setJewishYear(getJewishYear() + 1);
-      } else if ((!isJewishLeapYear() && getJewishMonth() == ADAR) ||
-          (isJewishLeapYear() && getJewishMonth() == ADAR_II)) {
-        setJewishMonth(NISSAN);
+      if (month == ELUL) {
+        month = TISHREI;
+        year++;
+      } else if ((!_isJewishLeapYear(year) && month == ADAR) ||
+          (_isJewishLeapYear(year) && month == ADAR_II)) {
+        month = NISSAN;
       } else {
-        setJewishMonth(getJewishMonth() + 1);
+        month++;
       }
     }
+    setJewishDate(year, month, getJewishDayOfMonth());
   }
 
   /// Rolls the Jewish date back by the number of months passed in.
@@ -1190,19 +1195,19 @@ class JewishDate implements Comparable<JewishDate> {
       throw ArgumentError(
           "the amount of months to backward has to be greater than zero.");
     }
+    int year = getJewishYear();
+    int month = getJewishMonth();
     for (int i = 0; i < amount; i++) {
-      if (getJewishMonth() == TISHREI) {
-        // If Tishrei, move to Elul of the previous year
-        setJewishYear(getJewishYear() - 1);
-        setJewishMonth(ELUL);
-      } else if (getJewishMonth() == NISSAN) {
-        // If Nissan, move to Adar (non-leap year) or Adar II (leap year)
-        setJewishMonth(_getLastMonthOfJewishYear(getJewishYear()));
+      if (month == TISHREI) {
+        month = ELUL;
+        year--;
+      } else if (month == NISSAN) {
+        month = _getLastMonthOfJewishYear(year);
       } else {
-        // Otherwise, move to the previous month
-        setJewishMonth(getJewishMonth() - 1);
+        month--;
       }
     }
+    setJewishDate(year, month, getJewishDayOfMonth());
   }
 
   /// Rolls the date back by the specified field and amount. Supports [Calendar.DATE] (default),
@@ -1218,6 +1223,10 @@ class JewishDate implements Comparable<JewishDate> {
   ///
   /// See also [forward].
   void back([Calendar field = Calendar.DATE, int amount = 1]) {
+    if (amount < 1) {
+      throw ArgumentError(
+          "JewishDate.back() does not support amounts less than 1. See JewishDate.forward()");
+    }
     if (field == Calendar.MONTH) {
       _backwardJewishMonth(amount);
       return;
@@ -1228,9 +1237,8 @@ class JewishDate implements Comparable<JewishDate> {
       throw ArgumentError(
           "Unsupported field was passed to back(). Only Calendar.DATE, Calendar.MONTH or Calendar.YEAR are supported.");
     }
-    if (amount < 1) {
-      throw ArgumentError(
-          "JewishDate.back() does not support amounts less than 1. See JewishDate.forward()");
+    if (_gregorianAbsDate - amount < 1) {
+      throw ArgumentError("Dates in the BC era are not supported");
     }
     for (int i = 0; i < amount; i++) {
       // Change Gregorian date
@@ -1428,7 +1436,8 @@ class JewishDate implements Comparable<JewishDate> {
   ///             if a year of < 3761 is passed in. The same will happen if the year is 3761 and the month and day
   ///             previously set are < 18 Teves (prior to Jan 1, 1 AD)
   void setJewishYear(int year) {
-    setJewishDate(year, _jewishMonth, _jewishDay);
+    setJewishDate(year, min(_jewishMonth, _getLastMonthOfJewishYear(year)),
+        _jewishDay);
   }
 
   /// sets the Jewish day of month.

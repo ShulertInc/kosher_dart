@@ -298,22 +298,16 @@ class TefilaRules {
   /// See also [isVeseinTalUmatarStartingTonight].
   /// See also [isVeseinTalUmatarRecited].
   bool isVeseinTalUmatarStartDate(JewishCalendar jewishCalendar) {
-    if (jewishCalendar.inIsrael &&
-        jewishCalendar.getJewishMonth() == JewishDate.CHESHVAN &&
-        jewishCalendar.getJewishDayOfMonth() == 7) {
-      // The 7th Cheshvan can't occur on Shabbos, so always return true for 7 Cheshvan
-      return true;
+    if (jewishCalendar.inIsrael) {
+      return jewishCalendar.getJewishMonth() == JewishDate.CHESHVAN &&
+          jewishCalendar.getJewishDayOfMonth() == 7;
     }
-
-    // Not recited on Friday night
     if (jewishCalendar.getDayOfWeek() == JewishDate.saturday) {
       return false;
     }
-
-    // When starting on Sunday, it can be the start date or delayed from Shabbos
     final tted = jewishCalendar.getTekufasTishreiElapsedDays();
     return (jewishCalendar.getDayOfWeek() == JewishDate.sunday && tted == 48) ||
-        (tted == 47);
+        tted == 47;
   }
 
   /// Returns if true if tonight is the first night to start reciting _Vesein Tal Umatar Livracha_ (
@@ -331,22 +325,16 @@ class TefilaRules {
   /// See also [isVeseinTalUmatarStartDate].
   /// See also [isVeseinTalUmatarRecited].
   bool isVeseinTalUmatarStartingTonight(JewishCalendar jewishCalendar) {
-    if (jewishCalendar.inIsrael &&
-        (jewishCalendar.getJewishMonth() == JewishDate.CHESHVAN &&
-            jewishCalendar.getJewishDayOfMonth() == 6)) {
-      // The 7th Cheshvan can't occur on Shabbos, so always return true for 6 Cheshvan
-      return true;
+    if (jewishCalendar.inIsrael) {
+      return jewishCalendar.getJewishMonth() == JewishDate.CHESHVAN &&
+          jewishCalendar.getJewishDayOfMonth() == 6;
     }
-
-    // Not recited on Friday night
     if (jewishCalendar.getDayOfWeek() == JewishDate.friday) {
       return false;
     }
-
-    // When starting on motzai Shabbos, it can be the start date or delayed from Friday night
     final tted = jewishCalendar.getTekufasTishreiElapsedDays();
-    return (jewishCalendar.getDayOfWeek() == JewishDate.sunday && tted == 47) ||
-        (tted == 46);
+    return (jewishCalendar.getDayOfWeek() == JewishDate.saturday && tted == 47) ||
+        tted == 46;
   }
 
   /// Returns if _Vesein Tal Umatar Livracha_ (_Sheailas Geshamim_) is recited. This will return

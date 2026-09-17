@@ -580,7 +580,8 @@ class HebrewDateFormatter {
           return transliteratedShabbosDayOfWeek.substring(0, 3);
         }
       } else {
-        return DateFormat("EEE").format(jewishDate.getGregorianCalendar());
+        return DateFormat(longWeekFormat ? "EEEE" : "EEE")
+            .format(jewishDate.getGregorianCalendar());
       }
     }
   }

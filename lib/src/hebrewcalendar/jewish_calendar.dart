@@ -2703,9 +2703,10 @@ class JewishCalendar extends JewishDate {
   /// See also [Object.clone].
   @override
   JewishCalendar clone() {
-    final newJewishCalendar = JewishCalendar.initDate(
-        getJewishYear(), getJewishMonth(), getJewishDayOfMonth());
-    newJewishCalendar.inIsrael = inIsrael;
-    return newJewishCalendar;
+    return JewishCalendar.initDate(
+        getJewishYear(), getJewishMonth(), getJewishDayOfMonth())
+      ..inIsrael = inIsrael
+      ..isMukafChoma = isMukafChoma
+      ..setUseModernHolidays(isUseModernHolidays());
   }
 }
