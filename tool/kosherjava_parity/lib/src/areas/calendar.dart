@@ -20,7 +20,8 @@ Got<Object?> orThrows(Object? Function() body) {
   }
 }
 
-String javaString(JString? value) => value?.toDartString(releaseOriginal: true) ?? 'null';
+String javaString(JString? value) =>
+    withKosherDartMonthNames(value?.toDartString(releaseOriginal: true) ?? 'null');
 
 String javaEnumName(JObject? value) {
   if (value == null) return 'null';

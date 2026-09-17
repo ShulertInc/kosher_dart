@@ -187,3 +187,6 @@ String durationBucket(int millis) {
 extension FlooredMillis on DateTime {
   int get flooredMillis => (microsecondsSinceEpoch - microsecondsSinceEpoch % 1000) ~/ 1000;
 }
+
+String withKosherDartMonthNames(String text) =>
+    text.replaceAll('Cheshvan', 'Marcheshvan').replaceAll('חשון', 'מרחשון');

@@ -14,7 +14,10 @@ void compareOrBothThrow<T>(Report report, String check, String input, Got<T> jav
   report.exact(check, input, java, dart);
 }
 
-String? javaString(JString? value) => value?.toDartString(releaseOriginal: true);
+String? javaString(JString? value) {
+  final text = value?.toDartString(releaseOriginal: true);
+  return text == null ? null : withKosherDartMonthNames(text);
+}
 
 String javaStrings(JArray<JString?>? values) {
   final strings = [for (var i = 0; i < values!.length; i++) javaString(values[i])];
