@@ -77,7 +77,7 @@ class _Setup {
     place = randomPlace(rng, zones, date);
     midnight = zones.javaStartOfDay(place.zone, date.year, date.month, date.day);
     location = zones.dartFromJava(place.zone, midnight - 3 * _day, midnight + 4 * _day);
-    dartDate = tz.TZDateTime(location, date.year, date.month, date.day);
+    dartDate = tz.TZDateTime.fromMillisecondsSinceEpoch(location, midnight);
     final name = 'case'.toJString();
     javaGeo = kj.GeoLocation.new$1(name, place.latitude, place.longitude, place.elevation, zones.java(place.zone));
     name.release();
@@ -98,6 +98,8 @@ class _Setup {
   late final kd.GeoLocation dartGeo;
 
   String get input => '$id date=$date $place';
+
+  bool get dateExists => dartDate.year == date.year && dartDate.month == date.month && dartDate.day == date.day;
 
   void release() {
     javaGeo.release();
@@ -127,6 +129,11 @@ class CalculatorsArea extends Area {
     for (final index in indexes) {
       final rng = caseRandom(seed, name, index);
       final setup = _Setup(rng, zones, 'calculators#$index seed=$seed');
+      if (!setup.dateExists) {
+        report.note('skipped: the date does not exist in its zone, so no DateTime can name it');
+        setup.release();
+        continue;
+      }
       _raw(setup, report, 'noaa', kj.NOAACalculator(), kd.NOAACalculator());
       _raw(setup, report, 'suntimes', kj.SunTimesCalculator(), kd.SunTimesCalculator());
       _solarPosition(setup, report);
