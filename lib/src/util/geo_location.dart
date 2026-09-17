@@ -251,9 +251,9 @@ class GeoLocation {
   ///
   /// Returns the offset in milliseconds not accounting for Daylight saving time. A positive value will be returned
   /// East of the 15° timezone line, and a negative value West of it.
-  double getLocalMeanTimeOffset() {
+  double getLocalMeanTimeOffset([DateTime? instant]) {
     return (getLongitude() * 4 * _MINUTE_MILLIS -
-            getDateTime().timeZoneOffset.inMilliseconds)
+            (instant ?? getDateTime()).timeZoneOffset.inMilliseconds)
         .toDouble();
   }
 
@@ -272,8 +272,8 @@ class GeoLocation {
   /// to bring the date back to 2018-02-03.
   ///
   /// Returns the number of days to adjust the date This will typically be 0 unless the date crosses the antimeridian
-  int getAntimeridianAdjustment() {
-    double localHoursOffset = getLocalMeanTimeOffset() / _HOUR_MILLIS;
+  int getAntimeridianAdjustment([DateTime? instant]) {
+    double localHoursOffset = getLocalMeanTimeOffset(instant) / _HOUR_MILLIS;
 
     if (localHoursOffset >= 20) {
       // if the offset is 20 hours or more in the future (never expected anywhere other

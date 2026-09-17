@@ -20,6 +20,7 @@ import 'package:kosher_dart/src/util/geo_location.dart';
 import 'package:kosher_dart/src/astronomical_calendar.dart';
 import 'package:kosher_dart/src/hebrewcalendar/jewish_date.dart';
 import 'package:kosher_dart/src/util/astronomical_calculator.dart';
+import 'package:kosher_dart/src/util/local_midnight.dart';
 import 'package:kosher_dart/src/hebrewcalendar/jewish_calendar.dart';
 
 /// This class extends ZmanimCalendar and provides many more zmanim than available in the ZmanimCalendar. The basis for
@@ -2613,38 +2614,13 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   /// Used by Molad based zmanim to determine if zmanim occur during the current day.
   /// _see [getMoladBasedTime]_
   /// return previous midnight
-  DateTime? getMidnightLastNight() => _startOfDay(getCalendar());
+  DateTime? getMidnightLastNight() => startOfLocalDay(getCalendar());
 
   /// Used by Molad based zmanim to determine if zmanim occur during the current day.
   /// _see [getMoladBasedTime]_
   /// return following midnight
-  DateTime? getMidnightTonight() =>
-      _startOfDay(_startOfDay(getCalendar()).add(const Duration(hours: 36)));
-
-  static DateTime _startOfDay(DateTime day) {
-    final DateTime target = DateTime.utc(day.year, day.month, day.day);
-    Duration wallClockPastMidnight(DateTime instant) => DateTime.utc(instant.year,
-            instant.month, instant.day, instant.hour, instant.minute,
-            instant.second, instant.millisecond, instant.microsecond)
-        .difference(target);
-    DateTime midnight = day.subtract(wallClockPastMidnight(day));
-    for (var attempt = 0; attempt < 3; attempt++) {
-      final Duration drift = wallClockPastMidnight(midnight);
-      if (drift == Duration.zero) break;
-      final DateTime corrected = midnight.subtract(drift);
-      if (drift.isNegative && wallClockPastMidnight(corrected) > Duration.zero) {
-        return corrected;
-      }
-      midnight = corrected;
-    }
-    final DateTime earlier = midnight.subtract(const Duration(hours: 3));
-    final Duration fallBack = earlier.timeZoneOffset - midnight.timeZoneOffset;
-    if (fallBack > Duration.zero &&
-        wallClockPastMidnight(midnight.subtract(fallBack)) == Duration.zero) {
-      return midnight.subtract(fallBack);
-    }
-    return midnight;
-  }
+  DateTime? getMidnightTonight() => startOfLocalDay(
+      startOfLocalDay(getCalendar()).add(const Duration(hours: 36)));
 
   /// Returns the earliest time of _Kiddush Levana_ according to the opinions that it should not be said until 7
   /// days after the _molad_. The time will be returned even if it occurs during the day when _Kiddush Levana_

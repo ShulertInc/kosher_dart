@@ -18,6 +18,7 @@ import 'dart:core';
 
 import 'package:kosher_dart/src/util/astronomical_calculator.dart';
 import 'package:kosher_dart/src/util/geo_location.dart';
+import 'package:kosher_dart/src/util/local_midnight.dart';
 import 'package:kosher_dart/src/util/omitted.dart';
 
 enum SolarEvent { sunrise, sunset, noon, midnight }
@@ -566,11 +567,12 @@ class AstronomicalCalendar {
   /// See also [GeoLocation.getAntimeridianAdjustment].
   /// Returns the adjusted Calendar
   DateTime getAdjustedCalendar() {
-    int offset = getGeoLocation().getAntimeridianAdjustment();
-    if (offset == 0) {
-      return getCalendar();
-    }
     DateTime calendar = getCalendar();
+    int offset =
+        getGeoLocation().getAntimeridianAdjustment(startOfLocalDay(calendar));
+    if (offset == 0) {
+      return calendar;
+    }
     return DateTime.utc(calendar.year, calendar.month, calendar.day + offset);
   }
 
