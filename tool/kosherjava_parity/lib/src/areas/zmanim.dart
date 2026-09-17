@@ -56,9 +56,9 @@ class ZmanimCase {
     place = straddle ??
         (machineLocal ? null : extremePlace(rng, zones)) ??
         randomPlace(rng, zones, date, chosenZone: zone);
-    useElevation = chance(rng, 0.5);
-    candleLightingOffset = offset(rng, 18);
-    ateretTorahSunsetOffset = offset(rng, 40);
+    useElevation = chance(rng, 0.2) ? null : chance(rng, 0.5);
+    candleLightingOffset = chance(rng, 0.15) ? null : offset(rng, 18);
+    ateretTorahSunsetOffset = chance(rng, 0.15) ? null : offset(rng, 40);
     sunTimes = chance(rng, 0.15);
     settings = chance(rng, 0.2) ? CalculatorSettings(rng) : null;
     timeOfDay = chance(rng, 0.5) ? null : rng.nextDouble();
@@ -90,9 +90,9 @@ class ZmanimCase {
   late final bool machineLocal;
   late final CivilDate date;
   late final Place place;
-  late final bool useElevation;
-  late final double candleLightingOffset;
-  late final double ateretTorahSunsetOffset;
+  late final bool? useElevation;
+  late final double? candleLightingOffset;
+  late final double? ateretTorahSunsetOffset;
   late final bool sunTimes;
   late final CalculatorSettings? settings;
   late final double? timeOfDay;
@@ -114,8 +114,8 @@ class ZmanimCase {
   }
 
   String describe(String id) => '$id date=$date $place${machineLocal ? ' as a local DateTime' : ''} '
-      'useElevation=$useElevation '
-      'candle=$candleLightingOffset ateret=$ateretTorahSunsetOffset calculator=${sunTimes ? 'SunTimes' : 'NOAA'}'
+      'useElevation=${useElevation ?? 'default'} candle=${candleLightingOffset ?? 'default'} '
+      'ateret=${ateretTorahSunsetOffset ?? 'default'} calculator=${sunTimes ? 'SunTimes' : 'NOAA'}'
       '${settings == null ? '' : ' $settings'}${timeOfDay == null ? '' : ' timeOfDay=$timeOfDay'}'
       '${cloned ? ' cloned' : ''}${movedFromDays == null ? '' : ' builtOn=$movedFromDays days away, then setCalendar'}';
 }
@@ -293,9 +293,9 @@ class ZmanimArea extends Area {
     final date = kj.LocalDate.of$1(input.date.year, input.date.month, input.date.day);
     calendar.localDate = date;
     date?.release();
-    calendar.useElevation = input.useElevation;
-    calendar.candleLightingOffset = input.candleLightingOffset;
-    calendar.ateretTorahSunsetOffset = input.ateretTorahSunsetOffset;
+    if (input.useElevation != null) calendar.useElevation = input.useElevation!;
+    if (input.candleLightingOffset != null) calendar.candleLightingOffset = input.candleLightingOffset!;
+    if (input.ateretTorahSunsetOffset != null) calendar.ateretTorahSunsetOffset = input.ateretTorahSunsetOffset!;
     if (input.sunTimes) {
       final calculator = kj.SunTimesCalculator();
       calendar.astronomicalCalculator = calculator;
@@ -315,10 +315,10 @@ class ZmanimArea extends Area {
   DartCalendar dartCalendarFor(ZmanimCase input, DateTime date) {
     final place = input.place;
     final geo = kd.GeoLocation.setLocation('case', place.latitude, place.longitude, date, place.elevation);
-    final calendar = kd.ComplexZmanimCalendar.intGeoLocation(geo)
-      ..setUseElevation(input.useElevation)
-      ..setCandleLightingOffset(input.candleLightingOffset)
-      ..setAteretTorahSunsetOffset(input.ateretTorahSunsetOffset);
+    final calendar = kd.ComplexZmanimCalendar.intGeoLocation(geo);
+    if (input.useElevation != null) calendar.setUseElevation(input.useElevation!);
+    if (input.candleLightingOffset != null) calendar.setCandleLightingOffset(input.candleLightingOffset!);
+    if (input.ateretTorahSunsetOffset != null) calendar.setAteretTorahSunsetOffset(input.ateretTorahSunsetOffset!);
     if (input.sunTimes) calendar.setAstronomicalCalculator(kd.SunTimesCalculator());
     final settings = input.settings;
     if (settings != null) {
