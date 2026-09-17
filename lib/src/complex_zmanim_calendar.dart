@@ -3348,9 +3348,13 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
     return shiftTime;
   }
 
-  ComplexZmanimCalendar clone() {
-    return ComplexZmanimCalendar.intGeoLocation(geoLocation.clone());
-  }
+  ComplexZmanimCalendar clone() =>
+      ComplexZmanimCalendar.intGeoLocation(getGeoLocation().clone())
+        ..setCalendar(getCalendar())
+        ..setAstronomicalCalculator(getAstronomicalCalculator().clone())
+        ..setUseElevation(isUseElevation())
+        ..setCandleLightingOffset(getCandleLightingOffset())
+        ..setAteretTorahSunsetOffset(getAteretTorahSunsetOffset());
 
   /// This method returns _chatzos_ taken as the midpoint between [getSeaLevelSunrise]
   /// and [getSeaLevelSunset], which is a few seconds off the moment the sun actually

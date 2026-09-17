@@ -25,6 +25,9 @@ import 'package:kosher_dart/src/util/geo_location.dart';
 /// © Eliyahu Hershfeld 2004 - 2018
 /// © Kevin Boone 2000
 class SunTimesCalculator extends AstronomicalCalculator {
+  @override
+  SunTimesCalculator clone() => copySettingsTo(SunTimesCalculator());
+
   /// See also [AstronomicalCalculator.getCalculatorName].
   @override
   String getCalculatorName() {

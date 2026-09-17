@@ -1520,12 +1520,13 @@ class JewishDate implements Comparable<JewishDate> {
   }
 
   /// Creates a [deep copy](http://en.wikipedia.org/wiki/Object_copy#Deep_copy) of this object.
-  JewishDate clone() {
-    JewishDate clone = JewishDate();
-    clone.setGregorianDate(
-        _gregorianYear, _gregorianMonth, _gregorianDayOfMonth);
-    return clone;
-  }
+  JewishDate clone() => copyTo(JewishDate());
+
+  T copyTo<T extends JewishDate>(T copy) => copy
+    ..setGregorianDate(_gregorianYear, _gregorianMonth, _gregorianDayOfMonth)
+    .._moladHours = _moladHours
+    .._moladMinutes = _moladMinutes
+    .._moladChalakim = _moladChalakim;
 
   /// Returns a hash code based on the absolute Gregorian date.
   @override

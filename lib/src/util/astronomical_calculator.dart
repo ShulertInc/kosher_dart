@@ -313,17 +313,11 @@ abstract class AstronomicalCalculator {
     }
     _solarRadius = solarRadius;
   }
-/*
-  /// See also [Object.clone].
-  Object clone() {
-    AstronomicalCalculator clone = null;
-    try {
-      clone = (AstronomicalCalculator) super.clone();
-    } catch (CloneNotSupportedException cnse) {
-    System.out.print("Required by the compiler. Should never be reached since we implement clone()");
-    }
-    return clone;
-  }
 
- */
+  AstronomicalCalculator clone();
+
+  T copySettingsTo<T extends AstronomicalCalculator>(T copy) => copy
+    .._refraction = _refraction
+    .._solarRadius = _solarRadius
+    .._earthRadius = _earthRadius;
 }

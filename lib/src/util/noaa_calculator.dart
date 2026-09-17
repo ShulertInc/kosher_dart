@@ -30,6 +30,9 @@ class NOAACalculator extends AstronomicalCalculator {
   /// Julian days per century
   static const double _JULIAN_DAYS_PER_CENTURY = 36525.0;
 
+  @override
+  NOAACalculator clone() => copySettingsTo(NOAACalculator());
+
   /// See also [AstronomicalCalculator.getCalculatorName].
   @override
   String getCalculatorName() {
