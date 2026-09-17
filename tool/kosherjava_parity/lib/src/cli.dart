@@ -15,6 +15,8 @@ void runParity(List<String> arguments, Map<String, Area Function(Zones)> areaFac
     ..addOption('case', help: 'Run only this case index, to replay a divergence')
     ..addMultiOption('only', allowed: areaFactories.keys, help: 'Areas to run')
     ..addOption('examples', defaultsTo: '3', help: 'Examples kept per check and outcome')
+    ..addOption('machine-zone',
+        help: 'IANA name of the time zone this process runs in, to also test plain local DateTimes there')
     ..addFlag('help', abbr: 'h', negatable: false);
   final options = parser.parse(arguments);
   if (options.flag('help')) {
@@ -28,9 +30,10 @@ void runParity(List<String> arguments, Map<String, Area Function(Zones)> areaFac
   final selected = options.multiOption('only').isEmpty ? areaFactories.keys : options.multiOption('only');
 
   startJvm();
-  final zones = Zones.load();
+  final zones = Zones.load(machineZone: options.option('machine-zone'));
   final report = Report(examplesPerOutcome: int.parse(options.option('examples')!));
-  stdout.writeln('seed $seed, ${indexes.length} cases per area, ${zones.names.length} shared time zones');
+  stdout.writeln('seed $seed, ${indexes.length} cases per area, ${zones.names.length} shared time zones'
+      '${zones.machineZone == null ? '' : ', machine zone ${zones.machineZone}'}');
   for (final name in selected) {
     final stopwatch = Stopwatch()..start();
     areaFactories[name]!(zones).run(seed, indexes, report);

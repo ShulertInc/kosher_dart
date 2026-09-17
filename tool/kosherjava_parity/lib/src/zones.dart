@@ -5,9 +5,9 @@ import 'package:timezone/timezone.dart' as tz;
 import 'kosherjava.g.dart' as kj;
 
 class Zones {
-  Zones._(this.names);
+  Zones._(this.names, this.machineZone);
 
-  factory Zones.load() {
+  factory Zones.load({String? machineZone}) {
     tzdata.initializeTimeZones();
     final java = <String>{};
     final ids = kj.ZoneId.availableZoneIds!;
@@ -16,10 +16,14 @@ class Zones {
     }
     ids.release();
     final shared = tz.timeZoneDatabase.locations.keys.where(java.contains).toList()..sort();
-    return Zones._(shared);
+    if (machineZone != null && !java.contains(machineZone)) {
+      throw ArgumentError.value(machineZone, 'machineZone', 'not a java.time zone');
+    }
+    return Zones._(shared, machineZone);
   }
 
   final List<String> names;
+  final String? machineZone;
   final Map<String, kj.ZoneId> _java = {};
 
   kj.ZoneId java(String name) => _java.putIfAbsent(name, () => kj.ZoneId.of$1(name.toJString())!);
@@ -83,6 +87,33 @@ class Zones {
     rules.release();
     instant.release();
     return seconds * 1000;
+  }
+
+  bool machineAgrees(int fromMillis, int toMillis) {
+    final name = machineZone!;
+    bool agreesAt(int millis) =>
+        DateTime.fromMillisecondsSinceEpoch(millis).timeZoneOffset.inMilliseconds == javaOffsetMillis(name, millis);
+    for (var at = fromMillis; at <= toMillis; at += 1800000) {
+      if (!agreesAt(at)) return false;
+    }
+    final rules = java(name).rules!;
+    var at = fromMillis;
+    try {
+      while (true) {
+        final cursor = kj.Instant.ofEpochMilli(at)!;
+        final transition = rules.nextTransition(cursor);
+        cursor.release();
+        if (transition == null) return true;
+        final instant = transition.instant!;
+        transition.release();
+        at = instant.toEpochMilli();
+        instant.release();
+        if (at > toMillis) return true;
+        if (!agreesAt(at - 1) || !agreesAt(at)) return false;
+      }
+    } finally {
+      rules.release();
+    }
   }
 
   int javaStartOfDay(String name, int year, int month, int day) {
