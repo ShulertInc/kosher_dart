@@ -617,9 +617,10 @@ class JewishDate implements Comparable<JewishDate> {
       throw ArgumentError(
           "The Jewish month has to be between 1 and 12 (or 13 on a leap year). $month is invalid for the year $year.");
     }
-    if (dayOfMonth < 1 || dayOfMonth > 30) {
+    final int monthLength = _getDaysInJewishMonth(month, year);
+    if (dayOfMonth < 1 || dayOfMonth > monthLength) {
       throw ArgumentError(
-          "The Jewish day of month can't be < 1 or > 30.  $dayOfMonth is invalid.");
+          "The Jewish day of month can't be < 1 or > $monthLength for month $month. $dayOfMonth is invalid.");
     }
     // reject dates prior to 18 Teves, 3761 (1/1/1 AD). This restriction can be relaxed if the date coding is
     // changed/corrected
@@ -1034,10 +1035,6 @@ class JewishDate implements Comparable<JewishDate> {
     chalakim ??= _moladChalakim;
     _validateJewishDate(year, month, dayOfMonth, hours, minutes, chalakim);
 
-    if (dayOfMonth > _getDaysInJewishMonth(month, year)) {
-      dayOfMonth = _getDaysInJewishMonth(month, year);
-    }
-
     _jewishMonth = month;
     _jewishDay = dayOfMonth;
     _jewishYear = year;
@@ -1152,7 +1149,7 @@ class JewishDate implements Comparable<JewishDate> {
     } else if (field == Calendar.MONTH) {
       _forwardJewishMonth(amount);
     } else if (field == Calendar.YEAR) {
-      setJewishYear(getJewishYear() + amount);
+      plusYears(amount, true);
     }
   }
 
@@ -1180,7 +1177,8 @@ class JewishDate implements Comparable<JewishDate> {
         month++;
       }
     }
-    setJewishDate(year, month, getJewishDayOfMonth());
+    setJewishDate(year, month,
+        min(getJewishDayOfMonth(), _getDaysInJewishMonth(month, year)));
   }
 
   /// Rolls the Jewish date back by the number of months passed in.
@@ -1207,7 +1205,8 @@ class JewishDate implements Comparable<JewishDate> {
         month--;
       }
     }
-    setJewishDate(year, month, getJewishDayOfMonth());
+    setJewishDate(year, month,
+        min(getJewishDayOfMonth(), _getDaysInJewishMonth(month, year)));
   }
 
   /// Rolls the date back by the specified field and amount. Supports [Calendar.DATE] (default),
@@ -1231,7 +1230,7 @@ class JewishDate implements Comparable<JewishDate> {
       _backwardJewishMonth(amount);
       return;
     } else if (field == Calendar.YEAR) {
-      setJewishYear(getJewishYear() - amount);
+      minusYears(amount, true);
       return;
     } else if (field != Calendar.DATE) {
       throw ArgumentError(
@@ -1425,7 +1424,8 @@ class JewishDate implements Comparable<JewishDate> {
   /// Throws [ArgumentError]
   ///             if a month < 1 or > 12 (or 13 on a leap year) is passed in
   void setJewishMonth(int month) {
-    setJewishDate(_jewishYear, month, _jewishDay);
+    setJewishDate(_jewishYear, month,
+        min(_getDaysInJewishMonth(month, _jewishYear), _jewishDay));
   }
 
   /// sets the Jewish year.
@@ -1436,8 +1436,70 @@ class JewishDate implements Comparable<JewishDate> {
   ///             if a year of < 3761 is passed in. The same will happen if the year is 3761 and the month and day
   ///             previously set are < 18 Teves (prior to Jan 1, 1 AD)
   void setJewishYear(int year) {
-    setJewishDate(year, min(_jewishMonth, _getLastMonthOfJewishYear(year)),
-        _jewishDay);
+    final int month = min(_jewishMonth, _getLastMonthOfJewishYear(year));
+    setJewishDate(
+        year, month, min(_jewishDay, _getDaysInJewishMonth(month, year)));
+  }
+
+  void plusDays(int days) {
+    if (days < 1) {
+      throw ArgumentError(
+          "The number of days to add must be greater than zero. Use minusDays(int) to subtract days.");
+    }
+    forward(Calendar.DATE, days);
+  }
+
+  void minusDays(int days) {
+    if (days < 1) {
+      throw ArgumentError(
+          "The number of days to subtract must be greater than zero.");
+    }
+    back(Calendar.DATE, days);
+  }
+
+  void plusMonths(int months) {
+    if (months < 1) {
+      throw ArgumentError(
+          "The number of months to add must be greater than zero. Use minusMonths(int) to subtract months.");
+    }
+    _forwardJewishMonth(months);
+  }
+
+  void minusMonths(int months) {
+    if (months < 1) {
+      throw ArgumentError(
+          "The number of months to subtract must be greater than zero.");
+    }
+    _backwardJewishMonth(months);
+  }
+
+  void plusYears(int years, bool useAdarAlephForLeapYear) {
+    if (years < 1) {
+      throw ArgumentError(
+          "The number of years to add has to be greater than zero. Use minusYears(int, boolean) to subtract years.");
+    }
+    _moveToYear(getJewishYear() + years, useAdarAlephForLeapYear);
+  }
+
+  void minusYears(int years, bool useAdarAlephForLeapYear) {
+    if (years < 1) {
+      throw ArgumentError(
+          "The number of years to subtract has to be greater than zero.");
+    }
+    _moveToYear(getJewishYear() - years, useAdarAlephForLeapYear);
+  }
+
+  void _moveToYear(int targetYear, bool useAdarAlephForLeapYear) {
+    final int month;
+    if (getJewishMonth() == ADAR &&
+        !_isJewishLeapYear(getJewishYear()) &&
+        _isJewishLeapYear(targetYear)) {
+      month = useAdarAlephForLeapYear ? ADAR : ADAR_II;
+    } else {
+      month = min(getJewishMonth(), _getLastMonthOfJewishYear(targetYear));
+    }
+    setJewishDate(targetYear, month,
+        min(getJewishDayOfMonth(), _getDaysInJewishMonth(month, targetYear)));
   }
 
   /// sets the Jewish day of month.
