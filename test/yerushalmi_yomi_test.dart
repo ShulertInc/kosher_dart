@@ -6,11 +6,11 @@ library;
 import 'package:kosher_dart/kosher_dart.dart';
 import 'package:test/test.dart';
 
-Daf dafOn(int year, int month, int day) =>
+Daf? dafOn(int year, int month, int day) =>
     JewishCalendar.fromDateTime(DateTime(year, month, day)).getDafYomiYerushalmi();
 
-void expectDaf(Daf daf, String masechta, int page) {
-  expect(daf.getYerushlmiMasechtaTransliterated(), masechta);
+void expectDaf(Daf? daf, String masechta, int page) {
+  expect(daf!.getYerushlmiMasechtaTransliterated(), masechta);
   expect(daf.getDaf(), page);
 }
 
@@ -46,13 +46,13 @@ void main() {
 
   test('there is no daf on Yom Kippur or Tisha B Av', () {
     // Yom Kippur 5785 and the Tisha B'Av of 5785, which is fasted on the Sunday.
-    expect(dafOn(2024, 10, 12).getDaf(), 0);
-    expect(dafOn(2025, 8, 3).getDaf(), 0);
+    expect(dafOn(2024, 10, 12), isNull);
+    expect(dafOn(2025, 8, 3), isNull);
   });
 
   test('the days with no daf do not advance the count', () {
-    final Daf before = dafOn(2024, 10, 11);
-    final Daf after = dafOn(2024, 10, 13);
+    final Daf before = dafOn(2024, 10, 11)!;
+    final Daf after = dafOn(2024, 10, 13)!;
 
     expect(after.getDaf(), before.getDaf() + 1);
     expect(after.getYerushlmiMasechtaTransliterated(),

@@ -91,7 +91,7 @@ class HebrewDateFormatter {
     "שלישי",
     "רביעי",
     "חמישי",
-    "שישי",
+    "ששי",
     "שבת"
   ];
 
@@ -118,12 +118,12 @@ class HebrewDateFormatter {
   List<String> hebrewMonths = [
     "ניסן",
     "אייר",
-    "סיוון",
+    "סיון",
     "תמוז",
     "אב",
     "אלול",
     "תשרי",
-    "חשוון",
+    "חשון",
     "כסלו",
     "טבת",
     "שבט",
@@ -270,7 +270,7 @@ class HebrewDateFormatter {
     Parsha.SHOFTIM: "שופטים",
     Parsha.KI_SEITZEI: "כי תצא",
     Parsha.KI_SAVO: "כי תבוא",
-    Parsha.NITZAVIM: "ניצבים",
+    Parsha.NITZAVIM: "נצבים",
     Parsha.VAYEILECH: "וילך",
     Parsha.HAAZINU: "האזינו",
     Parsha.VZOS_HABERACHA: "וזאת הברכה",
@@ -280,7 +280,7 @@ class HebrewDateFormatter {
     Parsha.BEHAR_BECHUKOSAI: "בהר בחקתי",
     Parsha.CHUKAS_BALAK: "חוקת בלק",
     Parsha.MATOS_MASEI: "מטות מסעי",
-    Parsha.NITZAVIM_VAYEILECH: "ניצבים וילך",
+    Parsha.NITZAVIM_VAYEILECH: "נצבים וילך",
     Parsha.SHKALIM: "שקלים",
     Parsha.ZACHOR: "זכור",
     Parsha.PARA: "פרה",
@@ -362,7 +362,7 @@ class HebrewDateFormatter {
     'ט״ו בשבט',
     'תענית אסתר',
     'פורים',
-    'פורים שושן',
+    'שושן פורים',
     'פורים קטן',
     'ראש חודש',
     'יום השואה',
@@ -370,8 +370,8 @@ class HebrewDateFormatter {
     'יום העצמאות',
     'יום ירושלים',
     'ל״ג בעומר',
-    'פורים שושן קטן',
-    'איסרו חג'
+    'שושן פורים קטן',
+    'אסרו חג'
   ];
 
   final List<String> _hebrewShortHolidays = [
@@ -401,7 +401,7 @@ class HebrewDateFormatter {
     'ט״ו בשבט',
     'תענית אסתר',
     'פורים',
-    'פורים שושן',
+    'שושן פורים',
     'פורים קטן',
     'ר״ח',
     'יום השואה',
@@ -409,8 +409,8 @@ class HebrewDateFormatter {
     'יום העצמאות',
     'יום ירושלים',
     'ל״ג בעומר',
-    'פורים שושן קטן',
-    'איסרו חג'
+    'שושן פורים קטן',
+    'אסרו חג'
   ];
 
   static final List<String> _longOmerDay = [
@@ -605,16 +605,15 @@ class HebrewDateFormatter {
   /// - [jewishDate]: 
   ///   the JewishDate to be formatted
   /// - [pattern]: 
-  ///   The default pattern is "dd MM yy", for example if the formatter is set to Hebrew
-  ///   it will כ״א שבט תשכ״ט, and "21 Shevat, 5729" if not.
+  ///   The default pattern is "dd MM yy" in Hebrew, for example כ״א שבט תשכ״ט, and "dd MM, yy"
+  ///   otherwise, for example "21 Shevat, 5729".
   /// Returns the formatted date.
-  /// If the formatter is set to Hebrew, it will format in the form, "day Month year"
-  /// by default for example כ״א שבט תשכ״ט, and the format "21 Shevat, 5729" if not.
-  String format(JewishDate jewishDate, {String pattern = 'dd MM yy'}) {
+  String format(JewishDate jewishDate, {String? pattern}) {
+    pattern ??= hebrewFormat ? 'dd MM yy' : 'dd MM, yy';
     String formatDate;
     StringBuffer stringBuffer = StringBuffer();
     RegExp exp =
-        RegExp(r"(dd)|(MM)|(yy)|(yyy)|(mm)|(hh)|(HH)|(ss)|[aED]|[/\-: ]");
+        RegExp(r"(dd)|(MM)|(yy)|(yyy)|(mm)|(hh)|(HH)|(ss)|[aED]|[/\-:, ]");
     Iterable<Match> matches = exp.allMatches(pattern);
     for (var element in matches) {
       stringBuffer.write(element.group(0));
@@ -818,14 +817,17 @@ class HebrewDateFormatter {
   /// - [daf]: the Daf to be formatted.
   /// Returns the formatted daf.
   ///
-  String formatDafYomiYerushalmi(Daf daf) {
+  String formatDafYomiYerushalmi(Daf? daf) {
+    if (daf == null) {
+      final Daf noDaf = Daf(39, 0);
+      return hebrewFormat
+          ? noDaf.getYerushalmiMasechta()
+          : noDaf.getYerushlmiMasechtaTransliterated();
+    }
     if (hebrewFormat) {
-      String dafName =
-          daf.getDaf() == 0 ? "" : " ${formatHebrewNumber(daf.getDaf())}";
-      return daf.getYerushalmiMasechta() + dafName;
+      return "${daf.getYerushalmiMasechta()} ${formatHebrewNumber(daf.getDaf())}";
     } else {
-      String dafName = daf.getDaf() == 0 ? "" : " ${daf.getDaf()}";
-      return daf.getYerushlmiMasechtaTransliterated() + dafName;
+      return "${daf.getYerushlmiMasechtaTransliterated()} ${daf.getDaf()}";
     }
   }
 
@@ -948,14 +950,14 @@ class HebrewDateFormatter {
   }
 
   /// Returns a String with the name of the current parsha(ios). If the formatter is set to format in Hebrew, returns
-  /// a string of the current parsha(ios) in Hebrew for example בראשית or ניצבים וילך or an empty string if there
+  /// a string of the current parsha(ios) in Hebrew for example בראשית or נצבים וילך or an empty string if there
   /// are none. If not set to Hebrew, it returns a string of the parsha(ios) transliterated into Latin chars. The
   /// default uses Ashkenazi pronunciation in typical American English spelling, for example Bereshis or
   /// Nitzavim Vayeilech or an empty string if there are none.
   ///
   /// - [jewishCalendar]: the JewishCalendar Object
   /// Returns today's parsha(ios) in Hebrew for example, if the formatter is set to format in Hebrew, returns a string
-  /// of the current parsha(ios) in Hebrew for example בראשית or ניצבים וילך or an empty string if
+  /// of the current parsha(ios) in Hebrew for example בראשית or נצבים וילך or an empty string if
   /// there are none. If not set to Hebrew, it returns a string of the parsha(ios) transliterated into Latin
   /// chars. The default uses Ashkenazi pronunciation in typical American English spelling, for example
   /// Bereshis or Nitzavim Vayeilech or an empty string if there are none.
@@ -967,14 +969,14 @@ class HebrewDateFormatter {
   }
 
   /// Returns a String with the name of the current parsha(ios) on this week. If the formatter is set to format in Hebrew, returns
-  /// a string of the parsha(ios) in Hebrew for example בראשית or ניצבים וילך.
+  /// a string of the parsha(ios) in Hebrew for example בראשית or נצבים וילך.
   /// If not set to Hebrew, it returns a string of the parsha(ios) transliterated into Latin chars. The
   /// default uses Ashkenazi pronunciation in typical American English spelling, for example Bereshis or
   /// Nitzavim Vayeilech.
   ///
   /// - [jewishCalendar]: the JewishCalendar Object
   /// Returns week's parsha(ios) in Hebrew for example, if the formatter is set to format in Hebrew, returns a string
-  /// of the parsha(ios) in Hebrew for example בראשית or ניצבים וילך .
+  /// of the parsha(ios) in Hebrew for example בראשית or נצבים וילך .
   /// If not set to Hebrew, it returns a string of the parsha(ios) transliterated into Latin
   /// chars. The default uses Ashkenazi pronunciation in typical American English spelling, for example
   /// Bereshis or Nitzavim Vayeilech.

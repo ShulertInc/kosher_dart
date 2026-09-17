@@ -2459,7 +2459,7 @@ class JewishCalendar extends JewishDate {
   /// masechta names.
   ///
   /// Returns the daf as a [Daf]
-  Daf getDafYomiYerushalmi() {
+  Daf? getDafYomiYerushalmi() {
     return YerushalmiYomiCalculator.getDafYomiYerushalmi(this);
   }
 

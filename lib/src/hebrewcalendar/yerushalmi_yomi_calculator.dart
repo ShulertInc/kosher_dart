@@ -90,14 +90,14 @@ class YerushalmiYomiCalculator {
   ///
   /// Throws [ArgumentError] 
   ///             if the date is prior to the September 11, 1923 start date of the first Daf Yomi cycle
-  static Daf getDafYomiYerushalmi(JewishCalendar calendar) {
+  static Daf? getDafYomiYerushalmi(JewishCalendar calendar) {
     int masechta = 0;
-    Daf dafYomi = Daf(0, 0);
+    Daf? dafYomi;
 
     // There isn't Daf Yomi in Yom Kippur and Tisha Beav.
     if (calendar.getYomTovIndex() == JewishCalendar.YOM_KIPPUR ||
         calendar.getYomTovIndex() == JewishCalendar.TISHA_BEAV) {
-      return Daf(39, 0);
+      return null;
     }
 
     // Counting in absolute days rather than in DateTime keeps the answer off the
