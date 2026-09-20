@@ -310,8 +310,10 @@ class ZmanimCalendar extends AstronomicalCalendar {
 
   /// When candles are lit tonight: [getCandleLighting] on a Friday or a weekday erev yom tov, after dark on the
   /// second night of yom tov, a yom tov that follows Shabbos and a weekday night of Chanukah, and null otherwise.
-  DateTime? getCandleLightingTonight() {
+  /// [inIsrael] is passed to [JewishCalendar.inIsrael], so in Israel the second days of yom tov have no lighting.
+  DateTime? getCandleLightingTonight({bool inIsrael = false}) {
     JewishCalendar today = JewishCalendar.fromDateTime(getCalendar());
+    today.inIsrael = inIsrael;
     int dayOfWeek = today.getDayOfWeek();
     if (dayOfWeek == 6) {
       return getCandleLighting();

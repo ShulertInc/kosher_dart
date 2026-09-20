@@ -126,6 +126,28 @@ void main() {
         isTrue,
         reason: 'lit from an existing flame once the stars are out');
   });
+
+  test('in Israel the first day of yom tov has no lighting, Rosh Hashana aside', () async {
+    final GeoLocation jerusalem =
+        GeoLocation.setLocation("Jerusalem", 31.7964453, 35.2453987, DateTime.utc(2026, 4, 2));
+    complexZmanimCalendar.setGeoLocation(jerusalem);
+
+    // Thursday 2 April 2026, the first day of Pesach.
+    complexZmanimCalendar.setCalendar(DateTime.utc(2026, 4, 2));
+    expect(complexZmanimCalendar.getCandleLightingTonight(), isNotNull);
+    expect(complexZmanimCalendar.getCandleLightingTonight(inIsrael: true), isNull);
+
+    // Friday 3 April 2026 is erev Shabbos there, chol hamoed in Israel: lit before sunset either way.
+    complexZmanimCalendar.setCalendar(DateTime.utc(2026, 4, 3));
+    final DateTime sunset = complexZmanimCalendar.getSeaLevelSunset()!;
+    expect(complexZmanimCalendar.getCandleLightingTonight(inIsrael: true),
+        sunset.subtract(const Duration(minutes: 18)));
+
+    // Tuesday 7 September 2021, the first day of Rosh Hashana, which has two days everywhere.
+    complexZmanimCalendar.setCalendar(DateTime.utc(2021, 9, 7));
+    expect(complexZmanimCalendar.getCandleLightingTonight(inIsrael: true),
+        complexZmanimCalendar.getCandleLightingTonight());
+  });
 }
 
 /// Formats the candle lighting time as "HH:mm" in UTC, or returns `null` if
