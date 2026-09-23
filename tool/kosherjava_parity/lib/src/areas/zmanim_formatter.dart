@@ -136,10 +136,10 @@ class _FormatterSetup {
     timeFormat = roll < 0.05 ? pick(rng, const [5, -1, 99]) : between(rng, 0, 4);
     defaultConstructor = chance(rng, 0.2);
     pattern = _randomPattern(rng);
-    zone = chance(rng, 0.1) ? null : pick(rng, zones.names);
+    zone = chance(rng, 0.1) ? null : _randomZoneSpec(rng, zones);
     laterPattern = chance(rng, 0.2) ? _randomPattern(rng) : null;
     laterTimeFormat = chance(rng, 0.05) ? pick(rng, const [5, -1, 99]) : null;
-    laterZone = chance(rng, 0.1) ? pick(rng, zones.names) : null;
+    laterZone = chance(rng, 0.1) ? _randomZoneSpec(rng, zones) : null;
   }
 
   final int around;
@@ -158,6 +158,14 @@ class _FormatterSetup {
           '${laterPattern == null ? '' : ' setDateTimeFormatter("$laterPattern")'}'
           '${laterTimeFormat == null ? '' : ' setTimeFormat($laterTimeFormat)'}'
           '${laterZone == null ? '' : ' setZoneId($laterZone)'}';
+}
+
+String _randomZoneSpec(Random rng, Zones zones) {
+  if (!chance(rng, 0.15)) return pick(rng, zones.names);
+  final seconds = chance(rng, 0.5)
+      ? pick(rng, const [0, 1, -1, 30, -52, 59, -59, 60, -75, 3599, 3600, -12600, 20700, 64800, -64800])
+      : between(rng, -64800, 64800);
+  return '@$seconds';
 }
 
 String _randomPattern(Random rng) {
@@ -235,7 +243,19 @@ class ZmanimFormatterArea extends Area {
     return bits.getFloat64(0);
   }
 
-  tz.Location _dartZone(String name, int around) => zones.dartFromJava(name, around - 5 * _day, around + 5 * _day);
+  tz.Location _dartZone(String name, int around) {
+    if (!name.startsWith('@')) return zones.dartFromJava(name, around - 5 * _day, around + 5 * _day);
+    final offset = _javaOffset(name);
+    final id = _javaText(offset.id);
+    offset.release();
+    final zone = tz.TimeZone(Duration(seconds: int.parse(name.substring(1))), isDst: false, abbreviation: id);
+    return tz.Location(id, [tz.minTime], [0], [zone]);
+  }
+
+  kj.ZoneOffset _javaOffset(String spec) => kj.ZoneOffset.ofTotalSeconds(int.parse(spec.substring(1)))!;
+
+  kj.ZoneId _javaZone(String spec, Arena arena) =>
+      spec.startsWith('@') ? (_javaOffset(spec)..releasedBy(arena)) : zones.java(spec);
 
   int _randomInstantMicros(Random rng, String? zone) {
     final roll = rng.nextDouble();
@@ -303,7 +323,7 @@ class ZmanimFormatterArea extends Area {
     final around = base ~/ 1000;
     final setup = _FormatterSetup(rng, zones, around);
     final describe = '$id $setup';
-    kj.ZoneId? javaZone(String? name) => name == null ? null : zones.java(name);
+    kj.ZoneId? javaZone(String? name) => name == null ? null : _javaZone(name, arena);
     tz.Location? dartZone(String? name) => name == null ? null : _dartZone(name, around);
 
     final javaFormatter = attempt(() {
@@ -386,7 +406,7 @@ class ZmanimFormatterArea extends Area {
         attempt(() => _javaText(java.format(kj.Duration.ofMillis(timeMillis)!..releasedBy(arena)))),
         attempt(() => dart.formatTime(time)));
 
-    final instantZone = chance(rng, 0.2) ? zoneName : pick(rng, zones.names);
+    final instantZone = chance(rng, 0.2) ? zoneName : _randomZoneSpec(rng, zones);
     for (var repeat = 0; repeat < 3; repeat++) {
       final micros = repeat == 0 ? base : base + (chance(rng, 0.5) ? 0 : between(rng, -3 * _day, 3 * _day) * 1000);
       final (seconds, nanos) = _split(micros);
