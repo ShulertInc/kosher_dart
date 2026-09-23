@@ -537,44 +537,22 @@ class AstronomicalCalendar {
             (direction * minutes * MINUTE_MILLIS * 1000).truncate(),
         1000);
     final double step = minutes > 0.0 ? incrementor : -incrementor;
-    double degreesAfter(int steps) {
-      double degrees = 0.0;
-      for (int i = 0; i < steps; i++) {
-        degrees += step;
-      }
-      return degrees;
-    }
-
-    bool stops(double degrees) {
+    final bool continuesWhileLater = (minutes > 0.0) == (direction < 0);
+    double degrees = 0.0;
+    while (true) {
+      degrees += step;
       final DateTime? time = offsetByDegrees(GEOMETRIC_ZENITH + degrees);
       if (time == null || degrees.abs() > 30.0) {
-        return true;
+        return double.nan;
       }
       final int millis = _floorDivide(time.microsecondsSinceEpoch, 1000);
-      final bool earlierThanOffset = millis < offsetByTimeMillis;
-      final bool laterThanOffset = millis > offsetByTimeMillis;
-      final bool continues = (minutes > 0.0) == (direction < 0)
-          ? laterThanOffset
-          : earlierThanOffset;
-      return !continues;
-    }
-
-    if (offsetByDegrees(GEOMETRIC_ZENITH + step) == null) {
-      return double.nan;
-    }
-    int low = 1;
-    int high = (30.0 / incrementor).ceil() + 1;
-    while (low < high) {
-      final int middle = (low + high) ~/ 2;
-      if (stops(degreesAfter(middle))) {
-        high = middle;
-      } else {
-        low = middle + 1;
+      final bool continues = continuesWhileLater
+          ? millis > offsetByTimeMillis
+          : millis < offsetByTimeMillis;
+      if (!continues) {
+        return degrees;
       }
     }
-    final double degrees = degreesAfter(low);
-    final DateTime? time = offsetByDegrees(GEOMETRIC_ZENITH + degrees);
-    return time == null || degrees.abs() > 30.0 ? double.nan : degrees;
   }
 
   /// Adjusts the `Calendar` to deal with edge cases where the location crosses the antimeridian.
