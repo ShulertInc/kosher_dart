@@ -262,14 +262,14 @@ class CalculatorsArea extends Area {
       'calculators.noaa.getSolarElevation',
       input,
       attempt(() => java.getSolarElevation(instant, setup.javaGeo)),
-      attempt(() => kd.NOAACalculator.getSolarElevation(utc, setup.place.latitude, setup.place.longitude)),
+      attempt(() => kd.NOAACalculator().getSolarElevation(utc, setup.dartGeo)),
       tolerance: 1e-6,
     );
     report.real(
       'calculators.noaa.getSolarAzimuth',
       input,
       attempt(() => java.getSolarAzimuth(instant, setup.javaGeo)),
-      attempt(() => kd.NOAACalculator.getSolarAzimuth(utc, setup.place.latitude, setup.place.longitude)),
+      attempt(() => kd.NOAACalculator().getSolarAzimuth(utc, setup.dartGeo)),
       tolerance: 1e-6,
     );
     final zoned = tz.TZDateTime.fromMillisecondsSinceEpoch(setup.location, at);
@@ -277,7 +277,7 @@ class CalculatorsArea extends Area {
       'calculators.noaa.getSolarElevation.zonedDateTime',
       input,
       attempt(() => java.getSolarElevation(instant, setup.javaGeo)),
-      attempt(() => kd.NOAACalculator.getSolarElevation(zoned, setup.place.latitude, setup.place.longitude)),
+      attempt(() => kd.NOAACalculator().getSolarElevation(zoned, setup.dartGeo)),
       tolerance: 1e-6,
     );
     instant.release();

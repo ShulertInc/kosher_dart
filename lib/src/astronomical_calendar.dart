@@ -451,6 +451,21 @@ class AstronomicalCalendar {
           .getUTCMidnight(getAdjustedCalendar(), getGeoLocation()),
       SolarEvent.midnight);
 
+  DateTime? getTimeAtAzimuth90Or270(double azimuth) => getDateFromTime(
+      getAstronomicalCalculator()
+          .getUTCTimeAtAzimuth(getAdjustedCalendar(), getGeoLocation(), azimuth),
+      azimuth == 90 ? SolarEvent.sunrise : SolarEvent.sunset);
+
+  DateTime getLocalMeanTime(Duration timeOfDay) {
+    final DateTime date = getAdjustedCalendar();
+    final int longitudeOffset =
+        (getGeoLocation().getLongitude() * 4 * MINUTE_MILLIS * 1000).truncate();
+    return DateTime.utc(date.year, date.month, date.day)
+        .add(timeOfDay)
+        .subtract(Duration(microseconds: longitudeOffset))
+        .toLocal();
+  }
+
   /// A method that returns a `Date` from the time passed in as a parameter.
   ///
   /// - [time]: 

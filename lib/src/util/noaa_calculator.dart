@@ -386,12 +386,16 @@ class NOAACalculator extends AstronomicalCalculator {
   }
 
   /// Degrees above the horizon, corrected for refraction.
-  static double getSolarElevation(DateTime dateTime, double lat, double lon) =>
-      _getSolarElevationAzimuth(dateTime, lat, lon, false);
+  @override
+  double getSolarElevation(DateTime instant, GeoLocation geoLocation) =>
+      _getSolarElevationAzimuth(instant, geoLocation.getLatitude(),
+          geoLocation.getLongitude(), false);
 
   /// Degrees clockwise from true north.
-  static double getSolarAzimuth(DateTime dateTime, double lat, double lon) =>
-      _getSolarElevationAzimuth(dateTime, lat, lon, true);
+  @override
+  double getSolarAzimuth(DateTime instant, GeoLocation geoLocation) =>
+      _getSolarElevationAzimuth(instant, geoLocation.getLatitude(),
+          geoLocation.getLongitude(), true);
 
   static double _getSolarElevationAzimuth(
       DateTime dateTime, double lat, double lon, bool isAzimuth) {

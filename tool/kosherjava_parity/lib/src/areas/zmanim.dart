@@ -57,6 +57,8 @@ class ZmanimCase {
         (machineLocal ? null : extremePlace(rng, zones)) ??
         randomPlace(rng, zones, date, chosenZone: zone);
     useElevation = chance(rng, 0.2) ? null : chance(rng, 0.5);
+    useAstronomicalChatzos = chance(rng, 0.4) ? null : chance(rng, 0.5);
+    useAstronomicalChatzosForOtherZmanim = chance(rng, 0.4) ? null : chance(rng, 0.5);
     candleLightingOffset = chance(rng, 0.15) ? null : offset(rng, 18);
     ateretTorahSunsetOffset = chance(rng, 0.15) ? null : offset(rng, 40);
     sunTimes = chance(rng, 0.15);
@@ -91,6 +93,8 @@ class ZmanimCase {
   late final CivilDate date;
   late final Place place;
   late final bool? useElevation;
+  late final bool? useAstronomicalChatzos;
+  late final bool? useAstronomicalChatzosForOtherZmanim;
   late final double? candleLightingOffset;
   late final double? ateretTorahSunsetOffset;
   late final bool sunTimes;
@@ -114,7 +118,8 @@ class ZmanimCase {
   }
 
   String describe(String id) => '$id date=$date $place${machineLocal ? ' as a local DateTime' : ''} '
-      'useElevation=${useElevation ?? 'default'} candle=${candleLightingOffset ?? 'default'} '
+      'useElevation=${useElevation ?? 'default'} astronomicalChatzos=${useAstronomicalChatzos ?? 'default'} '
+      'forOtherZmanim=${useAstronomicalChatzosForOtherZmanim ?? 'default'} candle=${candleLightingOffset ?? 'default'} '
       'ateret=${ateretTorahSunsetOffset ?? 'default'} calculator=${sunTimes ? 'SunTimes' : 'NOAA'}'
       '${settings == null ? '' : ' $settings'}${timeOfDay == null ? '' : ' timeOfDay=$timeOfDay'}'
       '${cloned ? ' cloned' : ''}${movedFromDays == null ? '' : ' builtOn=$movedFromDays days away, then setCalendar'}';
@@ -298,6 +303,10 @@ class ZmanimArea extends Area {
     calendar.localDate = date;
     date?.release();
     if (input.useElevation != null) calendar.useElevation = input.useElevation!;
+    if (input.useAstronomicalChatzos != null) calendar.useAstronomicalChatzos = input.useAstronomicalChatzos!;
+    if (input.useAstronomicalChatzosForOtherZmanim != null) {
+      calendar.useAstronomicalChatzosForOtherZmanim = input.useAstronomicalChatzosForOtherZmanim!;
+    }
     if (input.candleLightingOffset != null) calendar.candleLightingOffset = input.candleLightingOffset!;
     if (input.ateretTorahSunsetOffset != null) calendar.ateretTorahSunsetOffset = input.ateretTorahSunsetOffset!;
     if (input.sunTimes) {
@@ -321,6 +330,10 @@ class ZmanimArea extends Area {
     final geo = kd.GeoLocation.setLocation('case', place.latitude, place.longitude, date, place.elevation);
     final calendar = kd.ComplexZmanimCalendar.intGeoLocation(geo);
     if (input.useElevation != null) calendar.setUseElevation(input.useElevation!);
+    if (input.useAstronomicalChatzos != null) calendar.setUseAstronomicalChatzos(input.useAstronomicalChatzos!);
+    if (input.useAstronomicalChatzosForOtherZmanim != null) {
+      calendar.setUseAstronomicalChatzosForOtherZmanim(input.useAstronomicalChatzosForOtherZmanim!);
+    }
     if (input.candleLightingOffset != null) calendar.setCandleLightingOffset(input.candleLightingOffset!);
     if (input.ateretTorahSunsetOffset != null) calendar.setAteretTorahSunsetOffset(input.ateretTorahSunsetOffset!);
     if (input.sunTimes) calendar.setAstronomicalCalculator(kd.SunTimesCalculator());

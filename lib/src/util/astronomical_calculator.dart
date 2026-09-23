@@ -164,6 +164,14 @@ abstract class AstronomicalCalculator {
       throw UnsupportedError(
           "${getCalculatorName()} does not calculate the time at an azimuth. Use the NOAACalculator instead.");
 
+  double getSolarElevation(DateTime instant, GeoLocation geoLocation) =>
+      throw UnsupportedError(
+          "${getCalculatorName()} does not calculate the solar elevation. Use the NOAACalculator instead.");
+
+  double getSolarAzimuth(DateTime instant, GeoLocation geoLocation) =>
+      throw UnsupportedError(
+          "${getCalculatorName()} does not calculate the solar azimuth. Use the NOAACalculator instead.");
+
   /// A method that calculates UTC solar midnight - astronomical _chatzos halayla_.
   ///
   /// - [dateTime]:

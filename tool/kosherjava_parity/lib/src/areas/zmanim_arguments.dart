@@ -4,6 +4,7 @@ import '../kosherjava.g.dart' as kj;
 import '../random_input.dart';
 import '../report.dart';
 import 'zman_getters.dart';
+import 'zmanim.dart' show durationMillis;
 import 'zmanim_removed.dart';
 
 class Moment {
@@ -68,13 +69,61 @@ void runArgumentChecks(
   pair('getMinchaKetana(s,e) / getMinchaKetanaOfDay', java.getMinchaKetana$1, dart.getMinchaKetanaOfDay);
   pair('getPlagHamincha(s,e)', java.getPlagHamincha$1, dart.getPlagHamincha);
   pair('getPlagHamincha(s,e) / getPlagHaminchaOfDay', java.getPlagHamincha$1, dart.getPlagHaminchaOfDay);
-  pair('getSofZmanShma(s,e,synchronous) / getSofZmanShma', (s, e) => java.getSofZmanShma(s, e, true),
-      dart.getSofZmanShma);
-  pair('getPlagHamincha(s,e,synchronous) / getPlagHamincha', (s, e) => java.getPlagHamincha(s, e, true),
-      dart.getPlagHamincha);
   pair('getSofZmanBiurChametz(s,e)', (s, e) => java.getSofZmanBiurChametz(s, e, false), dart.getSofZmanBiurChametz);
   pair('getSofZmanAchilasChametz(s,e)', (s, e) => java.getSofZmanAchilasChametz(s, e, false),
       dart.getSofZmanAchilasChametz);
+
+  for (final synchronous in [true, false]) {
+    void synced(String name, kj.Instant? Function(kj.Instant?, kj.Instant?, bool) javaCall,
+        DateTime? Function(DateTime?, DateTime?, bool) dartCall) {
+      pair('$name(s,e,$synchronous)', (s, e) => javaCall(s, e, synchronous), (s, e) => dartCall(s, e, synchronous));
+    }
+
+    synced('getSofZmanShma', java.getSofZmanShma, dart.getSofZmanShma);
+    synced('getSofZmanShma / getSofZmanShmaOfDay', java.getSofZmanShma, dart.getSofZmanShmaOfDay);
+    synced('getSofZmanTfila', java.getSofZmanTfila, dart.getSofZmanTfila);
+    synced('getSofZmanTfila / getSofZmanTfilaOfDay', java.getSofZmanTfila, dart.getSofZmanTfilaOfDay);
+    synced('getMinchaGedola', java.getMinchaGedola, dart.getMinchaGedola);
+    synced('getMinchaGedola / getMinchaGedolaOfDay', java.getMinchaGedola, dart.getMinchaGedolaOfDay);
+    synced('getSamuchLeMinchaKetana / getSamuchLeMinchaKetanaOfDay', java.getSamuchLeMinchaKetana,
+        dart.getSamuchLeMinchaKetanaOfDay);
+    synced('getMinchaKetana', java.getMinchaKetana, dart.getMinchaKetana);
+    synced('getMinchaKetana / getMinchaKetanaOfDay', java.getMinchaKetana, dart.getMinchaKetanaOfDay);
+    synced('getPlagHamincha', java.getPlagHamincha, dart.getPlagHamincha);
+    synced('getPlagHamincha / getPlagHaminchaOfDay', java.getPlagHamincha, dart.getPlagHaminchaOfDay);
+    synced('getSofZmanBiurChametz', java.getSofZmanBiurChametz, dart.getSofZmanBiurChametz);
+    synced('getSofZmanAchilasChametz', java.getSofZmanAchilasChametz, dart.getSofZmanAchilasChametz);
+  }
+
+  for (var sample = 0; sample < 2; sample++) {
+    final start = any();
+    final end = any();
+    report.real('$prefix.getHalfDayBasedShaahZmanis(s,e)', '$describe $start $end',
+        attempt(() => durationMillis(java.getHalfDayBasedShaahZmanis(start.java, end.java)) ?? double.nan),
+        attempt(() => dart.getHalfDayBasedShaahZmanis(start.dart, end.dart)),
+        tolerance: 1e-6);
+  }
+
+  for (var sample = 0; sample < 2; sample++) {
+    final degrees = chance(rng, 0.5) ? pick(rng, const [0.0, 1.583, 3.7, 7.083, 8.5, 16.1, 18.0]) : uniform(rng, -5, 30);
+    final sunset = chance(rng, 0.5);
+    report.real('$prefix.getPercentOfShaahZmanisFromDegrees(degrees,sunset)', '$describe degrees=$degrees sunset=$sunset',
+        attempt(() => java.getPercentOfShaahZmanisFromDegrees(degrees, sunset)),
+        attempt(() => dart.getPercentOfShaahZmanisFromDegrees(degrees, sunset)),
+        tolerance: 1e-6);
+  }
+
+  {
+    final seconds = chance(rng, 0.3) ? pick(rng, const [0, 43200, 86399]) : rng.nextInt(86400);
+    final nanos = chance(rng, 0.5) ? 0 : rng.nextInt(1000000) * 1000;
+    final time = kj.LocalTime.ofSecondOfDay(seconds)!;
+    final withNanos = time.withNano(nanos)!;
+    time.release();
+    report.instant('$prefix.getLocalMeanTime(localTime)', '$describe secondOfDay=$seconds nanos=$nanos',
+        attempt(() => millisOrNull(java.getLocalMeanTime(withNanos))),
+        attempt(() => dart.getLocalMeanTime(Duration(seconds: seconds, microseconds: nanos ~/ 1000)).flooredMillis));
+    withNanos.release();
+  }
 
   pair('getSofZmanKidushLevanaBetweenMoldos(alos,tzais)', java.getSofZmanKidushLevanaBetweenMoldos,
       dart.getSofZmanKidushLevanaBetweenMoldos);
