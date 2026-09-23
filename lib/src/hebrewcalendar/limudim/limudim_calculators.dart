@@ -68,7 +68,7 @@ class AmudYomiBavliDirshuCalculator {
   static final DateTime cycleStartDay = DateTime(2023, 10, 16);
 
   /// The number of amudim in the Bavli as the schedule counts them.
-  static const int WHOLE_SHAS_AMUDIM = 5407;
+  static const int WHOLE_SHAS_AMUDIM = 5406;
 
   static final int _cycleStartAbsDate = _absDateOfGregorian(2023, 10, 16);
 
@@ -164,15 +164,13 @@ class PirkeiAvosCalculator {
     // The cycle opens the day after Pesach, which is a day earlier in Israel.
     final int anchorDay = calendar.inIsrael ? 22 : 23;
 
-    int cycleYear = year;
-    int cycleStart = _absDateOf(year, JewishDate.NISSAN, anchorDay);
+    final int cycleStart = _absDateOf(year, JewishDate.NISSAN, anchorDay);
     if (date < cycleStart) {
-      cycleYear = year - 1;
-      cycleStart = _absDateOf(cycleYear, JewishDate.NISSAN, anchorDay);
+      return null;
     }
 
     // The cycle closes on the last Shabbos before Rosh Hashana.
-    final int roshHashana = _absDateOf(cycleYear + 1, JewishDate.TISHREI, 1);
+    final int roshHashana = _absDateOf(year + 1, JewishDate.TISHREI, 1);
     final int cycleEnd = roshHashana - _dayOfWeek(roshHashana);
     if (date > cycleEnd) {
       return null;
