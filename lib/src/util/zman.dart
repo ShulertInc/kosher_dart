@@ -14,153 +14,126 @@
  * or connect to: http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html
  */
 
-import 'dart:core';
+import 'package:timezone/timezone.dart';
 
-/// A wrapper class for a astronomical times / _zmanim_ that is mostly intended to allow sorting collections of astronomical times.
-/// It has fields for both date/time and duration based _zmanim_, name / labels as well as a longer description or explanation of a
-/// _zman_.
-///
-/// Here is an example of various ways of sorting _zmanim_.
-/// First create the Calendar for the location you would like to calculate:
-///
-///
-/// ```dart
-///  String locationName = "Lakewood, NJ";
-///  double latitude = 40.0828; // Lakewood, NJ
-///  double longitude = -74.2094; // Lakewood, NJ
-///  double elevation = 20; // optional elevation correction in Meters
-///  // the String parameter in getTimeZone() has to be a valid timezone listed in [TimeZone.getAvailableIDs]
-///  TimeZone timeZone = TimeZone.getTimeZone("America/New_York");
-///  GeoLocation location = new GeoLocation(locationName, latitude, longitude, elevation, timeZone);
-///  ComplexZmanimCalendar czc = new ComplexZmanimCalendar(location);
-///  Zman sunset = new Zman(czc.getSunset(), "Sunset");
-///  Zman shaah16 = new Zman(czc.getShaahZmanis16Point1Degrees(), "Shaah zmanis 16.1");
-///  Zman sunrise = new Zman(czc.getSunrise(), "Sunrise");
-///  Zman shaah = new Zman(czc.getShaahZmanisGra(), "Shaah zmanis GRA");
-///  ArrayList<Zman> zl = new ArrayList<Zman>();
-///  zl.add(sunset);
-///  zl.add(shaah16);
-///  zl.add(sunrise);
-///  zl.add(shaah);
-///  //will sort sunset, shaah 1.6, sunrise, shaah GRA
-///  System.out.println(zl);
-///  Collections.sort(zl, Zman.DATE_ORDER);
-///  // will sort sunrise, sunset, shaah, shaah 1.6 (the last 2 are not in any specific order)
-///  Collections.sort(zl, Zman.DURATION_ORDER);
-///  // will sort sunrise, sunset (the first 2 are not in any specific order), shaah GRA, shaah 1.6
-///  Collections.sort(zl, Zman.NAME_ORDER);
-///  // will sort shaah 1.6, shaah GRA, sunrise, sunset
-/// ```
-///
-/// © Eliyahu Hershfeld 2007-2020
-/// TODO: Add secondary sorting. As of now the `Comparator`s in this class do not sort by secondary order. This means that when sorting a
-/// [Collection] of _zmanim_ and using the [DATE_ORDER] `Comparator` will have the duration based _zmanim_
-/// at the end, but they will not be sorted by duration. This should be N/A for label based sorting.
+import 'date_time_formatter.dart';
+import 'geo_location.dart';
+
 class Zman {
-  /// The name / label of the _zman_.
-  late String _label;
+  Zman(DateTime? zman, String? label) : this.withGeoLocation(zman, null, label);
 
-  /// The [Date] of the _zman_
-  DateTime? _zman;
+  Zman.withGeoLocation(this._zman, this._geoLocation, this._label);
 
-  /// The duration if the _zman_ is  a [AstronomicalCalendar.getTemporalHour] (or the various
-  /// _shaah zmanis_ base times such as [ZmanimCalendar.getShaahZmanisGra] or
-  /// [ComplexZmanimCalendar.getShaahZmanis16Point1Degrees]).
-  double? _duration;
-
-  /// A longer description or explanation of a _zman_.
-  String? _description;
-
-  /// The constructor setting a [Date] based _zman_ and a label.
-  /// - [date]: the Date of the _zman_.
-  /// - [label]: the label of the  _zman_ such as "_Sof Zman Krias Shema GRA_".
-  /// See also [Zman].
-  Zman(this._zman, this._label);
-
-  /// The constructor setting a duration based _zman_ such as
-  /// [AstronomicalCalendar.getTemporalHour] (or the various _shaah zmanis_ times such as
-  /// [ZmanimCalendar.getShaahZmanisGra] or
-  /// [ComplexZmanimCalendar.getShaahZmanis16Point1Degrees]) and label.
-  /// - [duration]: a duration based _zman_ such as ([AstronomicalCalendar.getTemporalHour]
-  /// - [label]: the label of the  _zman_ such as "_Shaah Zmanis GRA_".
-  /// See also [Zman].
   Zman.duration(this._duration, this._label);
 
-  /// Returns the `Date` based _zman_.
-  /// Returns the _zman_.
-  /// See also [setZman].
-  DateTime? getZman() {
-    return _zman;
+  String? _label;
+
+  DateTime? _zman;
+
+  double? _duration;
+
+  String? _description;
+
+  GeoLocation? _geoLocation;
+
+  DateTime? getZman() => _zman;
+
+  void setZman(DateTime? zman) => _zman = zman;
+
+  GeoLocation? getGeoLocation() => _geoLocation;
+
+  void setGeoLocation(GeoLocation? geoLocation) => _geoLocation = geoLocation;
+
+  double? getDuration() => _duration;
+
+  void setDuration(double? duration) => _duration = duration;
+
+  String? getLabel() => _label;
+
+  void setLabel(String? label) => _label = label;
+
+  String? getDescription() => _description;
+
+  void setDescription(String? description) => _description = description;
+
+  static const Comparator<Zman?> DATE_ORDER = _dateOrder;
+
+  static const Comparator<Zman?> NAME_ORDER = _nameOrder;
+
+  static const Comparator<Zman?> DURATION_ORDER = _durationOrder;
+
+  static int _dateOrder(Zman? first, Zman? second) {
+    if (first == null || second == null) return _nullsLast(first, second)!;
+    return _byZman(first, second) ?? _byDuration(first, second) ?? 0;
   }
 
-  /// Sets a `Date` based _zman_.
-  /// - [date]: a `Date` based _zman_
-  /// See also [getZman].
-  void setZman(DateTime date) {
-    _zman = date;
+  static int _durationOrder(Zman? first, Zman? second) {
+    if (first == null || second == null) return _nullsLast(first, second)!;
+    return _byDuration(first, second) ?? _byZman(first, second) ?? 0;
   }
 
-  /// Returns a duration based _zman_ such as [AstronomicalCalendar.getTemporalHour]
-  /// (or the various _shaah zmanis_ times such as [ZmanimCalendar.getShaahZmanisGra]
-  /// or [ComplexZmanimCalendar.getShaahZmanis16Point1Degrees]).
-  /// Returns the duration based _zman_.
-  /// See also [setDuration].
-  double? getDuration() {
-    return _duration;
+  static int _nameOrder(Zman? first, Zman? second) {
+    if (first == null || second == null) return first == null ? (second == null ? 0 : -1) : 1;
+    final firstLabel = first.getLabel();
+    final secondLabel = second.getLabel();
+    if (firstLabel == null || secondLabel == null) {
+      return firstLabel == null ? (secondLabel == null ? 0 : -1) : 1;
+    }
+    return firstLabel.compareTo(secondLabel);
   }
 
-  ///  Sets a duration based _zman_ such as [AstronomicalCalendar.getTemporalHour]
-  /// (or the various _shaah zmanis_ times as [ZmanimCalendar.getShaahZmanisGra] or
-  /// [ComplexZmanimCalendar.getShaahZmanis16Point1Degrees]).
-  /// - [duration]: duration based _zman_ such as [AstronomicalCalendar.getTemporalHour].
-  /// See also [getDuration].
-  void setDuration(double duration) {
-    _duration = duration;
+  static int? _nullsLast(Zman? first, Zman? second) {
+    if (first == null) return second == null ? 0 : 1;
+    if (second == null) return -1;
+    return null;
   }
 
-  /// Returns the name / label of the _zman_ such as "_Sof Zman Krias Shema GRA_". There are no automatically set labels
-  /// and you must set them using [setLabel].
-  /// Returns the name/label of the _zman_.
-  /// See also [setLabel].
-  String getLabel() {
-    return _label;
+  static int? _byZman(Zman first, Zman second) {
+    final firstZman = first.getZman();
+    final secondZman = second.getZman();
+    if (firstZman != null && secondZman != null) return firstZman.compareTo(secondZman);
+    if (firstZman != null) return -1;
+    if (secondZman != null) return 1;
+    return null;
   }
 
-  /// Sets the the name / label of the _zman_ such as "_Sof Zman Krias Shema GRA_".
-  /// - [label]: the name / label to set for the _zman_.
-  /// See also [getLabel].
-  void setLabel(String label) {
-    _label = label;
+  static int? _byDuration(Zman first, Zman second) {
+    final firstDuration = first.getDuration();
+    final secondDuration = second.getDuration();
+    if (firstDuration != null && secondDuration != null) return firstDuration.compareTo(secondDuration);
+    if (firstDuration != null) return -1;
+    if (secondDuration != null) return 1;
+    return null;
   }
 
-  /// Returns the longer description or explanation of a _zman_. There is no default value for this and it must be set using
-  /// [setDescription]
-  /// Returns the description or explanation of a _zman_.
-  /// See also [setDescription].
-  String? getDescription() {
-    return _description;
+  String toXML() {
+    final geoLocation = getGeoLocation();
+    final formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS")
+        .withZone(geoLocation == null ? UTC : geoLocation.getZoneId());
+    final zman = getZman();
+    final sb = StringBuffer('<Zman>\n');
+    sb.write('\t<Label>${getLabel()}</Label>\n');
+    sb.write('\t<Zman>${zman == null ? '' : formatter.format(zman)}</Zman>\n');
+    if (geoLocation != null) sb.write('\t${geoLocation.toXML().replaceAll('\n', '\n\t')}');
+    sb.write('\n\t<Duration>${_durationText()}</Duration>\n');
+    sb.write('\t<Description>${getDescription()}</Description>\n');
+    sb.write('</Zman>');
+    return sb.toString();
   }
 
-  /// Sets the longer description or explanation of a _zman_.
-  /// - [description]: 
-  ///   the _zman_ description to set.
-  /// See also [getDescription].
-  void setDescription(String description) {
-    _description = description;
-  }
-
-  /// See also [Object.toString].
   @override
   String toString() {
-    StringBuffer sb = StringBuffer();
-    sb.write("\nLabel:\t\t\t");
-    sb.write(getLabel());
-    sb.write("\nZman:\t\t\t");
-    sb.write(getZman());
-    sb.write("\nDuration:\t\t\t");
-    sb.write(getDuration());
-    sb.write("\nDescription:\t\t\t");
-    sb.write(getDescription());
-    return sb.toString();
+    final zman = getZman();
+    final geoLocation = getGeoLocation();
+    return '\nLabel:\t${getLabel()}'
+        '\nZman:\t${zman == null ? 'null' : instantText(zman)}'
+        '\nGeoLocation:\t${geoLocation == null ? 'null' : geoLocation.toString().replaceAll('\n', '\n\t')}'
+        '\nDuration:\t${_durationText()}'
+        '\nDescription:\t${getDescription()}';
+  }
+
+  String _durationText() {
+    final duration = getDuration();
+    return duration == null || duration.isNaN ? 'null' : javaDurationTextOfMillis(duration);
   }
 }

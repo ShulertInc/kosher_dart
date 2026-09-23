@@ -23,7 +23,7 @@ dart run bin/parity.dart --seed 2026 --cases 5000
 dart run bin/parity.dart --only zmanim --seed 2026 --case 812
 ```
 
-Areas: `zmanim`, `calendar`, `tefila`, `formatter`, `geo`, `calculators`. A run prints its seed, then
+Areas: `zmanim`, `calendar`, `tefila`, `formatter`, `geo`, `calculators`, `zmanim-formatter`. A run prints its seed, then
 every check that diverged with counts and example inputs. `--case` replays one input. Exit code 1
 means something diverged.
 
@@ -39,8 +39,19 @@ KosherJava keeps nanoseconds, `DateTime` keeps microseconds. Both sides throwing
 - Calendar: a day-by-day sweep from 1900, random Gregorian and Jewish dates, and chains of
   arithmetic.
 - Machine zone: kosher_dart must not depend on it. Run with `TZ=JST-9` or `TZ=HST10` to check.
+- Zmanim formatter: `Double.toString` on random bit patterns, every `ZmanimFormatter` format and
+  pattern on random durations, doubles and instants near transitions, the `Zman` comparators on
+  random lists, `Zman` and `GeoLocation` XML, and `toXML` / `toJSON` of random calendars of all three
+  classes.
+
+`dart run tool/zone_names.dart` regenerates kosher_dart's table of java.time's English zone names.
 
 ## Known differences
 
 kosher_dart names the month Marcheshvan / מרחשון where KosherJava says Cheshvan / חשון. KosherJava's output is
 mapped to the full name before comparing.
+
+`ZmanimFormatter.toXML` sorts by value and keeps reflection order for ties and missing zmanim, and
+`getMethods()` order changes between JVM runs. kosher_dart orders those by name, so KosherJava's
+ties are put in name order before comparing. Durations in `toXML` / `toJSON` differ below the
+microsecond, so those checks are rounding.

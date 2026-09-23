@@ -20,6 +20,7 @@ import 'package:kosher_dart/src/util/astronomical_calculator.dart';
 import 'package:kosher_dart/src/util/geo_location.dart';
 import 'package:kosher_dart/src/util/local_midnight.dart';
 import 'package:kosher_dart/src/util/omitted.dart';
+import 'package:kosher_dart/src/util/zmanim_formatter.dart';
 
 enum SolarEvent { sunrise, sunset, noon, midnight }
 
@@ -591,24 +592,11 @@ class AstronomicalCalendar {
     return DateTime.utc(calendar.year, calendar.month, calendar.day + offset);
   }
 
-/*
+  @override
+  String toString() => ZmanimFormatter.toXML(this);
 
-  /// Returns an XML formatted representation of the class. It returns the default output of the
-  /// [ZmanimFormatter.toXML] method.
-  /// See also [ZmanimFormatter.toXML].
-  /// See also [Object.toString].
-  String toString() {
-    return ZmanimFormatter.toXML(this);
-  }
+  String toJSON() => ZmanimFormatter.toJSON(this);
 
-  /// Returns a JSON formatted representation of the class. It returns the default output of the
-  /// [ZmanimFormatter.toJSON] method.
-  /// See also [ZmanimFormatter.toJSON].
-  /// See also [Object.toString].
-  String toJSON() {
-    return ZmanimFormatter.toJSON(this);
-  }
-*/
   /// See also [Object.equals].
   @override
   bool operator ==(Object object) {

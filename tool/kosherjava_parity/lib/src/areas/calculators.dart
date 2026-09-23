@@ -2,7 +2,6 @@ import 'dart:math';
 
 import 'package:jni/jni.dart';
 import 'package:kosher_dart/kosher_dart.dart' as kd;
-import 'package:kosher_dart/src/astronomical_calendar.dart' as kd;
 import 'package:kosher_dart/src/util/astronomical_calculator.dart' as kd;
 import 'package:kosher_dart/src/util/noaa_calculator.dart' as kd;
 import 'package:kosher_dart/src/util/sun_times_calculator.dart' as kd;
