@@ -43,7 +43,6 @@ library;
 
 import 'package:test/test.dart';
 import 'package:kosher_dart/kosher_dart.dart';
-import 'package:kosher_dart/src/astronomical_calendar.dart';
 
 // ─────────────────────────────────────────────────────────────────
 // Helper: build an AstronomicalCalendar for a given lat/lon on a date

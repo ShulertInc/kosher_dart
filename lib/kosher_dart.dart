@@ -1,6 +1,11 @@
 
+export 'src/astronomical_calendar.dart';
 export 'src/zmanim_calendar.dart';
 export 'src/util/geo_location.dart';
+export 'src/util/zman.dart';
+export 'src/util/time.dart';
+export 'src/util/zmanim_formatter.dart';
+export 'src/util/date_time_formatter.dart' show DateTimeFormatter;
 export 'src/hebrewcalendar/daf.dart';
 export 'src/complex_zmanim_calendar.dart';
 export 'src/hebrewcalendar/jewish_date.dart';

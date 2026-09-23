@@ -15,7 +15,11 @@
  */
 
 import 'dart:math';
+import 'package:timezone/timezone.dart' as tz;
 import 'package:vector_math/vector_math.dart';
+
+import 'date_time_formatter.dart';
+import 'java_double.dart';
 
 /// A class that contains location information such as latitude and longitude required for astronomical calculations. The
 /// elevation field may not be used by some calculation engines and would be ignored if set. Check the documentation for
@@ -35,6 +39,7 @@ class GeoLocation {
   late double _longitude;
   late String _locationName;
   late DateTime _dateTime;
+  tz.Location? _zoneId;
 
   /// See also [getElevation].
   /// See also [setElevation].
@@ -238,6 +243,18 @@ class GeoLocation {
   ///   The timeZone to set.
   void setDateTime(DateTime dateTime) {
     _dateTime = dateTime;
+  }
+
+  tz.Location getZoneId() {
+    final zoneId = _zoneId;
+    if (zoneId != null) return zoneId;
+    final dateTime = getDateTime();
+    if (dateTime is tz.TZDateTime) return dateTime.location;
+    return dateTime.isUtc ? tz.UTC : tz.local;
+  }
+
+  void setZoneId(tz.Location? zoneId) {
+    _zoneId = zoneId;
   }
 
   /// A method that will return the location's local mean time offset in milliseconds from local [standard time](http://en.wikipedia.org/wiki/Standard_time). The globe is split into 360°, with
@@ -454,43 +471,16 @@ class GeoLocation {
     return d * earthRadius;
   }
 
-/*
-  /// A method that returns an XML formatted `String` representing the serialized `Object`. Very
-  /// similar to the toString method but the return value is in an xml format. The format currently used (subject to
-  /// change) is:
-  ///
-  ///
-  /// ```dart
-  ///    <GeoLocation>
-  ///    	 <LocationName>Lakewood, NJ</LocationName>
-  ///    	 <Latitude>40.0828&deg</Latitude>
-  ///    	 <Longitude>-74.2094&deg</Longitude>
-  ///    	 <Elevation>0 Meters</Elevation>
-  ///    	 <TimezoneName>America/New_York</TimezoneName>
-  ///    	 <TimeZoneDisplayName>Eastern Standard Time</TimeZoneDisplayName>
-  ///    	 <TimezoneGMTOffset>-5</TimezoneGMTOffset>
-  ///    	 <TimezoneDSTOffset>1</TimezoneDSTOffset>
-  ///    </GeoLocation>
-  /// ```
-  ///
-  /// Returns The XML formatted `String`.
   String toXML() {
-    StringBuffer sb = new StringBuffer();
-    sb.append("<GeoLocation>\n");
-    sb.append("\t<LocationName>").append(getLocationName()).append("</LocationName>\n");
-    sb.append("\t<Latitude>").append(getLatitude()).append("</Latitude>\n");
-    sb.append("\t<Longitude>").append(getLongitude()).append("</Longitude>\n");
-    sb.append("\t<Elevation>").append(getElevation()).append(" Meters").append("</Elevation>\n");
-    sb.append("\t<TimezoneName>").append(getTimeZone().getID()).append("</TimezoneName>\n");
-    sb.append("\t<TimeZoneDisplayName>").append(getTimeZone().getDisplayName()).append("</TimeZoneDisplayName>\n");
-    sb.append("\t<TimezoneGMTOffset>").append(getTimeZone().getRawOffset() / _HOUR_MILLIS)
-        .append("</TimezoneGMTOffset>\n");
-    sb.append("\t<TimezoneDSTOffset>").append(getTimeZone().getDSTSavings() / _HOUR_MILLIS)
-        .append("</TimezoneDSTOffset>\n");
-    sb.append("</GeoLocation>");
-    return sb.toString();
+    return '<GeoLocation>\n'
+        '\t<LocationName>${getLocationName()}</LocationName>\n'
+        '\t<Latitude>${javaDouble(getLatitude())}</Latitude>\n'
+        '\t<Longitude>${javaDouble(getLongitude())}</Longitude>\n'
+        '\t<Elevation>${javaDouble(getElevation() ?? 0)} Meters</Elevation>\n'
+        '\t<TimezoneName>${getZoneId().name}</TimezoneName>\n'
+        '\t<TimeZoneDisplayName>${zoneGenericName(getZoneId())}</TimeZoneDisplayName>\n'
+        '</GeoLocation>';
   }
-*/
 
   /// See also [Object.equals].
   @override
@@ -525,26 +515,21 @@ class GeoLocation {
     result += 37 * result + _dateTime.hashCode;
     return result;
   }
-/*
-  /// See also [Object.toString].
+  @override
   String toString() {
-    StringBuffer sb = new StringBuffer();
-    sb.append("\nLocation Name:\t\t\t").append(getLocationName());
-    sb.append("\nLatitude:\t\t\t").append(getLatitude()).append("\u00B0");
-    sb.append("\nLongitude:\t\t\t").append(getLongitude()).append("\u00B0");
-    sb.append("\nElevation:\t\t\t").append(getElevation()).append(" Meters");
-    sb.append("\nTimezone ID:\t\t\t").append(getTimeZone().getID());
-    sb.append("\nTimezone Display Name:\t\t").append(getTimeZone().getDisplayName())
-        .append(" (").append(getTimeZone().getDisplayName(false, TimeZone.SHORT)).append(")");
-    sb.append("\nTimezone GMT Offset:\t\t").append(getTimeZone().getRawOffset() / _HOUR_MILLIS);
-    sb.append("\nTimezone DST Offset:\t\t").append(getTimeZone().getDSTSavings() / _HOUR_MILLIS);
-    return sb.toString();
+    final degrees = String.fromCharCode(0xB0);
+    return '\nLocation Name:\t\t\t${getLocationName()}'
+        '\nLatitude:\t\t\t${javaDouble(getLatitude())}$degrees'
+        '\nLongitude:\t\t\t${javaDouble(getLongitude())}$degrees'
+        '\nElevation:\t\t\t${javaDouble(getElevation() ?? 0)} Meters'
+        '\nTimezone ID:\t\t\t${getZoneId().name}'
+        '\nTimezone Display Name:\t\t${zoneGenericName(getZoneId())}';
   }
-*/
 
   /// Create clone of this GeoLocation
   GeoLocation clone() {
     return GeoLocation.setLocation(getLocationName(), getLatitude(),
-        getLongitude(), getDateTime(), getElevation() ?? 0);
+        getLongitude(), getDateTime(), getElevation() ?? 0)
+      .._zoneId = _zoneId;
   }
 }

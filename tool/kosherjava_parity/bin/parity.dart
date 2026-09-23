@@ -6,6 +6,7 @@ import 'package:kosherjava_parity/src/areas/formatter.dart';
 import 'package:kosherjava_parity/src/areas/geo.dart';
 import 'package:kosherjava_parity/src/areas/tefila.dart';
 import 'package:kosherjava_parity/src/areas/zmanim.dart';
+import 'package:kosherjava_parity/src/areas/zmanim_formatter.dart';
 import 'package:kosherjava_parity/src/zones.dart';
 
 final areaFactories = <String, Area Function(Zones)>{
@@ -15,6 +16,7 @@ final areaFactories = <String, Area Function(Zones)>{
   'formatter': FormatterArea.new,
   'geo': GeoArea.new,
   'calculators': CalculatorsArea.new,
+  'zmanim-formatter': ZmanimFormatterArea.new,
 };
 
 void main(List<String> arguments) => runParity(arguments, areaFactories);
