@@ -115,6 +115,8 @@ final List<CalendarInstant> calendarInstants = [
     (d) => d.getSofZmanKidushLevanaBetweenMoldos()
   ),
   ('getSofZmanKidushLevana15Days', (j) => j.sofZmanKidushLevana15Days, (d) => d.getSofZmanKidushLevana15Days()),
+  ('getTekufaAsInstant(false)', (j) => j.getTekufaAsInstant(false), (d) => d.getTekufaAsInstant(false)),
+  ('getTekufaAsInstant(true)', (j) => j.getTekufaAsInstant(true), (d) => d.getTekufaAsInstant(true)),
 ];
 
 const _arithmeticOperations = [
@@ -182,7 +184,7 @@ class CalendarArea extends Area {
     dartDaf.setMasechtaNumber(yerushalmi);
     report.exact('calendar.Daf.getYerushalmiMasechtaTransliterated', input,
         attempt(() => javaString(javaDaf.yerushalmiMasechtaTransliterated)),
-        attempt(() => dartDaf.getYerushlmiMasechtaTransliterated()));
+        attempt(() => dartDaf.getYerushalmiMasechtaTransliterated()));
     report.exact('calendar.Daf.getYerushalmiMasechta', input, attempt(() => javaString(javaDaf.yerushalmiMasechta)),
         attempt(() => dartDaf.getYerushalmiMasechta()));
     report.exact('calendar.Daf.getDaf / setDaf', input, attempt(() {
@@ -350,6 +352,15 @@ class CalendarArea extends Area {
     }),
         attempt(() =>
             CivilDate(dart.getGregorianYear(), dart.getGregorianMonth(), dart.getGregorianDayOfMonth()).toString()));
+    report.exact('$prefix.getLocalDate', input, attempt(() {
+      final local = java.localDate!;
+      final text = CivilDate(local.year, local.monthValue, local.dayOfMonth).toString();
+      local.release();
+      return text;
+    }), attempt(() {
+      final local = dart.getLocalDate();
+      return CivilDate(local.year, local.month, local.day).toString();
+    }));
     report.exact('$prefix.getDayOfWeek', input, attempt(() => java.dayOfWeek), attempt(() => dart.getDayOfWeek()));
     report.exact('$prefix.getAbsDate', input, attempt(() => java.absDate), attempt(() => dart.getAbsDate()));
   }
@@ -447,7 +458,7 @@ class CalendarArea extends Area {
               : pair.dart.getDafYomiYerushalmi();
           if (daf == null) return null;
           return '${daf.getMasechtaNumber()}:${daf.getDaf()} '
-              '${daf.getYerushlmiMasechtaTransliterated()} ${daf.getYerushalmiMasechta()}';
+              '${daf.getYerushalmiMasechtaTransliterated()} ${daf.getYerushalmiMasechta()}';
         }));
   }
 
@@ -642,6 +653,9 @@ class CalendarArea extends Area {
     report.exact('calendar.getJewishCalendarElapsedDays(year)', input,
         attempt(() => kj.JewishDate.getJewishCalendarElapsedDays(year)),
         attempt(() => kd.JewishDate.getJewishCalendarElapsedDays(year)));
+    report.exact('calendar.YOM_KIPPUR_KATAN BEHAB', input,
+        Value('${kj.JewishCalendar.YOM_KIPPUR_KATAN} ${kj.JewishCalendar.BEHAB}'),
+        Value('${kd.JewishCalendar.YOM_KIPPUR_KATAN} ${kd.JewishCalendar.BEHAB}'));
     final dart = kd.JewishCalendar.initDate(year, kd.JewishDate.TISHREI, 1);
     report.exact('calendar.isJewishLeapYear(year)', input, attempt(() => kj.JewishDate.isJewishLeapYear(year)),
         attempt(() => dart.isJewishLeapYear()));

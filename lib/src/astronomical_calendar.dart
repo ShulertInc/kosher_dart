@@ -96,6 +96,10 @@ class AstronomicalCalendar {
   /// constant for milliseconds in an hour (3,600,000)
   static const double HOUR_MILLIS = MINUTE_MILLIS * 60;
 
+  static const int MINUTE_NANOS = 60 * 1000 * 1000 * 1000;
+
+  static const int HOUR_NANOS = MINUTE_NANOS * 60;
+
   /// The Java Calendar encapsulated by this class to track the current date used by the class
   late DateTime _calendar;
 
@@ -679,5 +683,15 @@ class AstronomicalCalendar {
   ///   The calendar to set.
   void setCalendar(DateTime calendar) {
     _calendar = calendar;
+  }
+
+  DateTime getLocalDate() =>
+      DateTime.utc(_calendar.year, _calendar.month, _calendar.day);
+
+  void setLocalDate(DateTime localDate) {
+    final int days = DateTime.utc(localDate.year, localDate.month, localDate.day)
+        .difference(getLocalDate())
+        .inDays;
+    setCalendar(startOfLocalDay(_calendar).add(Duration(hours: days * 24 + 12)));
   }
 }

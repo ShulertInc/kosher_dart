@@ -822,12 +822,12 @@ class HebrewDateFormatter {
       final Daf noDaf = Daf(39, 0);
       return hebrewFormat
           ? noDaf.getYerushalmiMasechta()
-          : noDaf.getYerushlmiMasechtaTransliterated();
+          : noDaf.getYerushalmiMasechtaTransliterated();
     }
     if (hebrewFormat) {
       return "${daf.getYerushalmiMasechta()} ${formatHebrewNumber(daf.getDaf())}";
     } else {
-      return "${daf.getYerushlmiMasechtaTransliterated()} ${daf.getDaf()}";
+      return "${daf.getYerushalmiMasechtaTransliterated()} ${daf.getDaf()}";
     }
   }
 
@@ -1107,4 +1107,60 @@ class HebrewDateFormatter {
     if (jewishCalendar.getDayOfOmer() != -1) return formatOmer(jewishCalendar);
     return "";
   }
+
+  static const List<String> _transliteratedTekufaNames = [
+    "Tishrei",
+    "Teves",
+    "Nissan",
+    "Tammuz"
+  ];
+
+  static const List<String> _tekufaNames = ["תשרי", "טבת", "ניסן", "תמוז"];
+
+  String formatTekufaName(JewishCalendar jewishCalendar) {
+    const double initialTekufaOffset = 12.625;
+    final double days =
+        JewishDate.getJewishCalendarElapsedDays(jewishCalendar.getJewishYear()) +
+            jewishCalendar.getDaysSinceStartOfJewishYear() +
+            initialTekufaOffset -
+            1;
+    final double solarDaysElapsed = days % 365.25;
+    final int currentTekufaNumber = solarDaysElapsed ~/ 91.3125;
+    final double tekufaDaysElapsed = solarDaysElapsed % 91.3125;
+    if (tekufaDaysElapsed > 0 && tekufaDaysElapsed <= 1) {
+      return hebrewFormat
+          ? "תקופת ${_tekufaNames[currentTekufaNumber]}"
+          : "Tekufas ${_transliteratedTekufaNames[currentTekufaNumber]}";
+    }
+    return "";
+  }
+
+  List<String> getTransliteratedHolidayList() => transliteratedHolidays;
+
+  void setTransliteratedHolidayList(List<String> transliteratedHolidays) =>
+      this.transliteratedHolidays = transliteratedHolidays;
+
+  List<String> getHebrewMonthList() => hebrewMonths;
+
+  void setHebrewMonthList(List<String> hebrewMonths) {
+    if (hebrewMonths.length != 14) {
+      throw ArgumentError("The Hebrew month array must have a length of 14.");
+    }
+    this.hebrewMonths = hebrewMonths;
+  }
+
+  List<String> getTransliteratedMonthList() => transliteratedMonths;
+
+  void setTransliteratedMonthList(List<String> transliteratedMonths) {
+    if (transliteratedMonths.length != 14) {
+      throw ArgumentError(
+          "The transliterated month array must have a length of 14.");
+    }
+    this.transliteratedMonths = transliteratedMonths;
+  }
+
+  Map<Parsha, String> getTransliteratedParshiyosList() => transliteratedParshaMap;
+
+  void setTransliteratedParshiyosList(Map<Parsha, String> transliteratedParshaMap) =>
+      this.transliteratedParshaMap = transliteratedParshaMap;
 }

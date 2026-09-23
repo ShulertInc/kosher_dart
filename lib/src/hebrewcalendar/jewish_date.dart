@@ -1060,6 +1060,9 @@ class JewishDate implements Comparable<JewishDate> {
         getGregorianDayOfMonth(), _hour ?? 12, _minute ?? 0, _second ?? 0);
   }
 
+  DateTime getLocalDate() => DateTime.utc(
+      getGregorianYear(), getGregorianMonth(), getGregorianDayOfMonth());
+
   /// Resets this date to the current system date.
   void resetDate() {
     setDate(DateTime.now());

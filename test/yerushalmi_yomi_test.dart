@@ -10,7 +10,7 @@ Daf? dafOn(int year, int month, int day) =>
     JewishCalendar.fromDateTime(DateTime(year, month, day)).getDafYomiYerushalmi();
 
 void expectDaf(Daf? daf, String masechta, int page) {
-  expect(daf!.getYerushlmiMasechtaTransliterated(), masechta);
+  expect(daf!.getYerushalmiMasechtaTransliterated(), masechta);
   expect(daf.getDaf(), page);
 }
 
@@ -55,7 +55,7 @@ void main() {
     final Daf after = dafOn(2024, 10, 13)!;
 
     expect(after.getDaf(), before.getDaf() + 1);
-    expect(after.getYerushlmiMasechtaTransliterated(),
-        before.getYerushlmiMasechtaTransliterated());
+    expect(after.getYerushalmiMasechtaTransliterated(),
+        before.getYerushalmiMasechtaTransliterated());
   });
 }

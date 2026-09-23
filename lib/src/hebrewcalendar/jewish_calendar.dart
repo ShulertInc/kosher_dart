@@ -243,6 +243,10 @@ class JewishCalendar extends JewishDate {
   /// The day following the last day of _Pesach_, _Shavuos_ and _Succos_.
   static const int ISRU_CHAG = 35;
 
+  static const int YOM_KIPPUR_KATAN = 36;
+
+  static const int BEHAB = 37;
+
   /// Is the calendar set to Israel, where some holidays have different rules.
   bool inIsrael = false;
 
@@ -1301,6 +1305,42 @@ class JewishCalendar extends JewishDate {
     // days of completed solar years
     double solar = (getJewishYear() - 1) * 365.25;
     return (days - solar).floor();
+  }
+
+  double? _getTekufa() {
+    const double initialTekufaOffset = 12.625;
+    final double days = JewishDate.getJewishCalendarElapsedDays(getJewishYear()) +
+        getDaysSinceStartOfJewishYear() +
+        initialTekufaOffset -
+        1;
+    final double tekufaDaysElapsed = days % 365.25 % 91.3125;
+    if (tekufaDaysElapsed > 0 && tekufaDaysElapsed <= 1) {
+      return ((1.0 - tekufaDaysElapsed) * 24.0) % 24;
+    }
+    return null;
+  }
+
+  DateTime? getTekufaAsInstant(bool useLocalMeanTime) {
+    double? hours = _getTekufa();
+    if (hours == null) {
+      return null;
+    }
+    hours -= 6;
+    int dayShift = 0;
+    if (hours < 0) {
+      hours += 24;
+      dayShift = -1;
+    }
+    final int wholeHours = hours.toInt();
+    final int minutes = ((hours - wholeHours) * 60).toInt();
+    final DateTime tekufa = DateTime.utc(getGregorianYear(), getGregorianMonth(),
+            getGregorianDayOfMonth() + dayShift, wholeHours, minutes)
+        .subtract(const Duration(hours: 2));
+    if (useLocalMeanTime) {
+      return tekufa.subtract(
+          const Duration(minutes: 20, seconds: 56, milliseconds: 496));
+    }
+    return tekufa;
   }
 
   /// Return the type of year for parsha calculations. The algorithm follows the

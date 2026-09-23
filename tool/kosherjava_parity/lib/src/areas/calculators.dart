@@ -246,7 +246,7 @@ class CalculatorsArea extends Area {
       '$prefix.getApparentSolarRadius',
       setup.input,
       attempt(() => java.getApparentSolarRadius(setup.javaDate)),
-      attempt(() => dart.getSolarRadiusForDate(setup.dartDate)),
+      attempt(() => dart.getApparentSolarRadius(setup.dartDate)),
     );
     java.release();
   }
@@ -290,8 +290,9 @@ class CalculatorsArea extends Area {
     final solarRadius = pick(rng, [uniform(rng, 0, 0.5), 0.0, -0.1, double.nan]);
     final earthRadius = uniform(rng, 6300, 6400);
     final zenith = chance(rng, 0.8) ? 90.0 : pick(rng, _zeniths);
-    final input =
-        '${setup.input} refraction=$refraction solarRadius=$solarRadius earthRadius=$earthRadius zenith=$zenith';
+    final apparent = pick(rng, const [null, true, false]);
+    final input = '${setup.input} refraction=$refraction solarRadius=$solarRadius earthRadius=$earthRadius '
+        'useApparentSolarRadius=${apparent ?? 'after setSolarRadius'} zenith=$zenith';
     for (final calculatorName in const ['noaa', 'suntimes']) {
       final kj.AstronomicalCalculator java = calculatorName == 'noaa' ? kj.NOAACalculator() : kj.SunTimesCalculator();
       final kd.AstronomicalCalculator dart = calculatorName == 'noaa' ? kd.NOAACalculator() : kd.SunTimesCalculator();
@@ -316,6 +317,12 @@ class CalculatorsArea extends Area {
       java.earthRadius = earthRadius;
       dart.setRefraction(refraction);
       dart.setEarthRadius(earthRadius);
+      if (apparent != null) {
+        java.useApparentSolarRadius = apparent;
+        dart.setUseApparentSolarRadius(apparent);
+      }
+      report.exact('$prefix.isUseApparentSolarRadius', input, attempt(() => java.isUseApparentSolarRadius),
+          attempt(() => dart.isUseApparentSolarRadius()));
       _hours(
         report,
         '$prefix.getUTCSunrise.configured',

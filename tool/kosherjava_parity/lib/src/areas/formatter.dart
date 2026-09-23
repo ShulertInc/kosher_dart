@@ -7,6 +7,7 @@ import '../area.dart';
 import '../kosherjava.g.dart' as kj;
 import '../random_input.dart';
 import '../report.dart';
+import 'calendar.dart' show orThrows;
 import 'tefila_calendar.dart';
 
 const hebrewNumberEdges = [0, 1, 9, 10, 11, 14, 15, 16, 17, 19, 20, 99, 100, 115, 116, 270, 275, 300, 400, 401, 500, 515,
@@ -178,6 +179,7 @@ class FormatterArea extends Area {
       'formatOmer': ((c) => javaString(java.formatOmer(c)), (c) => dart.formatOmer(c)),
       'formatYomTov': ((c) => javaString(java.formatYomTov(c)), (c) => dart.formatYomTov(c)),
       'formatRoshChodesh': ((c) => javaString(java.formatRoshChodesh(c)), (c) => dart.formatRoshChodesh(c)),
+      'formatTekufaName': ((c) => javaString(java.formatTekufaName(c)), (c) => dart.formatTekufaName(c)),
       'formatParshah / formatParsha': ((c) => javaString(java.formatParshah(c)), (c) => dart.formatParsha(c)),
       'formatSpecialParshah / formatSpecialParsha': (
         (c) => javaString(java.formatSpecialParshah(c)),
@@ -232,6 +234,15 @@ class FormatterArea extends Area {
       final java = flags.java();
       final dart = flags.dart();
       final mode = flags.mode;
+      final javaDay = kj.JewishCalendar.new1(5660, kd.JewishDate.TISHREI, 1);
+      final dartDay = kd.JewishCalendar.initDate(5660, kd.JewishDate.TISHREI, 1);
+      for (var day = 0; day < 146100; day++) {
+        compareOrBothThrow(report, 'formatter.sweep.formatTekufaName[$mode]', 'sweep ${dartDay.toString()}',
+            attempt(() => javaString(java.formatTekufaName(javaDay))), attempt(() => dart.formatTekufaName(dartDay)));
+        javaDay.plusDays(1);
+        dartDay.plusDays(1);
+      }
+      javaDay.release();
       for (var year = 3762; year <= 13760; year++) {
         if (hebrew) {
           compareOrBothThrow(report, 'formatter.sweep.getFormattedKviah', 'sweep kviahYear=$year',
@@ -274,18 +285,38 @@ class FormatterArea extends Area {
           attempt(() => javaString(javaDaf.yerushalmiMasechta)), attempt(() => dartDaf.getYerushalmiMasechta()));
       compareOrBothThrow(report, 'formatter.sweep.Daf.getYerushalmiMasechtaTransliterated', describe,
           attempt(() => javaString(javaDaf.yerushalmiMasechtaTransliterated)),
-          attempt(() => dartDaf.getYerushlmiMasechtaTransliterated()));
+          attempt(() => dartDaf.getYerushalmiMasechtaTransliterated()));
       javaDaf.release();
     }
 
     final java = kj.HebrewDateFormatter();
     final dart = kd.HebrewDateFormatter();
     report.exact('formatter.sweep.default transliteratedMonths', 'sweep',
-        attempt(() => javaStrings(java.transliteratedMonthList)), Value(dart.transliteratedMonths.join('|')));
+        attempt(() => javaStrings(java.transliteratedMonthList)), Value(dart.getTransliteratedMonthList().join('|')));
     report.exact('formatter.sweep.default hebrewMonths', 'sweep', attempt(() => javaStrings(java.hebrewMonthList)),
-        Value(dart.hebrewMonths.join('|')));
+        Value(dart.getHebrewMonthList().join('|')));
     report.exact('formatter.sweep.default transliteratedHolidays', 'sweep',
-        attempt(() => javaStrings(java.transliteratedHolidayList)), Value(dart.transliteratedHolidays.join('|')));
+        attempt(() => javaStrings(java.transliteratedHolidayList)),
+        Value(dart.getTransliteratedHolidayList().join('|')));
+    for (final length in const [0, 13, 14, 15]) {
+      final names = [for (var i = 0; i < length; i++) 'm$i'];
+      compareOrBothThrow(report, 'formatter.sweep.setHebrewMonthList(length $length)', 'sweep',
+          orThrows(() {
+            java.hebrewMonthList = FormatterFlags.javaArray(names);
+            return javaStrings(java.hebrewMonthList);
+          }), orThrows(() {
+            dart.setHebrewMonthList(names);
+            return dart.getHebrewMonthList().join('|');
+          }));
+      compareOrBothThrow(report, 'formatter.sweep.setTransliteratedMonthList(length $length)', 'sweep',
+          orThrows(() {
+            java.transliteratedMonthList = FormatterFlags.javaArray(names);
+            return javaStrings(java.transliteratedMonthList);
+          }), orThrows(() {
+            dart.setTransliteratedMonthList(names);
+            return dart.getTransliteratedMonthList().join('|');
+          }));
+    }
     report.exact('formatter.sweep.default hebrewOmerPrefix', 'sweep', attempt(() => javaString(java.hebrewOmerPrefix)),
         Value(dart.hebrewOmerPrefix));
     report.exact('formatter.sweep.default transliteratedShabbosDayOfWeek', 'sweep',
@@ -298,10 +329,10 @@ class FormatterArea extends Area {
     java.release();
     report.exact('formatter.sweep.Daf.getYerushalmiMasechtos', 'sweep',
         attempt(() => javaStrings(kj.Daf.yerushalmiMasechtos)),
-        Value([for (var i = 0; i < 40; i++) kd.Daf(i, 0).getYerushalmiMasechta()].join('|')));
+        Value(kd.Daf.getYerushalmiMasechtos().join('|')));
     report.exact('formatter.sweep.Daf.getYerushalmiMasechtosTransliterated', 'sweep',
         attempt(() => javaStrings(kj.Daf.yerushalmiMasechtosTransliterated)),
-        Value([for (var i = 0; i < 40; i++) kd.Daf(i, 0).getYerushlmiMasechtaTransliterated()].join('|')));
+        Value(kd.Daf.getYerushalmiMasechtosTransliterated().join('|')));
   }
 
   String javaEnumNames() {

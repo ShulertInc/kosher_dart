@@ -112,7 +112,7 @@ class Daf {
     "\u05E0\u05D3\u05D4"
   ];
 
-  /// See [getYerushlmiMasechtaTransliterated].
+  /// See [getYerushalmiMasechtaTransliterated].
   static List<String> _masechtosYerushalmiTransliterated = [
     "Berachos",
     "Pe'ah",
@@ -157,7 +157,7 @@ class Daf {
   ];
 
   /// See [getYerushalmiMasechta].
-  static final List<String> _masechtosYerushlmi = [
+  static final List<String> _masechtosYerushalmi = [
     "\u05d1\u05e8\u05db\u05d5\u05ea",
     "\u05e4\u05d9\u05d0\u05d4",
     "\u05d3\u05de\u05d0\u05d9",
@@ -272,7 +272,7 @@ class Daf {
   /// Bava Basra ,  Sanhedrin ,  Makos ,  Shevuos ,  Avodah Zarah ,  Horayos ,  And Nidah .
   ///
   /// Returns the transliterated name of the masechta (tractate) of the Daf Yomi such as Berachos.
-  String getYerushlmiMasechtaTransliterated() {
+  String getYerushalmiMasechtaTransliterated() {
     return _masechtosYerushalmiTransliterated[_masechtaNumber];
   }
 
@@ -282,17 +282,22 @@ class Daf {
   ///
   /// - [masechtosYerushalmiTransliterated]: the list of transliterated Yerushalmi masechtos to set.
   ///
-  void setYerushlmiMasechtaTransliterated(
+  void setYerushalmiMasechtaTransliterated(
       List<String> masechtosYerushalmiTransliterated) {
     _masechtosYerushalmiTransliterated = masechtosYerushalmiTransliterated;
   }
 
-  /// Returns the Yerushlmi masechta (tractate) of the Daf Yomi in Hebrew, It will return
+  static List<String> getYerushalmiMasechtosTransliterated() =>
+      _masechtosYerushalmiTransliterated;
+
+  static List<String> getYerushalmiMasechtos() => _masechtosYerushalmi;
+
+  /// Returns the Yerushalmi masechta (tractate) of the Daf Yomi in Hebrew, It will return
   /// &#x05D1;&#x05E8;&#x05DB;&#x05D5;&#x05EA; for Berachos.
   ///
   /// Returns the Yerushalmi masechta (tractate) of the Daf Yomi in Hebrew, It will return
   /// &#x05D1;&#x05E8;&#x05DB;&#x05D5;&#x05EA; for Berachos.
   String getYerushalmiMasechta() {
-    return _masechtosYerushlmi[_masechtaNumber];
+    return _masechtosYerushalmi[_masechtaNumber];
   }
 }

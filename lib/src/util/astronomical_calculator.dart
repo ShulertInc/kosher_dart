@@ -39,7 +39,14 @@ abstract class AstronomicalCalculator {
   /// The commonly used average solar radius in minutes of a degree.
   ///
   /// See also [getSolarRadius].
-  double? _solarRadius;
+  double _solarRadius = 16 / 60;
+
+  bool _useApparentSolarRadius = true;
+
+  bool isUseApparentSolarRadius() => _useApparentSolarRadius;
+
+  void setUseApparentSolarRadius(bool useApparentSolarRadius) =>
+      _useApparentSolarRadius = useApparentSolarRadius;
 
   /// The mean earth radius in KM. At this time, this only affects elevation adjustment and not the
   /// sunrise and sunset calculations. The value defaults to the IUGG mean radius of 6371.0088 KM;
@@ -253,7 +260,9 @@ abstract class AstronomicalCalculator {
     if (zenith == GEOMETRIC_ZENITH) {
       // only adjust if it is exactly sunrise or sunset
       adjustedZenith = zenith +
-          ((date == null ? getSolarRadius() : getSolarRadiusForDate(date)) +
+          ((isUseApparentSolarRadius() && date != null
+                  ? getApparentSolarRadius(date)
+                  : getSolarRadius()) +
               getRefraction() +
               getElevationAdjustment(elevation));
     }
@@ -296,19 +305,11 @@ abstract class AstronomicalCalculator {
   ///
   /// Returns The sun's radius in arc minutes.
   double getSolarRadius() {
-    return _solarRadius ?? 16 / 60;
+    return _solarRadius;
   }
 
-  /// Method to get the sun's radius on a given date. Unless a radius has been set with
-  /// [setSolarRadius], this is the apparent radius of that day rather than the yearly
-  /// mean of 16 arc minutes.
-  ///
-  /// - [date]:
-  ///   the date whose apparent radius is wanted.
-  /// Returns The sun's radius in degrees.
-  double getSolarRadiusForDate(DateTime date) {
-    return _solarRadius ?? apparentSolarRadius(date);
-  }
+  double getApparentSolarRadius(DateTime? date) =>
+      date == null ? 16 / 60 : apparentSolarRadius(date);
 
   /// Method to set the sun's radius.
   ///
@@ -320,6 +321,7 @@ abstract class AstronomicalCalculator {
       throw ArgumentError("Solar radius must be a non-negative number");
     }
     _solarRadius = solarRadius;
+    _useApparentSolarRadius = false;
   }
 
   AstronomicalCalculator clone();
@@ -327,5 +329,6 @@ abstract class AstronomicalCalculator {
   T copySettingsTo<T extends AstronomicalCalculator>(T copy) => copy
     .._refraction = _refraction
     .._solarRadius = _solarRadius
+    .._useApparentSolarRadius = _useApparentSolarRadius
     .._earthRadius = _earthRadius;
 }
