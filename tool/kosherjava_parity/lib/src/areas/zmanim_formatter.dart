@@ -43,27 +43,9 @@ String _javaText(JString? text) => text == null ? 'null' : text.toDartString(rel
 (int, int) _split(int micros) => ((micros - micros % 1000000) ~/ 1000000, micros % 1000000 * 1000);
 
 class _Jvm {
-  _Jvm() {
-    final roundingMode = JClass.forName('java/math/RoundingMode');
-    halfUp = roundingMode.staticFieldId('HALF_UP', 'Ljava/math/RoundingMode;').get(roundingMode, JObject.type);
-    floor = roundingMode.staticFieldId('FLOOR', 'Ljava/math/RoundingMode;').get(roundingMode, JObject.type);
-  }
-
   final formatterClass = JClass.forName('java/time/format/DateTimeFormatter');
   late final _ofPattern =
       formatterClass.staticMethodId('ofPattern', '(Ljava/lang/String;)Ljava/time/format/DateTimeFormatter;');
-  final bigDecimal = JClass.forName('java/math/BigDecimal');
-  late final _newBigDecimal = bigDecimal.constructorId('(D)V');
-  late final _movePointLeft = bigDecimal.instanceMethodId('movePointLeft', '(I)Ljava/math/BigDecimal;');
-  late final _movePointRight = bigDecimal.instanceMethodId('movePointRight', '(I)Ljava/math/BigDecimal;');
-  late final _setScale =
-      bigDecimal.instanceMethodId('setScale', '(ILjava/math/RoundingMode;)Ljava/math/BigDecimal;');
-  late final _subtract =
-      bigDecimal.instanceMethodId('subtract', '(Ljava/math/BigDecimal;)Ljava/math/BigDecimal;');
-  late final _longValueExact = bigDecimal.instanceMethodId('longValueExact', '()J');
-  late final _intValueExact = bigDecimal.instanceMethodId('intValueExact', '()I');
-  late final JObject halfUp;
-  late final JObject floor;
   final arrayList = JClass.forName('java/util/ArrayList');
   late final _newList = arrayList.constructorId('()V');
   late final _add = arrayList.instanceMethodId('add', '(Ljava/lang/Object;)Z');
@@ -94,17 +76,6 @@ class _Jvm {
       ..releasedBy(arena);
   }
 
-  kj.Duration durationOfMillis(double millis, Arena arena) {
-    final exact = _newBigDecimal.call(bigDecimal, [millis])..releasedBy(arena);
-    final secondsExact = _movePointLeft.call(exact, JObject.type, [JValueInt(3)])..releasedBy(arena);
-    final rounded = _setScale.call(secondsExact, JObject.type, [JValueInt(9), halfUp])..releasedBy(arena);
-    final whole = _setScale.call(rounded, JObject.type, [JValueInt(0), floor])..releasedBy(arena);
-    final seconds = _longValueExact.call(whole, jlong.type, []);
-    final fraction = _subtract.call(rounded, JObject.type, [whole])..releasedBy(arena);
-    final nanosExact = _movePointRight.call(fraction, JObject.type, [JValueInt(9)])..releasedBy(arena);
-    final nanos = _intValueExact.call(nanosExact, jint.type, []);
-    return kj.Duration.ofSeconds$1(seconds, nanos)!..releasedBy(arena);
-  }
 
   JObject newList(Arena arena) => _newList.call(arrayList, [])..releasedBy(arena);
 
@@ -302,20 +273,6 @@ class ZmanimFormatterArea extends Area {
         };
   }
 
-  double _randomMillis(Random rng) {
-    final sign = chance(rng, 0.3) ? -1.0 : 1.0;
-    return sign *
-        switch (rng.nextInt(8)) {
-          0 => 0.0,
-          1 => rng.nextDouble(),
-          2 => rng.nextDouble() * 1000,
-          3 => rng.nextDouble() * 86400000,
-          4 => pow(10, uniform(rng, -12, 22)).toDouble(),
-          5 => (rng.nextInt(1 << 31) * 1000 + rng.nextInt(1000)) / 12000,
-          6 => pick(rng, const [0.0000005, 0.0000015, 0.0000025, 1e-9, 5e-7, 999.9999995, 3600000.0, 9.2233720368547e15]),
-          _ => rng.nextInt(1 << 31) / pick(rng, const [3.0, 7.0, 12.0, 1024.0]),
-        };
-  }
 
   void _formatter(Random rng, String id, Report report, Arena arena) {
     final zoneName = chance(rng, 0.9) ? pick(rng, zones.names) : null;
@@ -387,25 +344,6 @@ class ZmanimFormatterArea extends Area {
           attempt(() => dart.formatXSDDurationTime(dartDuration)));
     }
 
-    for (var repeat = 0; repeat < 3; repeat++) {
-      final millis = _randomMillis(rng);
-      final input = '$describe millis=$millis';
-      final reference = attempt(() => _jvm.durationOfMillis(millis, arena));
-      report.exact('formatter.$format millis', input,
-          attempt(() => _javaText(java.format((reference as Value<kj.Duration>).value))),
-          attempt(() => dart.formatMillis(millis)));
-      report.exact('formatter.formatXSDDurationTime millis', input,
-          attempt(() => _javaText(java.formatXSDDurationTime((reference as Value<kj.Duration>).value))),
-          attempt(() => dart.formatXSDDurationMillis(millis)));
-    }
-
-    final time = kd.Time(between(rng, 0, 200), between(rng, 0, 59), between(rng, 0, 59), between(rng, 0, 999))
-      ..setIsNegative(chance(rng, 0.3));
-    final timeMillis = (time.getTime().toInt()) * (time.isNegative() ? -1 : 1);
-    report.exact('formatter.$format Time', '$describe time=$time negative=${time.isNegative()}',
-        attempt(() => _javaText(java.format(kj.Duration.ofMillis(timeMillis)!..releasedBy(arena)))),
-        attempt(() => dart.formatTime(time)));
-
     final instantZone = chance(rng, 0.2) ? zoneName : _randomZoneSpec(rng, zones);
     for (var repeat = 0; repeat < 3; repeat++) {
       final micros = repeat == 0 ? base : base + (chance(rng, 0.5) ? 0 : between(rng, -3 * _day, 3 * _day) * 1000);
@@ -446,9 +384,9 @@ class ZmanimFormatterArea extends Area {
     if (instant != null && duration != null) java.duration = javaDuration;
     java.description = description.toJString()..releasedBy(arena);
     final dart = instant == null && duration != null
-        ? kd.Zman.duration(duration / 1000, label)
+        ? kd.Zman.duration(Duration(microseconds: duration), label)
         : kd.Zman(instant == null ? null : DateTime.fromMicrosecondsSinceEpoch(instant, isUtc: true), label);
-    if (instant != null && duration != null) dart.setDuration(duration / 1000);
+    if (instant != null && duration != null) dart.setDuration(Duration(microseconds: duration));
     dart.setDescription(description);
     return (java, dart, '$description(label=$label instant=$instant duration=$duration)');
   }
@@ -520,12 +458,17 @@ class ZmanimFormatterArea extends Area {
     final javaName = name.toJString()..releasedBy(arena);
     final java = kj.GeoLocation.new$1(javaName, latitude, longitude, elevation, zones.java(zone))..releasedBy(arena);
     final location = _dartZone(zone, around);
-    final viaDateTime = chance(rng, 0.5);
-    final dart = kd.GeoLocation.setLocation(name, latitude, longitude,
-        viaDateTime ? tz.TZDateTime.fromMillisecondsSinceEpoch(location, around) : DateTime.utc(2000), elevation);
-    if (!viaDateTime) dart.setZoneId(location);
+    final viaSetters = chance(rng, 0.5);
+    final dart = viaSetters
+        ? (kd.GeoLocation()
+          ..setLocationName(name)
+          ..setLatitude(latitude)
+          ..setLongitude(longitude)
+          ..setElevation(elevation)
+          ..setZoneId(location))
+        : kd.GeoLocation.withElevation(name, latitude, longitude, elevation, location);
     return (java, dart, 'geo(name="$name" lat=$latitude lon=$longitude elev=$elevation zone=$zone'
-        '${viaDateTime ? ' from TZDateTime' : ' setZoneId'})');
+        '${viaSetters ? ' through the setters' : ''})');
   }
 
   double _interesting(Random rng, double limit) {
@@ -569,25 +512,20 @@ class ZmanimFormatterArea extends Area {
 
   void _calendar(Random rng, String id, Report report, Arena arena) {
     final input = ZmanimCase(rng, zones);
-    if (input.machineLocal) return;
     final kind = pick(rng, const ['ComprehensiveZmanimCalendar', 'ComprehensiveZmanimCalendar', 'ZmanimCalendar', 'AstronomicalCalendar']);
     final locationName = pick(rng, _names);
     final describe = '${input.describe(id)} kind=$kind name="$locationName"';
     final zone = input.place.zone;
     final javaMidnight = zones.javaStartOfDay(zone, input.date.year, input.date.month, input.date.day);
     final location = zones.dartFromJava(zone, javaMidnight - 3 * _day, javaMidnight + 4 * _day);
-    final midnight = tz.TZDateTime.fromMillisecondsSinceEpoch(location, javaMidnight);
-    if (midnight.year != input.date.year || midnight.month != input.date.month || midnight.day != input.date.day) {
-      report.note('skipped: the date does not exist in its zone, so no DateTime can name it');
-      return;
-    }
+    final localDate = _zmanim.localDateArgument(input, location, javaMidnight, report);
     final kj.AstronomicalCalendar java;
     final kd.AstronomicalCalendar dart;
     if (kind == 'ComprehensiveZmanimCalendar') {
-      java = _zmanim.javaCalendarFor(input)..releasedBy(arena);
-      dart = _zmanim.dartCalendarFor(input, midnight);
+      java = _zmanim.javaCalendarFor(input, null)..releasedBy(arena);
+      dart = _zmanim.dartCalendarFor(input, location, localDate);
     } else {
-      (java, dart) = _simpleCalendars(input, kind, midnight, arena);
+      (java, dart) = _simpleCalendars(input, kind, location, localDate, arena);
     }
     final javaGeo = java.geoLocation!..releasedBy(arena);
     javaGeo.locationName = locationName.toJString()..releasedBy(arena);
@@ -614,7 +552,7 @@ class ZmanimFormatterArea extends Area {
       final Object? value;
       if (base != null) {
         value = base(dart);
-      } else if (dart is kd.ComplexZmanimCalendar) {
+      } else if (dart is kd.ComprehensiveZmanimCalendar) {
         value = switch (_dartGetters[tag]) {
           InstantZman(dart: final getter) => getter(dart),
           DurationZman(dart: final getter) => getter(dart),
@@ -624,7 +562,7 @@ class ZmanimFormatterArea extends Area {
         return null;
       }
       if (value is DateTime) return value.microsecondsSinceEpoch;
-      if (value is double && !value.isNaN) return (value * 1000).round();
+      if (value is Duration) return value.inMicroseconds;
       return null;
     }
 
@@ -651,41 +589,41 @@ class ZmanimFormatterArea extends Area {
     'Sunrise': (calendar) => calendar.getSunrise(),
     'Sunset': (calendar) => calendar.getSunset(),
     'TemporalHour': (calendar) => calendar.getTemporalHour(),
-    'Alos16Point1Degrees': (calendar) => (calendar as kd.ZmanimCalendar).getAlosHashachar(),
-    'Alos72Minutes': (calendar) => (calendar as kd.ZmanimCalendar).getAlos72(),
+    'Alos16Point1Degrees': (calendar) => (calendar as kd.ZmanimCalendar).getAlos16Point1Degrees(),
+    'Alos72Minutes': (calendar) => (calendar as kd.ZmanimCalendar).getAlos72Minutes(),
     'CandleLighting': (calendar) => (calendar as kd.ZmanimCalendar).getCandleLighting(),
     'ChatzosHalayla': (calendar) => (calendar as kd.ZmanimCalendar).getChatzosHalayla(),
-    'ChatzosHayom': (calendar) => (calendar as kd.ZmanimCalendar).getChatzos(),
-    'ChatzosHayomAsHalfDay': (calendar) => (calendar as kd.ZmanimCalendar).getChatzosAsHalfDay(),
-    'MinchaGedolaGRA': (calendar) => (calendar as kd.ZmanimCalendar).getMinchaGedola(),
-    'MinchaKetanaGRA': (calendar) => (calendar as kd.ZmanimCalendar).getMinchaKetana(),
-    'PlagHaminchaGRA': (calendar) => (calendar as kd.ZmanimCalendar).getPlagHamincha(),
-    'ShaahZmanis72Minutes': (calendar) => (calendar as kd.ZmanimCalendar).getShaahZmanisMGA(),
-    'ShaahZmanisGRA': (calendar) => (calendar as kd.ZmanimCalendar).getShaahZmanisGra(),
+    'ChatzosHayom': (calendar) => (calendar as kd.ZmanimCalendar).getChatzosHayom(),
+    'ChatzosHayomAsHalfDay': (calendar) => (calendar as kd.ZmanimCalendar).getChatzosHayomAsHalfDay(),
+    'MinchaGedolaGRA': (calendar) => (calendar as kd.ZmanimCalendar).getMinchaGedolaGRA(),
+    'MinchaKetanaGRA': (calendar) => (calendar as kd.ZmanimCalendar).getMinchaKetanaGRA(),
+    'PlagHaminchaGRA': (calendar) => (calendar as kd.ZmanimCalendar).getPlagHaminchaGRA(),
+    'ShaahZmanis72Minutes': (calendar) => (calendar as kd.ZmanimCalendar).getShaahZmanis72Minutes(),
+    'ShaahZmanisGRA': (calendar) => (calendar as kd.ZmanimCalendar).getShaahZmanisGRA(),
     'SofZmanShmaGRA': (calendar) => (calendar as kd.ZmanimCalendar).getSofZmanShmaGRA(),
-    'SofZmanShmaMGA72Minutes': (calendar) => (calendar as kd.ZmanimCalendar).getSofZmanShmaMGA(),
+    'SofZmanShmaMGA72Minutes': (calendar) => (calendar as kd.ZmanimCalendar).getSofZmanShmaMGA72Minutes(),
     'SofZmanTfilaGRA': (calendar) => (calendar as kd.ZmanimCalendar).getSofZmanTfilaGRA(),
-    'SofZmanTfilaMGA72Minutes': (calendar) => (calendar as kd.ZmanimCalendar).getSofZmanTfilaMGA(),
-    'Tzais72Minutes': (calendar) => (calendar as kd.ZmanimCalendar).getTzais72(),
-    'TzaisGeonim8Point5Degrees': (calendar) => (calendar as kd.ZmanimCalendar).getTzais(),
+    'SofZmanTfilaMGA72Minutes': (calendar) => (calendar as kd.ZmanimCalendar).getSofZmanTfilaMGA72Minutes(),
+    'Tzais72Minutes': (calendar) => (calendar as kd.ZmanimCalendar).getTzais72Minutes(),
+    'TzaisGeonim8Point5Degrees': (calendar) => (calendar as kd.ZmanimCalendar).getTzaisGeonim8Point5Degrees(),
   };
 
   static final Map<String, ZmanGetter> _dartGetters = {
-    for (final getter in zmanGetters) getter.name.split(' / ').first.substring(3): getter,
+    for (final getter in zmanGetters) getter.name.substring(3): getter,
   };
 
   (kj.AstronomicalCalendar, kd.AstronomicalCalendar) _simpleCalendars(
-      ZmanimCase input, String kind, DateTime midnight, Arena arena) {
+      ZmanimCase input, String kind, tz.Location location, DateTime localDate, Arena arena) {
     final place = input.place;
     final name = 'case'.toJString()..releasedBy(arena);
     final geo = kj.GeoLocation.new$1(name, place.latitude, place.longitude, place.elevation, zones.java(place.zone))
       ..releasedBy(arena);
-    final dartGeo = kd.GeoLocation.setLocation('case', place.latitude, place.longitude, midnight, place.elevation);
+    final dartGeo = kd.GeoLocation.withElevation('case', place.latitude, place.longitude, place.elevation, location);
     final kj.AstronomicalCalendar java;
     final kd.AstronomicalCalendar dart;
     if (kind == 'ZmanimCalendar') {
       final javaZmanim = kj.ZmanimCalendar.new1(geo)..releasedBy(arena);
-      final dartZmanim = kd.ZmanimCalendar.intGeolocation(dartGeo);
+      final dartZmanim = kd.ZmanimCalendar.withGeoLocation(dartGeo);
       if (input.useElevation != null) {
         javaZmanim.useElevation = input.useElevation!;
         dartZmanim.setUseElevation(input.useElevation!);
@@ -706,10 +644,11 @@ class ZmanimFormatterArea extends Area {
       dart = dartZmanim;
     } else {
       java = kj.AstronomicalCalendar.new$1(geo)..releasedBy(arena);
-      dart = kd.AstronomicalCalendar(geoLocation: dartGeo);
+      dart = kd.AstronomicalCalendar.withGeoLocation(dartGeo);
     }
     final date = kj.LocalDate.of$1(input.date.year, input.date.month, input.date.day)!..releasedBy(arena);
     java.localDate = date;
+    dart.setLocalDate(localDate);
     if (input.calculator != CalculatorKind.noaa || input.precision != null) {
       final javaCalculator = input.calculator.java()..releasedBy(arena);
       input.precision?.applyToJava(javaCalculator);

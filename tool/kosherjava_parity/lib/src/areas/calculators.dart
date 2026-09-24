@@ -10,6 +10,7 @@ import '../kosherjava.g.dart' as kj;
 import '../random_input.dart';
 import '../report.dart';
 import '../zones.dart';
+import 'zmanim.dart' show dartDurationMillis;
 
 const _day = 86400000;
 
@@ -81,12 +82,14 @@ class _Setup {
     place = randomPlace(rng, zones, date);
     midnight = zones.javaStartOfDay(place.zone, date.year, date.month, date.day);
     location = zones.dartFromJava(place.zone, midnight - 3 * _day, midnight + 4 * _day);
-    dartDate = tz.TZDateTime.fromMillisecondsSinceEpoch(location, midnight);
+    final zonedMidnight = tz.TZDateTime.fromMillisecondsSinceEpoch(location, midnight);
+    dateExists = zonedMidnight.year == date.year && zonedMidnight.month == date.month && zonedMidnight.day == date.day;
+    dartDate = dateExists ? zonedMidnight : DateTime.utc(date.year, date.month, date.day);
     final name = 'case'.toJString();
     javaGeo = kj.GeoLocation.new$1(name, place.latitude, place.longitude, place.elevation, zones.java(place.zone));
     name.release();
     javaDate = kj.LocalDate.of$1(date.year, date.month, date.day)!;
-    dartGeo = kd.GeoLocation.setLocation('case', place.latitude, place.longitude, dartDate, place.elevation);
+    dartGeo = kd.GeoLocation.withElevation('case', place.latitude, place.longitude, place.elevation, location);
   }
 
   final Random rng;
@@ -96,14 +99,13 @@ class _Setup {
   late final Place place;
   late final int midnight;
   late final tz.Location location;
-  late final tz.TZDateTime dartDate;
+  late final DateTime dartDate;
+  late final bool dateExists;
   late final kj.GeoLocation javaGeo;
   late final kj.LocalDate javaDate;
   late final kd.GeoLocation dartGeo;
 
   String get input => '$id date=$date $place';
-
-  bool get dateExists => dartDate.year == date.year && dartDate.month == date.month && dartDate.day == date.day;
 
   void release() {
     javaGeo.release();
@@ -133,11 +135,7 @@ class CalculatorsArea extends Area {
     for (final index in indexes) {
       final rng = caseRandom(seed, name, index);
       final setup = _Setup(rng, zones, 'calculators#$index seed=$seed');
-      if (!setup.dateExists) {
-        report.note('skipped: the date does not exist in its zone, so no DateTime can name it');
-        setup.release();
-        continue;
-      }
+      if (!setup.dateExists) report.note('the date does not exist in its zone, so it was passed at UTC midnight');
       for (final kind in CalculatorKind.values) {
         _raw(setup, report, kind);
       }
@@ -260,7 +258,7 @@ class CalculatorsArea extends Area {
       '$prefix.getTimeAtAzimuth',
       '$settingsInput azimuth=$azimuth',
       () => java.getTimeAtAzimuth(setup.javaDate, setup.javaGeo, azimuth),
-      () => dart.getUTCTimeAtAzimuth(setup.dartDate, setup.dartGeo, azimuth),
+      () => dart.getTimeAtAzimuth(setup.dartDate, setup.dartGeo, azimuth),
     );
     final otherAzimuth = uniform(rng, 0, 360);
     _hours(
@@ -268,7 +266,7 @@ class CalculatorsArea extends Area {
       '$prefix.getTimeAtAzimuth.otherAzimuth',
       '$settingsInput azimuth=$otherAzimuth',
       () => java.getTimeAtAzimuth(setup.javaDate, setup.javaGeo, otherAzimuth),
-      () => dart.getUTCTimeAtAzimuth(setup.dartDate, setup.dartGeo, otherAzimuth),
+      () => dart.getTimeAtAzimuth(setup.dartDate, setup.dartGeo, otherAzimuth),
     );
 
     report.exact(
@@ -480,7 +478,8 @@ class CalculatorsArea extends Area {
     final rng = setup.rng;
     final java = kj.ComprehensiveZmanimCalendar.new1(setup.javaGeo);
     java.localDate = setup.javaDate;
-    final dart = kd.ComplexZmanimCalendar.intGeoLocation(setup.dartGeo);
+    final dart = kd.ComprehensiveZmanimCalendar.withGeoLocation(setup.dartGeo);
+    dart.setLocalDate(setup.dartDate);
     final (javaCalculator, dartCalculator, settings) = _configured(rng, kind);
     java.astronomicalCalculator = javaCalculator;
     javaCalculator.release();
@@ -547,8 +546,9 @@ class CalculatorsArea extends Area {
       '$prefix.getTemporalHour(start, end)',
       spanInput,
       attempt(() => _durationMillis(java.getTemporalHour(javaStart, javaEnd))),
-      attempt(() => dart.getTemporalHour(dartStart, dartEnd)),
+      attempt(() => dartDurationMillis(dart.getTemporalHour(dartStart, dartEnd))),
       tolerance: 1e-6,
+      absolute: 0.001,
     );
     report.instant(
       '$prefix.getSunTransit(start, end)',
@@ -569,7 +569,7 @@ class CalculatorsArea extends Area {
         duration?.release();
         return result;
       }),
-      attempt(() => kd.AstronomicalCalendar.getTimeOffset(dartStart, wholeOffset.toDouble())?.flooredMillis),
+      attempt(() => kd.AstronomicalCalendar.getTimeOffset(dartStart, Duration(milliseconds: wholeOffset))?.flooredMillis),
     );
     report.instant(
       '$prefix.getTimeOffset.fractionalMillis',
@@ -580,7 +580,8 @@ class CalculatorsArea extends Area {
         duration?.release();
         return result;
       }),
-      attempt(() => kd.AstronomicalCalendar.getTimeOffset(dartStart, fractionalOffset)?.flooredMillis),
+      attempt(() => kd.AstronomicalCalendar.getTimeOffset(
+          dartStart, Duration(microseconds: ((fractionalOffset * 1e6).round() / 1000).floor()))?.flooredMillis),
     );
     javaStart?.release();
     javaEnd?.release();
