@@ -6,52 +6,52 @@ import 'package:kosher_dart/kosher_dart.dart';
 import 'package:test/test.dart';
 
 JewishCalendar on(int year, int month, int day, {bool inIsrael = false}) =>
-    JewishCalendar.fromDateTime(DateTime(year, month, day))..inIsrael = inIsrael;
+    JewishCalendar.fromLocalDate(DateTime(year, month, day))..setInIsrael(inIsrael);
 
 void main() {
   group('Daf Hashavua Bavli', () {
     test('opens on Berachos 2 the week the cycle begins', () {
       // The first cycle began on Sunday 6 March 2005.
       for (final day in [6, 7, 12]) {
-        final daf = on(2005, 3, day).getDafHashavuaBavli()!;
+        final daf = DafHashavuaBavliCalculator.getDafHashavuaBavli(on(2005, 3, day))!;
         expect(daf.getMasechtaTransliterated(), 'Berachos', reason: 'March $day');
         expect(daf.getDaf(), 2, reason: 'March $day');
       }
     });
 
     test('turns the page on the Sunday, not mid week', () {
-      expect(on(2005, 3, 13).getDafHashavuaBavli()!.getDaf(), 3);
-      expect(on(2005, 3, 19).getDafHashavuaBavli()!.getDaf(), 3);
-      expect(on(2005, 3, 20).getDafHashavuaBavli()!.getDaf(), 4);
+      expect(DafHashavuaBavliCalculator.getDafHashavuaBavli(on(2005, 3, 13))!.getDaf(), 3);
+      expect(DafHashavuaBavliCalculator.getDafHashavuaBavli(on(2005, 3, 19))!.getDaf(), 3);
+      expect(DafHashavuaBavliCalculator.getDafHashavuaBavli(on(2005, 3, 20))!.getDaf(), 4);
     });
 
     test('is null before the first cycle', () {
-      expect(on(2005, 3, 5).getDafHashavuaBavli(), isNull);
+      expect(DafHashavuaBavliCalculator.getDafHashavuaBavli(on(2005, 3, 5)), isNull);
     });
   });
 
   group('Dirshu Amud Yomi', () {
     test('opens on Berachos 2a the day the cycle begins', () {
-      final amud = on(2023, 10, 16).getAmudYomiBavliDirshu()!;
+      final amud = AmudYomiBavliDirshuCalculator.getAmudYomiBavliDirshu(on(2023, 10, 16))!;
       expect(amud.getMasechtaTransliterated(), 'Berachos');
       expect(amud.getDaf(), 2);
       expect(amud.getSide(), AmudSide.ALEPH);
     });
 
     test('turns to the second side the next day', () {
-      final amud = on(2023, 10, 17).getAmudYomiBavliDirshu()!;
+      final amud = AmudYomiBavliDirshuCalculator.getAmudYomiBavliDirshu(on(2023, 10, 17))!;
       expect(amud.getDaf(), 2);
       expect(amud.getSide(), AmudSide.BEIS);
     });
 
     test('is null before the first cycle', () {
-      expect(on(2023, 10, 15).getAmudYomiBavliDirshu(), isNull);
+      expect(AmudYomiBavliDirshuCalculator.getAmudYomiBavliDirshu(on(2023, 10, 15)), isNull);
     });
   });
 
   group('Mishna Yomis', () {
     test('opens on Berachos 1:1 and 1:2', () {
-      final mishnayos = on(1947, 5, 20).getMishnaYomis()!;
+      final mishnayos = MishnaYomisCalculator.getMishnaYomis(on(1947, 5, 20))!;
       expect(mishnayos.first.getMasechtaTransliterated(), 'Berachos');
       expect(mishnayos.first.getChapter(), 1);
       expect(mishnayos.first.getMishna(), 1);
@@ -59,75 +59,73 @@ void main() {
     });
 
     test('is null before the first cycle', () {
-      expect(on(1947, 5, 19).getMishnaYomis(), isNull);
+      expect(MishnaYomisCalculator.getMishnaYomis(on(1947, 5, 19)), isNull);
     });
   });
 
   group('Pirkei Avos', () {
     test('opens the Shabbos after Pesach and runs the six perakim in order', () {
       // 5778: the cycle opens 23 Nissan outside Israel, and a week later is perek 2.
-      final first = JewishCalendar.initDate(5778, JewishDate.NISSAN, 23);
-      expect(first.getPirkeiAvos()!.first, 1);
-      expect(first.getPirkeiAvos()!.isCombined, isFalse);
+      final first = JewishCalendar.fromJewishDate(5778, JewishDate.NISSAN, 23);
+      expect(PirkeiAvosCalculator.getPirkeiAvos(first)!.first, 1);
+      expect(PirkeiAvosCalculator.getPirkeiAvos(first)!.isCombined, isFalse);
 
-      final second = JewishCalendar.initDate(5778, JewishDate.IYAR, 1);
-      expect(second.getPirkeiAvos()!.first, 2);
+      final second = JewishCalendar.fromJewishDate(5778, JewishDate.IYAR, 1);
+      expect(PirkeiAvosCalculator.getPirkeiAvos(second)!.first, 2);
     });
 
     test('doubles up the perakim at the end of the season', () {
-      final late = JewishCalendar.initDate(5778, JewishDate.ELUL, 20);
-      final unit = late.getPirkeiAvos()!;
+      final late = JewishCalendar.fromJewishDate(5778, JewishDate.ELUL, 20);
+      final unit = PirkeiAvosCalculator.getPirkeiAvos(late)!;
       expect(unit.isCombined, isTrue);
       expect(unit.first, 3);
       expect(unit.second, 4);
     });
 
     test('is null outside the season', () {
-      expect(JewishCalendar.initDate(5778, JewishDate.NISSAN, 20).getPirkeiAvos(),
+      expect(PirkeiAvosCalculator.getPirkeiAvos(JewishCalendar.fromJewishDate(5778, JewishDate.NISSAN, 20)),
           isNull);
-      expect(JewishCalendar.initDate(5778, JewishDate.ELUL, 29).getPirkeiAvos(),
+      expect(PirkeiAvosCalculator.getPirkeiAvos(JewishCalendar.fromJewishDate(5778, JewishDate.ELUL, 29)),
           isNull);
     });
 
     test('is null before Pesach of the earliest year the calendar reaches', () {
-      expect(JewishCalendar.fromDateTime(DateTime(1, 1, 10)).getPirkeiAvos(),
+      expect(PirkeiAvosCalculator.getPirkeiAvos(JewishCalendar.fromLocalDate(DateTime(1, 1, 10))),
           isNull);
     });
 
     test('the diaspora starts a day after Israel does', () {
       final israel =
-          JewishCalendar.initDate(5778, JewishDate.NISSAN, 22, inIsrael: true);
-      final diaspora = JewishCalendar.initDate(5778, JewishDate.NISSAN, 22);
+          JewishCalendar.fromJewishDateInIsrael(5778, JewishDate.NISSAN, 22, true);
+      final diaspora = JewishCalendar.fromJewishDate(5778, JewishDate.NISSAN, 22);
 
-      expect(israel.getPirkeiAvos(), isNotNull);
-      expect(diaspora.getPirkeiAvos(), isNull);
+      expect(PirkeiAvosCalculator.getPirkeiAvos(israel), isNotNull);
+      expect(PirkeiAvosCalculator.getPirkeiAvos(diaspora), isNull);
     });
   });
 
   group('monthly Tehillim', () {
     test('divides the sefer across the days of the month', () {
       expect(
-          JewishCalendar.initDate(5778, JewishDate.TEVES, 1)
-              .getTehillimMonthly()
+          TehillimMonthlyCalculator.getTehillimMonthly(JewishCalendar.fromJewishDate(5778, JewishDate.TEVES, 1))
               .toString(),
           '1 - 9');
       expect(
-          JewishCalendar.initDate(5778, JewishDate.TEVES, 8)
-              .getTehillimMonthly()
+          TehillimMonthlyCalculator.getTehillimMonthly(JewishCalendar.fromJewishDate(5778, JewishDate.TEVES, 8))
               .toString(),
           '44 - 48');
     });
 
     test('splits kapitel 119 over the twenty fifth and twenty sixth', () {
       final twentyFifth =
-          JewishCalendar.initDate(5778, JewishDate.SHEVAT, 25).getTehillimMonthly();
+          TehillimMonthlyCalculator.getTehillimMonthly(JewishCalendar.fromJewishDate(5778, JewishDate.SHEVAT, 25));
       expect(twentyFifth.isPartialPsalm, isTrue);
       expect(twentyFifth.psalm, 119);
       expect(twentyFifth.startVerse, 1);
       expect(twentyFifth.endVerse, 96);
 
       final twentySixth =
-          JewishCalendar.initDate(5778, JewishDate.SHEVAT, 26).getTehillimMonthly();
+          TehillimMonthlyCalculator.getTehillimMonthly(JewishCalendar.fromJewishDate(5778, JewishDate.SHEVAT, 26));
       expect(twentySixth.startVerse, 97);
       expect(twentySixth.endVerse, 176);
     });
@@ -135,18 +133,15 @@ void main() {
     test('a month of 29 days says the thirtieth day too on the twenty ninth', () {
       // Teves 5778 has 29 days, Shevat has 30.
       expect(
-          JewishCalendar.initDate(5778, JewishDate.TEVES, 29)
-              .getTehillimMonthly()
+          TehillimMonthlyCalculator.getTehillimMonthly(JewishCalendar.fromJewishDate(5778, JewishDate.TEVES, 29))
               .toString(),
           '140 - 150');
       expect(
-          JewishCalendar.initDate(5778, JewishDate.SHEVAT, 29)
-              .getTehillimMonthly()
+          TehillimMonthlyCalculator.getTehillimMonthly(JewishCalendar.fromJewishDate(5778, JewishDate.SHEVAT, 29))
               .toString(),
           '140 - 144');
       expect(
-          JewishCalendar.initDate(5778, JewishDate.SHEVAT, 30)
-              .getTehillimMonthly()
+          TehillimMonthlyCalculator.getTehillimMonthly(JewishCalendar.fromJewishDate(5778, JewishDate.SHEVAT, 30))
               .toString(),
           '145 - 150');
     });

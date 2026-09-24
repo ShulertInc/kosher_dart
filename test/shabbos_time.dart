@@ -13,7 +13,7 @@ import 'package:kosher_dart/kosher_dart.dart';
 
 void main() {
   HebrewDateFormatter hdf = HebrewDateFormatter();
-  hdf.hebrewFormat = true;
+  hdf.setHebrewFormat(true);
 
   // Verifies that the calendar returns the correct Shabbat start time for
   // Jerusalem on the Friday of the week of April 22, 2022.

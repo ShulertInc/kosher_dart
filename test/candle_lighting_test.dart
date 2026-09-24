@@ -93,7 +93,7 @@ void main() {
     for (final date in [DateTime.utc(2026, 5, 22), DateTime.utc(2027, 6, 11)]) {
       complexZmanimCalendar.setCalendar(date);
 
-      final JewishCalendar jewishCalendar = JewishCalendar.fromDateTime(date);
+      final JewishCalendar jewishCalendar = JewishCalendar.fromLocalDate(date);
       expect(jewishCalendar.getDayOfWeek(), 6, reason: 'test date is a Friday');
       expect(jewishCalendar.isErevYomTovSheni(), isTrue,
           reason: 'and the first day of Shavuos');
@@ -118,7 +118,7 @@ void main() {
         GeoLocation.setLocation("NY", 40.7128, -74.0060, date));
     complexZmanimCalendar.setCalendar(date);
 
-    expect(JewishCalendar.fromDateTime(date).isErevYomTovSheni(), isTrue);
+    expect(JewishCalendar.fromLocalDate(date).isErevYomTovSheni(), isTrue);
     expect(
         complexZmanimCalendar
             .getCandleLightingTonight()!

@@ -8,7 +8,7 @@ import 'package:kosher_dart/kosher_dart.dart';
 import 'package:test/test.dart';
 
 JewishCalendar on(int year, int month, int day) =>
-    JewishCalendar.fromDateTime(DateTime(year, month, day));
+    JewishCalendar.fromLocalDate(DateTime(year, month, day));
 
 void main() {
   group('the seventeenth of Tammuz', () {
@@ -16,7 +16,7 @@ void main() {
       // 17 Tammuz 5779 fell on Shabbos, 20 July 2019.
       final JewishCalendar shabbos = on(2019, 7, 20);
       expect(shabbos.getJewishDayOfMonth(), 17);
-      expect(shabbos.getDayOfWeek(), JewishDate.saturday);
+      expect(shabbos.getDayOfWeek(), 7);
       expect(shabbos.getYomTovIndex(), isNot(JewishCalendar.SEVENTEEN_OF_TAMMUZ));
       expect(shabbos.isTaanis(), isFalse);
 
@@ -40,12 +40,12 @@ void main() {
       // Erev Pesach 5785 fell on Shabbos, 12 April 2025.
       final JewishCalendar erevPesach = on(2025, 4, 12);
       expect(erevPesach.getJewishDayOfMonth(), 14);
-      expect(erevPesach.getDayOfWeek(), JewishDate.saturday);
+      expect(erevPesach.getDayOfWeek(), 7);
       expect(erevPesach.isTaanisBechoros(), isFalse);
 
       final JewishCalendar thursday = on(2025, 4, 10);
       expect(thursday.getJewishDayOfMonth(), 12);
-      expect(thursday.getDayOfWeek(), JewishDate.thursday);
+      expect(thursday.getDayOfWeek(), 5);
       expect(thursday.isTaanisBechoros(), isTrue);
 
       expect(on(2025, 4, 8).isTaanisBechoros(), isFalse);

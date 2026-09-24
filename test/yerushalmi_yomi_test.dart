@@ -7,7 +7,7 @@ import 'package:kosher_dart/kosher_dart.dart';
 import 'package:test/test.dart';
 
 Daf? dafOn(int year, int month, int day) =>
-    JewishCalendar.fromDateTime(DateTime(year, month, day)).getDafYomiYerushalmi();
+    JewishCalendar.fromLocalDate(DateTime(year, month, day)).getDafYomiYerushalmi();
 
 void expectDaf(Daf? daf, String masechta, int page) {
   expect(daf!.getYerushalmiMasechtaTransliterated(), masechta);
