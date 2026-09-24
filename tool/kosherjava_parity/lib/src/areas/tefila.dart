@@ -162,6 +162,22 @@ final tefilaRules = <String, (JavaRule, DartRule)>{
   'isAlHanissimRecited': ((r, c) => r.isAlHanissimRecited(c), (r, c) => r.isAlHanissimRecited(c)),
   'isYaalehVeyavoRecited': ((r, c) => r.isYaalehVeyavoRecited(c), (r, c) => r.isYaalehVeyavoRecited(c)),
   'isMizmorLesodaRecited': ((r, c) => r.isMizmorLesodaRecited(c), (r, c) => r.isMizmorLesodaRecited(c)),
+  'helper.isTashlichRecited': (
+    (r, c) => c.jewishMonth == kd.JewishDate.TISHREI && c.jewishDayOfMonth <= 21,
+    (r, c) => r.isTashlichRecited(c)
+  ),
+  'helper.isMussafRecited': (
+    (r, c) => c.dayOfWeek == 7 || c.isRoshChodesh || c.isYomTovAssurBemelacha || c.isCholHamoed,
+    (r, c) => r.isMussafRecited(c)
+  ),
+  'helper.isAvinuMalkeinuRecited': (
+    (r, c) => c.dayOfWeek != 7 && (c.isAseresYemeiTeshuva || (c.isTaanis && !c.isTishaBav)),
+    (r, c) => r.isAvinuMalkeinuRecited(c)
+  ),
+  'helper.isLongTachanunRecited': (
+    (r, c) => (c.dayOfWeek == 2 || c.dayOfWeek == 5) && r.isTachanunRecitedShacharis(c),
+    (r, c) => r.isLongTachanunRecited(c)
+  ),
 };
 
 class TefilaArea extends Area {

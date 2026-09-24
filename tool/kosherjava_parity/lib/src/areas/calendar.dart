@@ -123,6 +123,51 @@ final List<CalendarCheck> calendarChecks = [
   ('hashCode', (j) => j.hashCode1(), (d) => d.hashCode),
 ];
 
+bool _javaIndex(kj.JewishCalendar j, int index) => j.yomTovIndex == index;
+
+final List<CalendarCheck> helperChecks = [
+  ('isErevPesach', (j) => _javaIndex(j, kd.JewishCalendar.EREV_PESACH), (d) => d.isErevPesach()),
+  ('isErevYomKippur', (j) => _javaIndex(j, kd.JewishCalendar.EREV_YOM_KIPPUR), (d) => d.isErevYomKippur()),
+  ('isErevRoshHashana', (j) => _javaIndex(j, kd.JewishCalendar.EREV_ROSH_HASHANA), (d) => d.isErevRoshHashana()),
+  ('isFastOfGedalyah', (j) => _javaIndex(j, kd.JewishCalendar.FAST_OF_GEDALYAH), (d) => d.isFastOfGedalyah()),
+  ('isTenthOfTeves', (j) => _javaIndex(j, kd.JewishCalendar.TENTH_OF_TEVES), (d) => d.isTenthOfTeves()),
+  ('isTaanisEsther', (j) => _javaIndex(j, kd.JewishCalendar.FAST_OF_ESTHER), (d) => d.isTaanisEsther()),
+  (
+    'isSeventeenthOfTammuz',
+    (j) => _javaIndex(j, kd.JewishCalendar.SEVENTEEN_OF_TAMMUZ),
+    (d) => d.isSeventeenthOfTammuz()
+  ),
+  ('isShushanPurim', (j) => _javaIndex(j, kd.JewishCalendar.SHUSHAN_PURIM), (d) => d.isShushanPurim()),
+  ('isPurimKatan', (j) => _javaIndex(j, kd.JewishCalendar.PURIM_KATAN), (d) => d.isPurimKatan()),
+  (
+    'isShushanPurimKatan',
+    (j) => _javaIndex(j, kd.JewishCalendar.SHUSHAN_PURIM_KATAN),
+    (d) => d.isShushanPurimKatan()
+  ),
+  ('isYomHaatzmaut', (j) => _javaIndex(j, kd.JewishCalendar.YOM_HAATZMAUT), (d) => d.isYomHaatzmaut()),
+  ('isYomYerushalayim', (j) => _javaIndex(j, kd.JewishCalendar.YOM_YERUSHALAYIM), (d) => d.isYomYerushalayim()),
+  ('isSefirasHaomer', (j) => j.dayOfOmer != -1, (d) => d.isSefirasHaomer()),
+  ('isMotzeiShabbos', (j) => j.dayOfWeek == 1, (d) => d.isMotzeiShabbos()),
+  ('isSunday', (j) => j.dayOfWeek == 1, (d) => d.isSunday()),
+  ('isMonday', (j) => j.dayOfWeek == 2, (d) => d.isMonday()),
+  ('isTuesday', (j) => j.dayOfWeek == 3, (d) => d.isTuesday()),
+  ('isWednesday', (j) => j.dayOfWeek == 4, (d) => d.isWednesday()),
+  ('isThursday', (j) => j.dayOfWeek == 5, (d) => d.isThursday()),
+  ('isFriday', (j) => j.dayOfWeek == 6, (d) => d.isFriday()),
+  ('isShabbos', (j) => j.dayOfWeek == 7, (d) => d.isShabbos()),
+  ('isMondayOrThursday', (j) => j.dayOfWeek == 2 || j.dayOfWeek == 5, (d) => d.isMondayOrThursday()),
+  (
+    'isLeDavidPeriod',
+    (j) => j.jewishMonth == kd.JewishDate.ELUL || (j.jewishMonth == kd.JewishDate.TISHREI && j.jewishDayOfMonth <= 21),
+    (d) => d.isLeDavidPeriod()
+  ),
+  (
+    'getGregorianYear/Month/DayOfMonth',
+    (j) => javaLocalDate(j.localDate),
+    (d) => CivilDate(d.getGregorianYear(), d.getGregorianMonth(), d.getGregorianDayOfMonth()).toString()
+  ),
+];
+
 typedef CalendarInstant = (String, kj.Instant? Function(kj.JewishCalendar), DateTime? Function(kd.JewishCalendar));
 
 final List<CalendarInstant> calendarInstants = [
@@ -452,6 +497,9 @@ class CalendarArea extends Area {
         '$prefix.getMoladChalakim', input, attempt(() => java.moladChalakim), attempt(() => dart.getMoladChalakim()));
     for (final (name, javaGetter, dartGetter) in calendarChecks) {
       report.exact('$prefix.$name', input, attempt(() => javaGetter(java)), attempt(() => dartGetter(dart)));
+    }
+    for (final (name, javaGetter, dartGetter) in helperChecks) {
+      report.exact('$prefix.helper.$name', input, attempt(() => javaGetter(java)), attempt(() => dartGetter(dart)));
     }
     for (final (name, javaGetter, dartGetter) in calendarInstants) {
       report.instant('$prefix.$name', input, attempt(() => javaMillis(javaGetter(java))),

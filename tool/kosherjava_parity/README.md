@@ -1,7 +1,8 @@
 # KosherJava parity
 
 Calls [KosherJava](https://github.com/KosherJava/zmanim) through JNI and compares it with kosher_dart
-on random inputs. Only what both libraries have is compared.
+on random inputs. Only what both libraries have is compared, plus the kosher_dart helpers under `helper.`,
+checked against values derived from KosherJava.
 
 ## Setup
 
