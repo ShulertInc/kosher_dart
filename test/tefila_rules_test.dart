@@ -12,8 +12,11 @@ library;
 
 import 'package:test/test.dart';
 import 'package:kosher_dart/kosher_dart.dart';
+import 'package:timezone/data/latest.dart' as tz_data;
+import 'package:timezone/timezone.dart' as tz;
 
 void main() {
+  tz_data.initializeTimeZones();
   final rules = TefilaRules();
 
   // ────────────────────────────────────────────────────────────────
@@ -348,7 +351,8 @@ void main() {
 
   group('TefilaRules - kiddush levana', () {
     bool levana(int year, int month, int day) => rules.isKiddushLevanaRecited(
-        JewishCalendar()..setJewishDate(year, month, day));
+        JewishCalendar()..setJewishDate(year, month, day),
+        tz.getLocation('America/New_York'));
 
     test('from seven days after the molad to fifteen days after it', () {
       expect(levana(5785, JewishDate.CHESHVAN, 5), isFalse);

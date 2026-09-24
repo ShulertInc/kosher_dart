@@ -19,6 +19,7 @@
  */
 
 import 'package:kosher_dart/kosher_dart.dart';
+import 'package:timezone/timezone.dart';
 
 /// Tefila Rules is a utility class that covers the various _halachos_ and _minhagim_ regarding
 /// changes to daily _tefila_ / prayers,
@@ -651,7 +652,7 @@ class TefilaRules {
     return jewishCalendar.isMotzeiShabbos() || yesterday.isYomKippur();
   }
 
-  bool isKiddushLevanaRecited(JewishCalendar jewishCalendar) {
+  bool isKiddushLevanaRecited(JewishCalendar jewishCalendar, Location zone) {
     final int month = jewishCalendar.getJewishMonth();
     final int day = jewishCalendar.getJewishDayOfMonth();
 
@@ -665,9 +666,9 @@ class TefilaRules {
 
     final DateTime date = jewishCalendar.getLocalDate();
     final DateTime noonBeforeTonight =
-        DateTime(date.year, date.month, date.day - 1, 12);
+        TZDateTime(zone, date.year, date.month, date.day - 1, 12);
     final DateTime noonAfterTonight =
-        DateTime(date.year, date.month, date.day, 12);
+        TZDateTime(zone, date.year, date.month, date.day, 12);
 
     return jewishCalendar
             .getTchilasZmanKidushLevana7Days()

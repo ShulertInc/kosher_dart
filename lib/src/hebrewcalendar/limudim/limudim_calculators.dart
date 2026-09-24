@@ -27,7 +27,7 @@ JewishCalendar _calendarOfAbsDate(int absDate) => JewishCalendar.fromLocalDate(
 /// The first cycle began on 6 March 2005.
 class DafHashavuaBavliCalculator {
   /// The first day of the first cycle, 6 March 2005.
-  static final DateTime cycleStartDay = DateTime(2005, 3, 6);
+  static final DateTime cycleStartDay = DateTime.utc(2005, 3, 6);
 
   /// The number of dafim in the Bavli as the schedule counts them.
   static const int WHOLE_SHAS_DAFIM = 2711;
@@ -65,7 +65,7 @@ class DafHashavuaBavliCalculator {
 /// The first cycle began on 16 October 2023.
 class AmudYomiBavliDirshuCalculator {
   /// The first day of the first cycle, 16 October 2023.
-  static final DateTime cycleStartDay = DateTime(2023, 10, 16);
+  static final DateTime cycleStartDay = DateTime.utc(2023, 10, 16);
 
   /// The number of amudim in the Bavli as the schedule counts them.
   static const int WHOLE_SHAS_AMUDIM = 5407;
@@ -102,7 +102,7 @@ class AmudYomiBavliDirshuCalculator {
 /// The first cycle began on 20 May 1947.
 class MishnaYomisCalculator {
   /// The first day of the first cycle, 20 May 1947.
-  static final DateTime cycleStartDay = DateTime(1947, 5, 20);
+  static final DateTime cycleStartDay = DateTime.utc(1947, 5, 20);
 
   /// The number of days a cycle runs for, two mishnayos a day.
   static const int CYCLE_DAYS = 2096;
