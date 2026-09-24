@@ -244,4 +244,142 @@ void main() {
       expect(saying.isMizmorLesodaRecited(c), isFalse);
     });
   });
+
+  group('TefilaRules - ata chonantanu', () {
+    JewishCalendar cal() => JewishCalendar()..setInIsrael(false);
+
+    test('said on motzei shabbos', () {
+      final c = cal()..setJewishDate(5784, JewishDate.CHESHVAN, 14);
+      expect(c.isSunday(), isTrue);
+      expect(rules.isAtaChonantanuRecited(c), isTrue);
+    });
+
+    test('said after yom tov as well', () {
+      final c = cal()..setJewishDate(5784, JewishDate.TISHREI, 24);
+      expect(c.isMotzeiShabbos(), isFalse);
+      expect(rules.isAtaChonantanuRecited(c), isTrue);
+    });
+
+    test('not said on an ordinary weekday', () {
+      final c = cal()..setJewishDate(5784, JewishDate.CHESHVAN, 16);
+      expect(rules.isAtaChonantanuRecited(c), isFalse);
+    });
+  });
+
+  group('TefilaRules - havdalah', () {
+    JewishCalendar cal(int year, int month, int day, {bool inIsrael = false}) =>
+        JewishCalendar()
+          ..setInIsrael(inIsrael)
+          ..setJewishDate(year, month, day);
+
+    test('said on motzei shabbos and motzei yom tov', () {
+      expect(
+          rules.isHavdalahRecited(cal(5784, JewishDate.CHESHVAN, 14)), isTrue);
+      expect(rules.isHavdalahRecited(cal(5784, JewishDate.SIVAN, 8)), isTrue,
+          reason: 'the Friday after Shavuos');
+      expect(rules.isHavdalahRecited(cal(5786, JewishDate.TISHREI, 11)), isTrue,
+          reason: 'the Friday after Yom Kippur');
+    });
+
+    test('not said where the night opens shabbos or yom tov', () {
+      expect(rules.isHavdalahRecited(cal(5785, JewishDate.TISHREI, 3)), isFalse,
+          reason: 'Rosh Hashana into Shabbos');
+      expect(rules.isHavdalahRecited(cal(5785, JewishDate.TISHREI, 4)), isTrue);
+      expect(
+          rules.isHavdalahRecited(cal(5784, JewishDate.TISHREI, 16)), isFalse,
+          reason: 'Shabbos into the second day of Succos');
+      expect(
+          rules.isHavdalahRecited(
+              cal(5784, JewishDate.TISHREI, 16, inIsrael: true)),
+          isTrue,
+          reason: 'Shabbos into chol hamoed');
+    });
+
+    test('put off to the night after a fast that opened on motzei shabbos', () {
+      expect(rules.isHavdalahRecited(cal(5782, JewishDate.AV, 10)), isFalse);
+      expect(rules.isHavdalahRecited(cal(5782, JewishDate.AV, 11)), isTrue);
+      expect(rules.isHavdalahRecited(cal(5785, JewishDate.AV, 9)), isFalse);
+      expect(rules.isHavdalahRecited(cal(5785, JewishDate.AV, 10)), isTrue);
+      expect(rules.isHavdalahRecited(cal(5786, JewishDate.AV, 10)), isFalse);
+    });
+
+    test('not said on an ordinary weekday', () {
+      expect(
+          rules.isHavdalahRecited(cal(5784, JewishDate.CHESHVAN, 16)), isFalse);
+    });
+
+    test('spices only after shabbos, never on or after tisha b\'av', () {
+      bool besamim(int year, int month, int day) =>
+          rules.isHavdalahBesamimRecited(cal(year, month, day));
+
+      expect(besamim(5784, JewishDate.CHESHVAN, 14), isTrue);
+      expect(besamim(5785, JewishDate.TISHREI, 11), isTrue,
+          reason: 'Yom Kippur on Shabbos');
+      expect(besamim(5786, JewishDate.TISHREI, 11), isFalse,
+          reason: 'Yom Kippur on Thursday');
+      expect(besamim(5784, JewishDate.SIVAN, 8), isFalse,
+          reason: 'after Shavuos');
+      expect(besamim(5785, JewishDate.AV, 9), isFalse);
+      expect(besamim(5782, JewishDate.AV, 10), isFalse);
+      expect(besamim(5782, JewishDate.AV, 11), isFalse);
+      expect(besamim(5784, JewishDate.TISHREI, 16), isFalse,
+          reason: 'Shabbos into yom tov');
+    });
+
+    test('the flame after shabbos and yom kippur, not after yom tov', () {
+      bool ner(int year, int month, int day) =>
+          rules.isHavdalahNerRecited(cal(year, month, day));
+
+      expect(ner(5784, JewishDate.CHESHVAN, 14), isTrue);
+      expect(ner(5786, JewishDate.TISHREI, 11), isTrue,
+          reason: 'Yom Kippur on Thursday');
+      expect(ner(5784, JewishDate.SIVAN, 8), isFalse, reason: 'after Shavuos');
+      expect(ner(5785, JewishDate.AV, 9), isTrue,
+          reason: 'the night tisha b\'av opens');
+      expect(ner(5782, JewishDate.AV, 10), isTrue,
+          reason: 'the night a put off tisha b\'av opens');
+      expect(ner(5782, JewishDate.AV, 11), isFalse,
+          reason: 'havdalah after the fast');
+      expect(ner(5784, JewishDate.TISHREI, 16), isFalse,
+          reason: 'Shabbos into yom tov');
+      expect(ner(5784, JewishDate.CHESHVAN, 16), isFalse);
+    });
+  });
+
+  group('TefilaRules - kiddush levana', () {
+    bool levana(int year, int month, int day) => rules.isKiddushLevanaRecited(
+        JewishCalendar()..setJewishDate(year, month, day));
+
+    test('from seven days after the molad to fifteen days after it', () {
+      expect(levana(5785, JewishDate.CHESHVAN, 5), isFalse);
+      expect(levana(5785, JewishDate.CHESHVAN, 10), isTrue);
+      expect(levana(5785, JewishDate.CHESHVAN, 15), isTrue);
+      expect(levana(5785, JewishDate.CHESHVAN, 17), isFalse);
+    });
+
+    test('not before Yom Kippur', () {
+      expect(levana(5785, JewishDate.TISHREI, 10), isFalse);
+      expect(levana(5785, JewishDate.TISHREI, 11), isTrue);
+    });
+
+    test('not before Tisha B\'Av, wherever the fast falls', () {
+      expect(levana(5785, JewishDate.AV, 9), isFalse);
+      expect(levana(5785, JewishDate.AV, 10), isTrue);
+      expect(levana(5782, JewishDate.AV, 10), isFalse,
+          reason: 'the fast put off from Shabbos');
+      expect(levana(5782, JewishDate.AV, 11), isTrue);
+    });
+  });
+
+  group('TefilaRules - tashlich', () {
+    bool tashlich(int month, int day) => rules
+        .isTashlichRecited(JewishCalendar()..setJewishDate(5785, month, day));
+
+    test('from Rosh Hashana through Hoshana Rabba', () {
+      expect(tashlich(JewishDate.ELUL, 29), isFalse);
+      expect(tashlich(JewishDate.TISHREI, 1), isTrue);
+      expect(tashlich(JewishDate.TISHREI, 21), isTrue);
+      expect(tashlich(JewishDate.TISHREI, 22), isFalse);
+    });
+  });
 }
