@@ -377,8 +377,8 @@ class ZmanimCalendar extends AstronomicalCalendar {
   /// second night of yom tov, a yom tov that follows Shabbos and a weekday night of Chanukah, and null otherwise.
   /// [inIsrael] is passed to [JewishCalendar.inIsrael], so in Israel the second days of yom tov have no lighting.
   DateTime? getCandleLightingTonight({bool inIsrael = false}) {
-    JewishCalendar today = JewishCalendar.fromDateTime(getCalendar());
-    today.inIsrael = inIsrael;
+    JewishCalendar today = JewishCalendar.fromZonedDateTime(getCalendar());
+    today.setInIsrael(inIsrael);
     int dayOfWeek = today.getDayOfWeek();
     if (dayOfWeek == 6) {
       return getCandleLighting();
@@ -602,9 +602,8 @@ class ZmanimCalendar extends AstronomicalCalendar {
   /// _see [JewishCalendar.setInIsrael]_
   bool isAssurBemlacha(DateTime currentTime, DateTime tzais, bool inIsrael) {
     JewishCalendar jewishCalendar = JewishCalendar();
-    jewishCalendar.setGregorianDate(
-        getCalendar().year, getCalendar().month, getCalendar().day);
-    jewishCalendar.inIsrael = inIsrael;
+    jewishCalendar.setGregorianDate(getCalendar());
+    jewishCalendar.setInIsrael(inIsrael);
 
     if (jewishCalendar.hasCandleLighting() &&
         currentTime.compareTo(getElevationAdjustedSunset()!) >= 0) {
@@ -708,7 +707,7 @@ class ZmanimCalendar extends AstronomicalCalendar {
   bool _isErevPesach() {
     final DateTime day = getCalendar();
     final JewishCalendar jewishCalendar = JewishCalendar()
-      ..setGregorianDate(day.year, day.month, day.day);
+      ..setGregorianDate(day);
     return jewishCalendar.getJewishMonth() == JewishDate.NISSAN &&
         jewishCalendar.getJewishDayOfMonth() == 14;
   }

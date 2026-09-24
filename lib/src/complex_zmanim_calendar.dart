@@ -18,7 +18,6 @@ import 'dart:core';
 import 'package:kosher_dart/src/zmanim_calendar.dart';
 import 'package:kosher_dart/src/util/geo_location.dart';
 import 'package:kosher_dart/src/astronomical_calendar.dart';
-import 'package:kosher_dart/src/hebrewcalendar/jewish_date.dart';
 import 'package:kosher_dart/src/util/astronomical_calculator.dart';
 import 'package:kosher_dart/src/util/local_midnight.dart';
 import 'package:kosher_dart/src/hebrewcalendar/jewish_calendar.dart';
@@ -2465,8 +2464,7 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   DateTime? getSofZmanKidushLevanaBetweenMoldos(
       [DateTime? alos, DateTime? tzais]) {
     JewishCalendar jewishCalendar = JewishCalendar();
-    jewishCalendar.setGregorianDate(
-        getCalendar().year, getCalendar().month, getCalendar().day);
+    jewishCalendar.setGregorianDate(getCalendar());
 
     // Do not calculate for impossible dates, but account for extreme cases. In the extreme case of Rapa Iti in French
     // Polynesia on Dec 2027 when kiddush Levana 3 days can be said on _Rosh Chodesh_, the sof zman Kiddush Levana
@@ -2520,8 +2518,7 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   /// [Rema](http://en.wikipedia.org/wiki/Moses_Isserles) who brings down the opinion of the <a [Maharil's](http://en.wikipedia.org/wiki/Yaakov_ben_Moshe_Levi_Moelin) of calculating [getSofZmanKidushLevanaBetweenMoldos] is of the opinion that the Mechaber agrees to his opinion. Also see the Aruch Hashulchan. For additional details on the subject, see Rabbi Dovid Heber's very detailed write-up in _Siman Daled_ (chapter 4) of [Shaarei Zmanim](http://www.hebrewbooks.org/53000). If the time of _sof zman Kiddush Levana_ occurs during the day (between the _alos_ and _tzais_ passed in as parameters), it returns the _alos_ passed in. If a null _alos_ or _tzais_ are passed to this method, the non-daytime adjusted time will be returned. /// [alos] the beginning of the Jewish day. If Kidush Levana occurs during the day (starting at alos and ending at tzais), the time returned will be alos. If either the alos or tzais parameters are null, no daytime adjustment will be made. [tzais] the end of the Jewish day. If Kidush Levana occurs during the day (starting at alos and ending at tzais), the time returned will be alos. If either the alos or tzais parameters are null, no daytime adjustment will be made. /// return the Date representing the moment 15 days after the molad. If the time occurs between _alos_ and _tzais_, _alos_ will be returned /// _see [getSofZmanKidushLevanaBetweenMoldos]_ _see [JewishCalendar.getSofZmanKidushLevana15Days]_
   DateTime? getSofZmanKidushLevana15Days([DateTime? alos, DateTime? tzais]) {
     JewishCalendar jewishCalendar = JewishCalendar();
-    jewishCalendar.setGregorianDate(
-        getCalendar().year, getCalendar().month, getCalendar().day);
+    jewishCalendar.setGregorianDate(getCalendar());
 
     // Do not calculate for impossible dates, but account for extreme cases. In the extreme case of Rapa Iti in
     // French Polynesia on Dec 2027 when kiddush Levana 3 days can be said on _Rosh Chodesh_, the sof zman Kiddush
@@ -2559,8 +2556,7 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   /// _see [JewishCalendar.getTchilasZmanKidushLevana3Days]_
   DateTime? getTchilasZmanKidushLevana3Days([DateTime? alos, DateTime? tzais]) {
     JewishCalendar jewishCalendar = JewishCalendar();
-    jewishCalendar.setGregorianDate(
-        getCalendar().year, getCalendar().month, getCalendar().day);
+    jewishCalendar.setGregorianDate(getCalendar());
 
     // Do not calculate for impossible dates, but account for extreme cases. Tchilas zman kiddush Levana 3 days for
     // the extreme case of Rapa Iti in French Polynesia on Dec 2027 when kiddush Levana 3 days can be said on the evening
@@ -2578,7 +2574,7 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
     //Get the following month's zman kiddush Levana for the extreme case of Rapa Iti in French Polynesia on Dec 2027 when
     // kiddush Levana can be said on Rosh Chodesh (the evening of the 30th). See Rabbi Dovid Heber's Shaarei Zmanim chapter 4 (page 32)
     if (zman == null && jewishCalendar.getJewishDayOfMonth() == 30) {
-      jewishCalendar.forward(Calendar.MONTH, 1);
+      jewishCalendar.plusMonths(1);
       zman = getMoladBasedTime(
           jewishCalendar.getTchilasZmanKidushLevana3Days(), null, null, true);
     }
@@ -2598,8 +2594,7 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   /// _see [JewishCalendar#getMoladAsDate]_
   DateTime? getZmanMolad() {
     JewishCalendar jewishCalendar = JewishCalendar();
-    jewishCalendar.setGregorianDate(
-        getCalendar().year, getCalendar().month, getCalendar().day);
+    jewishCalendar.setGregorianDate(getCalendar());
 
     // Optimize to not calculate for impossible dates, but account for extreme cases. The molad in the extreme case of Rapa
     // Iti in French Polynesia on Dec 2027 occurs on the night of the 27th of Kislev. In the case of Anadyr, Russia on
@@ -2609,13 +2604,13 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
       return null;
     }
     DateTime? molad = getMoladBasedTime(
-        jewishCalendar.getMoladAsDateTime(), null, null, true);
+        jewishCalendar.getMoladAsInstant(), null, null, true);
 
     // deal with molad that happens on the end of the previous month
     if (molad == null && jewishCalendar.getJewishDayOfMonth() > 26) {
-      jewishCalendar.forward(Calendar.MONTH, 1);
+      jewishCalendar.plusMonths(1);
       molad = getMoladBasedTime(
-          jewishCalendar.getMoladAsDateTime(), null, null, true);
+          jewishCalendar.getMoladAsInstant(), null, null, true);
     }
     return molad;
   }
@@ -2650,8 +2645,7 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   /// _see [JewishCalendar#getTchilasZmanKidushLevana7Days]_
   DateTime? getTchilasZmanKidushLevana7Days([DateTime? alos, DateTime? tzais]) {
     JewishCalendar jewishCalendar = JewishCalendar();
-    jewishCalendar.setGregorianDate(
-        getCalendar().year, getCalendar().month, getCalendar().day);
+    jewishCalendar.setGregorianDate(getCalendar());
 
     // Optimize to not calculate for impossible dates, but account for extreme cases. Tchilas zman kiddush Levana 7 days for
     // the extreme case of Rapa Iti in French Polynesia on Jan 2028 (when kiddush Levana 3 days can be said on the evening
@@ -3242,11 +3236,11 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   /// A method that return entry time of the closer Yom Tov
   DateTime getYomTovStartTime() {
     ComplexZmanimCalendar complexZmanimCalendar = clone();
-    JewishCalendar jewishCalendar = JewishCalendar.fromDateTime(getCalendar());
+    JewishCalendar jewishCalendar = JewishCalendar.fromZonedDateTime(getCalendar());
     while (!jewishCalendar.isErevYomTov()) {
-      jewishCalendar.forward();
+      jewishCalendar.plusDays(1);
     }
-    complexZmanimCalendar.setCalendar(jewishCalendar.getGregorianCalendar());
+    complexZmanimCalendar.setCalendar(jewishCalendar.getLocalDate());
     DateTime? date = complexZmanimCalendar.getSunset();
     return date!.add(Duration(minutes: _shiftTime()));
   }
@@ -3254,24 +3248,24 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   /// A method that return exit time of the closer Yom Tov
   DateTime getYomTovExitTime() {
     ComplexZmanimCalendar complexZmanimCalendar = clone();
-    JewishCalendar jewishCalendar = JewishCalendar.fromDateTime(getCalendar());
+    JewishCalendar jewishCalendar = JewishCalendar.fromZonedDateTime(getCalendar());
     while (!jewishCalendar.isYomTov()) {
-      jewishCalendar.forward();
+      jewishCalendar.plusDays(1);
     }
-    complexZmanimCalendar.setCalendar(jewishCalendar.getGregorianCalendar());
+    complexZmanimCalendar.setCalendar(jewishCalendar.getLocalDate());
     DateTime? date = complexZmanimCalendar
         .getBainHasmashosRT13Point5MinutesBefore7Point083Degrees();
     return date!.add(const Duration(minutes: 22));
   }
 
   DateTime? getTaanisStartTime({bool inIsrael = false, isAshkenaz = false}) {
-    JewishCalendar jewishCalendar = JewishCalendar.fromDateTime(
+    JewishCalendar jewishCalendar = JewishCalendar.fromZonedDateTime(
         DateTime.parse(getCalendar().toIso8601String()));
     DateTime calendar = DateTime.parse(getCalendar().toIso8601String());
-    jewishCalendar.inIsrael = inIsrael;
+    jewishCalendar.setInIsrael(inIsrael);
     while (!jewishCalendar.isTaanis()) {
       calendar = calendar.add(const Duration(days: 1));
-      jewishCalendar.setDate(calendar);
+      jewishCalendar.setGregorianDate(calendar);
     }
     ComplexZmanimCalendar complexZmanimCalendar = clone();
     complexZmanimCalendar.setCalendar(calendar);
@@ -3287,13 +3281,13 @@ class ComplexZmanimCalendar extends ZmanimCalendar {
   }
 
   DateTime? getTaanisExitTime({bool inIsrael = false, isAshkenaz = false}) {
-    JewishCalendar jewishCalendar = JewishCalendar.fromDateTime(
+    JewishCalendar jewishCalendar = JewishCalendar.fromZonedDateTime(
         DateTime.parse(getCalendar().toIso8601String()));
     DateTime calendar = DateTime.parse(getCalendar().toIso8601String());
-    jewishCalendar.inIsrael = inIsrael;
+    jewishCalendar.setInIsrael(inIsrael);
     while (!jewishCalendar.isTaanis()) {
       calendar = calendar.add(const Duration(days: 1));
-      jewishCalendar.setDate(calendar);
+      jewishCalendar.setGregorianDate(calendar);
     }
     ComplexZmanimCalendar complexZmanimCalendar = clone();
     complexZmanimCalendar.setCalendar(calendar);

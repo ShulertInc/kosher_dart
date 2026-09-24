@@ -18,7 +18,6 @@ import 'dart:core';
 
 import 'package:kosher_dart/src/hebrewcalendar/daf.dart';
 import 'package:kosher_dart/src/hebrewcalendar/jewish_calendar.dart';
-import 'package:kosher_dart/src/hebrewcalendar/jewish_date.dart';
 
 /// This class calculates the [Talmud Yerusalmi](https://en.wikipedia.org/wiki/Jerusalem_Talmud) [Daf Yomi]
 /// (https://en.wikipedia.org/wiki/Daf_Yomi) page ([Daf]) for the a given date.
@@ -28,16 +27,13 @@ import 'package:kosher_dart/src/hebrewcalendar/jewish_date.dart';
 class YerushalmiYomiCalculator {
   /// The start date of the first Daf Yomi Yerushalmi cycle of February 2, 1980 / 15 Shevat, 5740.
 
-  static final DateTime dafYomiStartDay = DateTime(1980, 2, 2);
-
-  /// The number of milliseconds in a day.
-  static const int DAY_MILIS = 1000 * 60 * 60 * 24;
+  static final DateTime _dafYomiStartDay = DateTime.utc(1980, 2, 2);
 
   /// he number of pages in the Talmud Yerushalmi.
-  static const int WHOLE_SHAS_DAFS = 1554;
+  static const int _WHOLE_SHAS_DAFS = 1554;
 
   /// The number of pages per _masechta_ (tractate).
-  static const List<int> BLATT_PER_MASSECTA = [
+  static const List<int> _BLATT_PER_MASECHTA = [
     68,
     37,
     34,
@@ -106,7 +102,7 @@ class YerushalmiYomiCalculator {
     if (requested < _dafYomiStartAbsDate) {
       // TODO: should we return a null or throw an IllegalArgumentException?
       throw ArgumentError(
-          "$requested is prior to organized Daf Yomi Yerushlmi cycles that started on $dafYomiStartDay");
+          "$requested is prior to organized Daf Yomi Yerushlmi cycles that started on $_dafYomiStartDay");
     }
 
     // Go cycle by cycle, until we get the cycle the requested day falls in
@@ -122,12 +118,12 @@ class YerushalmiYomiCalculator {
 
     // Finally find the daf. The count is zero based, so a masechta of n blatt
     // holds offsets 0 through n - 1; offset n is the first daf of the next one.
-    for (int j = 0; j < BLATT_PER_MASSECTA.length; j++) {
-      if (total < BLATT_PER_MASSECTA[j]) {
+    for (int j = 0; j < _BLATT_PER_MASECHTA.length; j++) {
+      if (total < _BLATT_PER_MASECHTA[j]) {
         dafYomi = Daf(masechta, total + 1);
         break;
       }
-      total -= BLATT_PER_MASSECTA[j];
+      total -= _BLATT_PER_MASECHTA[j];
       masechta++;
     }
 
@@ -139,7 +135,7 @@ class YerushalmiYomiCalculator {
   /// and those extra days can themselves land on a day with no daf, so the span grows
   /// until it stops picking up new ones.
   static int _cycleEnd(int cycleStart) {
-    int end = cycleStart + WHOLE_SHAS_DAFS - 1;
+    int end = cycleStart + _WHOLE_SHAS_DAFS - 1;
     int found = _getNumOfSpecialDays(cycleStart, end);
     while (found > 0) {
       final int extensionStart = end + 1;
@@ -164,8 +160,8 @@ class YerushalmiYomiCalculator {
     int specialDays = 0;
 
     //Instant of special Dates
-    JewishCalendar yomKippur = JewishCalendar.initDate(5770, 7, 10);
-    JewishCalendar tishaBeav = JewishCalendar.initDate(5770, 5, 9);
+    JewishCalendar yomKippur = JewishCalendar.fromJewishDate(5770, 7, 10);
+    JewishCalendar tishaBeav = JewishCalendar.fromJewishDate(5770, 5, 9);
 
     // Go over the years and find special dates
     for (int i = startYear; i <= endYear; i++) {
@@ -174,7 +170,7 @@ class YerushalmiYomiCalculator {
 
       // A Tisha B'Av on Shabbos is fasted, and skipped, on the Sunday.
       final int tishaBeavAbsDate = tishaBeav.getAbsDate() +
-          (tishaBeav.getDayOfWeek() == JewishDate.saturday ? 1 : 0);
+          (tishaBeav.getDayOfWeek() == 7 ? 1 : 0);
 
       if (_isBetween(start, yomKippur.getAbsDate(), end)) {
         specialDays++;
@@ -189,10 +185,10 @@ class YerushalmiYomiCalculator {
 
   /// The absolute date of the first day of the first cycle.
   static final int _dafYomiStartAbsDate =
-      JewishCalendar.fromDateTime(dafYomiStartDay).getAbsDate();
+      JewishCalendar.fromLocalDate(_dafYomiStartDay).getAbsDate();
 
   static int _jewishYearOfAbsDate(int absDate) =>
-      JewishCalendar.fromDateTime(_gregorianOfAbsDate(absDate)).getJewishYear();
+      JewishCalendar.fromLocalDate(_gregorianOfAbsDate(absDate)).getJewishYear();
 
   /// Absolute date 1 is January 1, 1 on the proleptic Gregorian calendar, which is
   /// also where Dart's `DateTime` starts counting.

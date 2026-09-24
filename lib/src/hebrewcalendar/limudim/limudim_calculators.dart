@@ -8,17 +8,17 @@ import 'package:kosher_dart/src/hebrewcalendar/limudim/pirkei_avos_unit.dart';
 import 'package:kosher_dart/src/hebrewcalendar/limudim/tehillim_unit.dart';
 
 int _absDateOf(int year, int month, int day) =>
-    JewishCalendar.initDate(year, month, day).getAbsDate();
+    JewishCalendar.fromJewishDate(year, month, day).getAbsDate();
 
 int _absDateOfGregorian(int year, int month, int day) =>
-    JewishCalendar.fromDateTime(DateTime(year, month, day)).getAbsDate();
+    JewishCalendar.fromLocalDate(DateTime.utc(year, month, day)).getAbsDate();
 
 /// Sunday is 1 and Shabbos is 7, as [JewishDate.getDayOfWeek] counts them.
 int _dayOfWeek(int absDate) => (absDate % 7).abs() + 1;
 
 /// Absolute date 1 is January 1, 1 on the proleptic Gregorian calendar, which is also
 /// where Dart's `DateTime` starts counting.
-JewishCalendar _calendarOfAbsDate(int absDate) => JewishCalendar.fromDateTime(
+JewishCalendar _calendarOfAbsDate(int absDate) => JewishCalendar.fromLocalDate(
     DateTime.utc(1, 1, 1).add(Duration(days: absDate - 1)));
 
 /// Calculates the [Daf Hashavua](https://en.wikipedia.org/wiki/Daf_Yomi) Bavli - one
@@ -162,7 +162,7 @@ class PirkeiAvosCalculator {
     final int date = calendar.getAbsDate();
     final int year = calendar.getJewishYear();
     // The cycle opens the day after Pesach, which is a day earlier in Israel.
-    final int anchorDay = calendar.inIsrael ? 22 : 23;
+    final int anchorDay = calendar.getInIsrael() ? 22 : 23;
 
     final int cycleStart = _absDateOf(year, JewishDate.NISSAN, anchorDay);
     if (date < cycleStart) {
@@ -182,7 +182,7 @@ class PirkeiAvosCalculator {
     int week = 1;
     while (true) {
       final int weekEnd = weekStart + (7 - _dayOfWeek(weekStart));
-      final bool skipped = _isSkipped(weekEnd, calendar.inIsrael);
+      final bool skipped = _isSkipped(weekEnd, calendar.getInIsrael());
       if (date <= weekEnd) {
         return skipped ? null : _unitForWeek(week, weekEnd, cycleEnd);
       }
