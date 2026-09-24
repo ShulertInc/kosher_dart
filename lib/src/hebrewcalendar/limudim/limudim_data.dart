@@ -1,5 +1,3 @@
-// GENERATED from kosher-rust by tool/parity/gen_limudim.mjs. Do not edit by hand.
-
 /// The first and last daf of each masechta of the Bavli, in the order [Daf] numbers
 /// them, for the schedules that run over whole dafim.
 const List<List<int>> dafRangePerMasechta = [

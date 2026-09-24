@@ -89,6 +89,11 @@ void main() {
           isNull);
     });
 
+    test('is null before Pesach of the earliest year the calendar reaches', () {
+      expect(JewishCalendar.fromDateTime(DateTime(1, 1, 10)).getPirkeiAvos(),
+          isNull);
+    });
+
     test('the diaspora starts a day after Israel does', () {
       final israel =
           JewishCalendar.initDate(5778, JewishDate.NISSAN, 22, inIsrael: true);

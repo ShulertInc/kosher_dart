@@ -1,0 +1,14 @@
+[package]
+name = "limudim_golden"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+kosher-rust = { path = "C:/Users/yzsco/AppData/Local/Temp/claude/E--Programming-JS-siddur-editor/4387776f-372a-4869-a800-367b8fe53d30/scratchpad/kr" }
+jiff = { version = "0.2", features = ["std", "alloc"] }
+
+[profile.release]
+debug = false
+
+[workspace]
