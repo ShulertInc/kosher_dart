@@ -19,3 +19,8 @@ export 'src/hebrewcalendar/limudim/limudim_calculators.dart';
 export 'src/hebrewcalendar/limudim/mishna.dart';
 export 'src/hebrewcalendar/limudim/pirkei_avos_unit.dart';
 export 'src/hebrewcalendar/limudim/tehillim_unit.dart';
+export 'src/util/astronomical_calculator.dart';
+export 'src/util/noaa_calculator.dart';
+export 'src/util/sun_times_calculator.dart';
+export 'src/util/meeus_calculator.dart';
+export 'src/util/spa_calculator.dart';

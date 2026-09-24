@@ -33,7 +33,8 @@ KosherJava keeps nanoseconds, `DateTime` keeps microseconds. Both sides throwing
 ## Inputs
 
 - Zmanim: dates 1900-2300, any latitude, longitudes near and far from the zone's meridian, elevation
-  0-4000 m, every IANA zone both sides know, both calculators, and random calculator settings.
+  0-4000 m, every IANA zone both sides know, all four calculators (NOAA, SunTimes, Meeus, SPA), and random
+  calculator settings including Meeus and SPA delta T, pressure and temperature.
 - Each Dart zone is rebuilt from java.time's rules for that week, so tz database differences never
   count. How often `package:timezone` itself disagrees is printed as a note.
 - Calendar: a day-by-day sweep from 1900, random Gregorian and Jewish dates, and chains of
@@ -55,3 +56,7 @@ mapped to the full name before comparing.
 `getMethods()` order changes between JVM runs. kosher_dart orders those by name, so KosherJava's
 ties are put in name order before comparing. Durations in `toXML` / `toJSON` differ below the
 microsecond, so those checks are rounding.
+
+SPA has no sunrise or sunset at a zenith below 0° or above 180°, and its secant search then ends wherever
+rounding noise takes it: one ulp of zenith moves the answer by hours. For those zeniths only whether a time
+exists is compared.

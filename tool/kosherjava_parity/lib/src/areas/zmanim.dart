@@ -2,9 +2,9 @@ import 'dart:math';
 
 import 'package:jni/jni.dart';
 import 'package:kosher_dart/kosher_dart.dart' as kd;
-import 'package:kosher_dart/src/util/sun_times_calculator.dart' as kd;
 import 'package:timezone/timezone.dart' as tz;
 
+import '../calculator_kinds.dart';
 import '../kosherjava.g.dart' as kj;
 import '../random_input.dart';
 import '../report.dart';
@@ -64,7 +64,8 @@ class ZmanimCase {
     useAstronomicalChatzosForOtherZmanim = chance(rng, 0.4) ? null : chance(rng, 0.5);
     candleLightingOffset = chance(rng, 0.15) ? null : offset(rng, 18);
     ateretTorahSunsetOffset = chance(rng, 0.15) ? null : offset(rng, 40);
-    sunTimes = chance(rng, 0.15);
+    calculator = chance(rng, 0.55) ? CalculatorKind.noaa : pick(rng, CalculatorKind.values);
+    precision = calculator.hasPrecisionSettings ? PrecisionSettings(rng, calculator) : null;
     settings = chance(rng, 0.2) ? CalculatorSettings(rng) : null;
     timeOfDay = chance(rng, 0.5) ? null : rng.nextDouble();
     cloned = chance(rng, 0.1);
@@ -101,7 +102,8 @@ class ZmanimCase {
   late final bool? useAstronomicalChatzosForOtherZmanim;
   late final double? candleLightingOffset;
   late final double? ateretTorahSunsetOffset;
-  late final bool sunTimes;
+  late final CalculatorKind calculator;
+  late final PrecisionSettings? precision;
   late final CalculatorSettings? settings;
   late final double? timeOfDay;
   late final bool cloned;
@@ -125,7 +127,7 @@ class ZmanimCase {
   String describe(String id) => '$id date=$date $place${machineLocal ? ' as a local DateTime' : ''} '
       'useElevation=${useElevation ?? 'default'} astronomicalChatzos=${useAstronomicalChatzos ?? 'default'} '
       'forOtherZmanim=${useAstronomicalChatzosForOtherZmanim ?? 'default'} candle=${candleLightingOffset ?? 'default'} '
-      'ateret=${ateretTorahSunsetOffset ?? 'default'} calculator=${sunTimes ? 'SunTimes' : 'NOAA'}'
+      'ateret=${ateretTorahSunsetOffset ?? 'default'} calculator=${calculator.label}${precision == null ? '' : ' $precision'}'
       '${settings == null ? '' : ' $settings'}${timeOfDay == null ? '' : ' timeOfDay=$timeOfDay'}'
       '${cloned ? ' cloned' : ''}${movedFromDays == null ? '' : ' builtOn=$movedFromDays days away, then ${viaSetLocalDate ? 'setLocalDate' : 'setCalendar'}'}';
 }
@@ -220,7 +222,7 @@ class ZmanimArea extends Area {
         javaCalendar = javaClone;
         dartCalendar = dartCalendar.clone();
       }
-      final prefix = 'zmanim.${input.sunTimes ? 'suntimes' : 'noaa'}';
+      final prefix = 'zmanim.${input.calculator.name}';
       for (final getter in [...zmanGetters, ...removedZmanGetters]) {
         final name = '$prefix.${getter.name}';
         switch (getter) {
@@ -330,8 +332,9 @@ class ZmanimArea extends Area {
     }
     if (input.candleLightingOffset != null) calendar.candleLightingOffset = input.candleLightingOffset!;
     if (input.ateretTorahSunsetOffset != null) calendar.ateretTorahSunsetOffset = input.ateretTorahSunsetOffset!;
-    if (input.sunTimes) {
-      final calculator = kj.SunTimesCalculator();
+    if (input.calculator != CalculatorKind.noaa || input.precision != null) {
+      final calculator = input.calculator.java();
+      input.precision?.applyToJava(calculator);
       calendar.astronomicalCalculator = calculator;
       calculator.release();
     }
@@ -358,7 +361,11 @@ class ZmanimArea extends Area {
     }
     if (input.candleLightingOffset != null) calendar.setCandleLightingOffset(input.candleLightingOffset!);
     if (input.ateretTorahSunsetOffset != null) calendar.setAteretTorahSunsetOffset(input.ateretTorahSunsetOffset!);
-    if (input.sunTimes) calendar.setAstronomicalCalculator(kd.SunTimesCalculator());
+    if (input.calculator != CalculatorKind.noaa || input.precision != null) {
+      final calculator = input.calculator.dart();
+      input.precision?.applyToDart(calculator);
+      calendar.setAstronomicalCalculator(calculator);
+    }
     final settings = input.settings;
     if (settings != null) {
       final calculator = calendar.getAstronomicalCalculator();

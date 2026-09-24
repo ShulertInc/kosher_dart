@@ -5,7 +5,7 @@ import 'dart:typed_data';
 import 'package:jni/jni.dart';
 import 'package:kosher_dart/kosher_dart.dart' as kd;
 import 'package:kosher_dart/src/util/java_double.dart' as jd;
-import 'package:kosher_dart/src/util/sun_times_calculator.dart' as kd;
+import '../calculator_kinds.dart';
 import 'package:timezone/timezone.dart' as tz;
 
 import '../area.dart';
@@ -710,9 +710,13 @@ class ZmanimFormatterArea extends Area {
     }
     final date = kj.LocalDate.of$1(input.date.year, input.date.month, input.date.day)!..releasedBy(arena);
     java.localDate = date;
-    if (input.sunTimes) {
-      java.astronomicalCalculator = kj.SunTimesCalculator()..releasedBy(arena);
-      dart.setAstronomicalCalculator(kd.SunTimesCalculator());
+    if (input.calculator != CalculatorKind.noaa || input.precision != null) {
+      final javaCalculator = input.calculator.java()..releasedBy(arena);
+      input.precision?.applyToJava(javaCalculator);
+      java.astronomicalCalculator = javaCalculator;
+      final dartCalculator = input.calculator.dart();
+      input.precision?.applyToDart(dartCalculator);
+      dart.setAstronomicalCalculator(dartCalculator);
     }
     final settings = input.settings;
     if (settings != null) {
@@ -729,6 +733,10 @@ class ZmanimFormatterArea extends Area {
       if (settings.earthRadius != null) {
         calculator.earthRadius = settings.earthRadius!;
         dartCalculator.setEarthRadius(settings.earthRadius!);
+      }
+      if (settings.useApparentSolarRadius != null) {
+        calculator.useApparentSolarRadius = settings.useApparentSolarRadius!;
+        dartCalculator.setUseApparentSolarRadius(settings.useApparentSolarRadius!);
       }
     }
     return (java, dart);
