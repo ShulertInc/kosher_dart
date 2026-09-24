@@ -26,7 +26,7 @@ import 'package:kosher_dart/src/util/geo_location.dart';
 /// © Kevin Boone 2000
 class SunTimesCalculator extends AstronomicalCalculator {
   @override
-  SunTimesCalculator clone() => copySettingsTo(SunTimesCalculator());
+  SunTimesCalculator clone() => copyCalculatorSettings(this, SunTimesCalculator());
 
   /// See also [AstronomicalCalculator.getCalculatorName].
   @override
@@ -40,7 +40,7 @@ class SunTimesCalculator extends AstronomicalCalculator {
       double zenith, bool adjustForElevation) {
     double doubleTime = double.nan;
     double elevation =
-        adjustForElevation ? (geoLocation.getElevation() ?? 0) : 0;
+        adjustForElevation ? geoLocation.getElevation() : 0;
     double adjustedZenith = adjustZenith(zenith, elevation, dateTime);
     doubleTime = _getTimeUTC(dateTime, geoLocation, adjustedZenith, true);
     return doubleTime;
@@ -52,14 +52,14 @@ class SunTimesCalculator extends AstronomicalCalculator {
       bool adjustForElevation) {
     double doubleTime = double.nan;
     double elevation =
-        adjustForElevation ? (geoLocation.getElevation() ?? 0) : 0;
+        adjustForElevation ? geoLocation.getElevation() : 0;
     double adjustedZenith = adjustZenith(zenith, elevation, calendar);
     doubleTime = _getTimeUTC(calendar, geoLocation, adjustedZenith, false);
     return doubleTime;
   }
 
   /// The number of degrees of longitude that corresponds to one hour time difference.
-  static const double DEG_PER_HOUR = 360.0 / 24.0;
+  static const double _DEG_PER_HOUR = 360.0 / 24.0;
 
   /// - [deg]: the degrees
   /// Returns sin of the angle in degrees
@@ -98,7 +98,7 @@ class SunTimesCalculator extends AstronomicalCalculator {
   /// - [longitude]: the longitude
   /// Returns time difference between the location's longitude and the Meridian, in hours. West of Meridian has a negative time difference
   static double _getHoursFromMeridian(double longitude) {
-    return longitude / DEG_PER_HOUR;
+    return longitude / _DEG_PER_HOUR;
   }
 
   /// Calculate the approximate time of sunset or sunrise in days since midnight Jan 1st, assuming 6am and 6pm events. We
@@ -156,7 +156,7 @@ class SunTimesCalculator extends AstronomicalCalculator {
     double raQuadrant = (ra / 90.0).floor() * 90.0;
     ra = ra + (lQuadrant - raQuadrant);
 
-    return ra / DEG_PER_HOUR; // convert to hours
+    return ra / _DEG_PER_HOUR; // convert to hours
   }
 
   /// Calculate the cosine of the Sun's local hour angle
@@ -224,7 +224,7 @@ class SunTimesCalculator extends AstronomicalCalculator {
       // sunset
       localHourAngle = _acosDeg(cosLocalHourAngle);
     }
-    double localHour = localHourAngle / DEG_PER_HOUR;
+    double localHour = localHourAngle / _DEG_PER_HOUR;
 
     double localMeanTime = _getLocalMeanTime(
         localHour,
@@ -250,4 +250,19 @@ class SunTimesCalculator extends AstronomicalCalculator {
   @override
   double getUTCMidnight(DateTime dateTime, GeoLocation geoLocation) =>
       (getUTCNoon(dateTime, geoLocation) + 12) % 24;
+
+  @override
+  double getSolarAzimuth(DateTime instant, GeoLocation geoLocation) =>
+      throw UnsupportedError(
+          "The SunTimesCalculator class does not implement the getSolarAzimuth method. Use the {@link NOAACalculator} instead.");
+
+  @override
+  double getSolarElevation(DateTime instant, GeoLocation geoLocation) =>
+      throw UnsupportedError(
+          "The SunTimesCalculator class does not implement the getSolarElevation method. Use the NOAACalculator instead.");
+
+  @override
+  double getTimeAtAzimuth(DateTime localDate, GeoLocation geoLocation, double azimuth) =>
+      throw UnsupportedError(
+          "The SunTimesCalculator class does not implement the getTimeAtAzimuth method. Use the {@link NOAACalculator} instead.");
 }

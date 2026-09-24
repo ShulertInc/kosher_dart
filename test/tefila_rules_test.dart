@@ -20,7 +20,7 @@ void main() {
   // KosherJava TefilaRulesTest, ported
   // ────────────────────────────────────────────────────────────────
   group('TefilaRules - ordinary summer weekday (21 August 2023)', () {
-    final date = JewishCalendar.fromDateTime(DateTime(2023, 8, 21));
+    final date = JewishCalendar.fromLocalDate(DateTime(2023, 8, 21));
 
     test('tachanun is recited', () {
       expect(rules.isTachanunRecitedShacharis(date), isTrue);
@@ -54,7 +54,7 @@ void main() {
   });
 
   group('TefilaRules - Shemini Atzeres (7 October 2023)', () {
-    final date = JewishCalendar.fromDateTime(DateTime(2023, 10, 7));
+    final date = JewishCalendar.fromLocalDate(DateTime(2023, 10, 7));
 
     test('no tachanun', () {
       expect(rules.isTachanunRecitedShacharis(date), isFalse);
@@ -91,7 +91,7 @@ void main() {
   // The three predicates this port was missing
   // ────────────────────────────────────────────────────────────────
   group('TefilaRules - al hanissim', () {
-    JewishCalendar cal() => JewishCalendar()..inIsrael = false;
+    JewishCalendar cal() => JewishCalendar()..setInIsrael(false);
 
     test('said on Chanukah', () {
       final c = cal()..setJewishDate(5784, JewishDate.KISLEV, 25);
@@ -110,7 +110,7 @@ void main() {
 
     test('said on Shushan Purim in a walled city', () {
       final c = cal()
-        ..isMukafChoma = true
+        ..setIsMukafChoma(true)
         ..setJewishDate(5784, JewishDate.ADAR_II, 15);
       expect(rules.isAlHanissimRecited(c), isTrue);
     });
@@ -122,8 +122,8 @@ void main() {
   });
 
   group('TefilaRules - yaaleh vyavo', () {
-    JewishCalendar diaspora() => JewishCalendar()..inIsrael = false;
-    JewishCalendar israel() => JewishCalendar()..inIsrael = true;
+    JewishCalendar diaspora() => JewishCalendar()..setInIsrael(false);
+    JewishCalendar israel() => JewishCalendar()..setInIsrael(true);
 
     test('said on rosh chodesh', () {
       final c = diaspora()..setJewishDate(5784, JewishDate.CHESHVAN, 1);
@@ -207,7 +207,7 @@ void main() {
   });
 
   group('TefilaRules - mizmor lesoda', () {
-    JewishCalendar cal() => JewishCalendar()..inIsrael = false;
+    JewishCalendar cal() => JewishCalendar()..setInIsrael(false);
 
     test('said on an ordinary weekday', () {
       final c = cal()..setJewishDate(5784, JewishDate.CHESHVAN, 12);
@@ -232,21 +232,21 @@ void main() {
 
     test('said on those days when the minhag says so', () {
       final saying =
-          TefilaRules(mizmorLesodaRecitedErevYomKippurAndPesach: true);
+          TefilaRules()..setMizmorLesodaRecitedErevYomKippurAndPesach(true);
       final c = cal()..setJewishDate(5784, JewishDate.NISSAN, 14);
       expect(saying.isMizmorLesodaRecited(c), isTrue);
     });
 
     test('the minhag does not override a day work is forbidden', () {
       final saying =
-          TefilaRules(mizmorLesodaRecitedErevYomKippurAndPesach: true);
+          TefilaRules()..setMizmorLesodaRecitedErevYomKippurAndPesach(true);
       final c = cal()..setJewishDate(5784, JewishDate.TISHREI, 15);
       expect(saying.isMizmorLesodaRecited(c), isFalse);
     });
   });
 
   group('TefilaRules - ata chonantanu', () {
-    JewishCalendar cal() => JewishCalendar()..inIsrael = false;
+    JewishCalendar cal() => JewishCalendar()..setInIsrael(false);
 
     test('said on motzei shabbos', () {
       final c = cal()..setJewishDate(5784, JewishDate.CHESHVAN, 14);
@@ -255,7 +255,6 @@ void main() {
     });
 
     test('said after yom tov as well', () {
-      // 23 Tishrei 5784 is Simchas Torah, so the 24th is the first weekday after it.
       final c = cal()..setJewishDate(5784, JewishDate.TISHREI, 24);
       expect(c.isMotzeiShabbos(), isFalse);
       expect(rules.isAtaChonantanuRecited(c), isTrue);
@@ -270,7 +269,7 @@ void main() {
   group('TefilaRules - havdalah', () {
     JewishCalendar cal(int year, int month, int day, {bool inIsrael = false}) =>
         JewishCalendar()
-          ..inIsrael = inIsrael
+          ..setInIsrael(inIsrael)
           ..setJewishDate(year, month, day);
 
     test('said on motzei shabbos and motzei yom tov', () {

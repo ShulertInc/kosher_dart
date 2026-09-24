@@ -18,7 +18,7 @@ class _MyAppState extends State<MyApp> {
   JewishCalendar jewishCalendar = JewishCalendar();
   HebrewDateFormatter hebrewDateFormatter = HebrewDateFormatter();
   HebrewDateFormatter translatedDateFormatter = HebrewDateFormatter()
-    ..hebrewFormat = false;
+    ..setHebrewFormat(false);
 
   @override
   Widget build(BuildContext context) {
@@ -30,15 +30,15 @@ class _MyAppState extends State<MyApp> {
         onTap: () async {
           DateTime? pickedDate = await showDatePicker(
             context: context,
-            initialDate: jewishCalendar.getGregorianCalendar(),
-            firstDate: DateTime(jewishCalendar.getGregorianYear() - 100),
-            lastDate: DateTime(jewishCalendar.getGregorianYear() + 100),
+            initialDate: jewishCalendar.getLocalDate(),
+            firstDate: DateTime(jewishCalendar.getLocalDate().year - 100),
+            lastDate: DateTime(jewishCalendar.getLocalDate().year + 100),
           );
 
           if (pickedDate != null) {
             setState(() {
-              jewishCalendar.setDate(pickedDate);
-              jewishDate.setDate(pickedDate);
+              jewishCalendar.setGregorianDate(pickedDate);
+              jewishDate.setGregorianDate(pickedDate);
             });
           }
         },
@@ -48,16 +48,16 @@ class _MyAppState extends State<MyApp> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(' תאריך לעוזי: ${DateFormat("dd.MM.yyyy")
-                      .format(jewishDate.getGregorianCalendar())}'),
+                      .format(jewishDate.getLocalDate())}'),
               Text('תאריך עברי: ${hebrewDateFormatter.format(jewishDate)}'),
-              Text('פרשת השבוע: ${hebrewDateFormatter.formatWeeklyParsha(jewishCalendar)}'),
+              Text('פרשת השבוע: ${hebrewDateFormatter.formatParshah(jewishCalendar.getUpcomingParshah())}'),
               Text('דף יומי: ${hebrewDateFormatter.formatDafYomiBavli(
                       jewishCalendar.getDafYomiBavli())}'),
               Text('Daf Yomi: ${hebrewDateFormatter.formatDafYomiBavli(
                       jewishCalendar.getDafYomiBavli())}'),
               Text('Translated Hebrew Date: ${translatedDateFormatter.format(jewishDate)}'),
               Text('Cloned Translated Hebrew Date: ${translatedDateFormatter.format(jewishDate.clone())}'),
-              Text('Parasha of the week: ${translatedDateFormatter.formatWeeklyParsha(jewishCalendar)}'),
+              Text('Parasha of the week: ${translatedDateFormatter.formatParshah(jewishCalendar.getUpcomingParshah())}'),
             ],
           ),
         ),
@@ -67,8 +67,8 @@ class _MyAppState extends State<MyApp> {
 
   @override
   void initState() {
-    hebrewDateFormatter.hebrewFormat = true;
-    hebrewDateFormatter.useGershGershayim = true;
+    hebrewDateFormatter.setHebrewFormat(true);
+    hebrewDateFormatter.setUseGershGershayim(true);
     super.initState();
   }
 }

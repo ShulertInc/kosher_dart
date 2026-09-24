@@ -1,7 +1,3 @@
-/// Coverage for [TefilaRules.isVihiNoamRecited], which is the one rule in this library
-/// that reads the week ahead rather than the day it is asked about.
-library;
-
 import 'package:test/test.dart';
 import 'package:kosher_dart/kosher_dart.dart';
 
@@ -10,13 +6,12 @@ void main() {
 
   JewishCalendar day(int year, int month, int dayOfMonth,
           {bool inIsrael = false}) =>
-      JewishCalendar.initDate(year, month, dayOfMonth)..inIsrael = inIsrael;
+      JewishCalendar.fromJewishDate(year, month, dayOfMonth)..setInIsrael(inIsrael);
 
-  /// The Sunday that opens the week the given day falls in.
   JewishCalendar sundayOf(JewishCalendar from) {
     final calendar = from.clone();
     while (!calendar.isSunday()) {
-      calendar.back();
+      calendar.minusDays(1);
     }
     return calendar;
   }
@@ -49,7 +44,7 @@ void main() {
         final week = calendar.clone();
         for (var ahead = 0; ahead < 6; ahead++) {
           yomTov = yomTov || week.isYomTovAssurBemelacha();
-          week.forward(Calendar.DATE, 1);
+          week.plusDays(1);
         }
 
         expect(rules.isVihiNoamRecited(calendar), equals(!yomTov),
@@ -62,17 +57,17 @@ void main() {
       var found = 0;
 
       for (var date = 0; date < 20 * 365; date++) {
-        calendar.forward(Calendar.DATE, 1);
+        calendar.plusDays(1);
         if (!calendar.isSunday()) continue;
 
-        final shabbos = calendar.clone()..forward(Calendar.DATE, 6);
+        final shabbos = calendar.clone()..plusDays(6);
         if (!shabbos.isYomTovAssurBemelacha()) continue;
 
         final week = calendar.clone();
         var earlier = false;
         for (var ahead = 0; ahead < 6; ahead++) {
           earlier = earlier || week.isYomTovAssurBemelacha();
-          week.forward(Calendar.DATE, 1);
+          week.plusDays(1);
         }
         if (earlier) continue;
 

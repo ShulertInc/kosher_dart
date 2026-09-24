@@ -17,15 +17,17 @@
 import 'dart:core';
 
 import 'package:kosher_dart/src/util/astronomical_calculator.dart';
+import 'package:kosher_dart/src/util/date_time_formatter.dart';
 import 'package:kosher_dart/src/util/geo_location.dart';
-import 'package:kosher_dart/src/util/local_midnight.dart';
 import 'package:kosher_dart/src/util/omitted.dart';
 import 'package:kosher_dart/src/util/zmanim_formatter.dart';
+import 'package:meta/meta.dart';
+import 'package:timezone/timezone.dart' as tz;
 
-enum SolarEvent { sunrise, sunset, noon, midnight }
+enum SolarEvent { SUNRISE, SUNSET, NOON, MIDNIGHT }
 
-/// A Java calendar that calculates astronomical times such as [getSunrise], [getSunset] and twilight times. This class contains a [getCalendar] and can therefore use the standard
-/// Calendar functionality to change dates etc... The calculation engine used to calculate the astronomical times can be
+/// A calendar that calculates astronomical times such as [getSunrise], [getSunset] and twilight times for the
+/// [getLocalDate] it holds. The calculation engine used to calculate the astronomical times can be
 /// changed to a different implementation by implementing the abstract [AstronomicalCalculator] and setting it with
 /// the [setAstronomicalCalculator]. A number of different calculation engine
 /// implementations are included in the util package.
@@ -47,20 +49,17 @@ enum SolarEvent { sunrise, sunset, noon, midnight }
 ///  double latitude = 40.0828; // Lakewood, NJ
 ///  double longitude = -74.2094; // Lakewood, NJ
 ///  double elevation = 20; // optional elevation correction in Meters
-///  // the String parameter in getTimeZone() has to be a valid timezone listed in
-///  // [TimeZone.getAvailableIDs]
-///  TimeZone timeZone = TimeZone.getTimeZone("America/New_York");
-///  GeoLocation location = new GeoLocation(locationName, latitude, longitude, elevation, timeZone);
-///  AstronomicalCalendar ac = new AstronomicalCalendar(location);
+///  tz.Location zoneId = tz.getLocation("America/New_York");
+///  GeoLocation location = GeoLocation.withElevation(locationName, latitude, longitude, elevation, zoneId);
+///  AstronomicalCalendar ac = AstronomicalCalendar.withGeoLocation(location);
 /// ```
 ///
 /// To get the time of sunrise, first set the date you want (if not set, the date will default to today):
 ///
 ///
 /// ```dart
-///  ac.getCalendar().set(Calendar.MONTH, Calendar.FEBRUARY);
-///  ac.getCalendar().set(Calendar.DAY_OF_MONTH, 8);
-///  Date sunrise = ac.getSunrise();
+///  ac.setLocalDate(DateTime.utc(2024, 2, 8));
+///  DateTime? sunrise = ac.getSunrise();
 /// ```
 ///
 ///
@@ -91,22 +90,15 @@ class AstronomicalCalendar {
   /// Sun's zenith at astronomical twilight (108°).
   static const double ASTRONOMICAL_ZENITH = 108;
 
-  /// constant for milliseconds in a minute (60,000)
-  static const double MINUTE_MILLIS = 60.0 * 1000.0;
-
-  /// constant for milliseconds in an hour (3,600,000)
-  static const double HOUR_MILLIS = MINUTE_MILLIS * 60;
-
   static const int MINUTE_NANOS = 60 * 1000 * 1000 * 1000;
 
   static const int HOUR_NANOS = MINUTE_NANOS * 60;
 
-  /// The Java Calendar encapsulated by this class to track the current date used by the class
-  late DateTime _calendar;
+  late DateTime _localDate;
 
-  late GeoLocation geoLocation;
+  late GeoLocation _geoLocation;
 
-  late AstronomicalCalculator astronomicalCalculator;
+  late AstronomicalCalculator _astronomicalCalculator;
 
   /// The getSunrise method Returns a `Date` representing the
   /// [AstronomicalCalculator.getElevationAdjustment] sunrise time. The zenith used
@@ -127,7 +119,7 @@ class AstronomicalCalendar {
     if (sunrise.isNaN) {
       return null;
     } else {
-      return getDateFromTime(sunrise, SolarEvent.sunrise);
+      return getInstantFromTime(sunrise, SolarEvent.SUNRISE);
     }
   }
 
@@ -146,7 +138,7 @@ class AstronomicalCalendar {
     if (sunrise.isNaN) {
       return null;
     } else {
-      return getDateFromTime(sunrise, SolarEvent.sunrise);
+      return getInstantFromTime(sunrise, SolarEvent.SUNRISE);
     }
   }
 
@@ -199,7 +191,7 @@ class AstronomicalCalendar {
     if (sunset.isNaN) {
       return null;
     } else {
-      return getDateFromTime(sunset, SolarEvent.sunset);
+      return getInstantFromTime(sunset, SolarEvent.SUNSET);
     }
   }
 
@@ -217,7 +209,7 @@ class AstronomicalCalendar {
     if (sunset.isNaN) {
       return null;
     } else {
-      return getDateFromTime(sunset, SolarEvent.sunset);
+      return getInstantFromTime(sunset, SolarEvent.SUNSET);
     }
   }
 
@@ -257,26 +249,14 @@ class AstronomicalCalendar {
   /// - [time]: 
   ///   the start time
   /// - [offset]: 
-  ///   the offset in milliseconds to add to the time.
-  /// Returns the [DateTime] with the offset in milliseconds added to it
-  static DateTime? getTimeOffset(DateTime? time, double offset) {
-    if (time == null || !offset.isFinite || offset == double.minPositive) {
+  ///   the offset to add to the time.
+  /// Returns the [DateTime] with the offset added to it
+  static DateTime? getTimeOffset(DateTime? time, Duration? offset) {
+    if (time == null || offset == null) {
       return null;
     }
-    return time.add(Duration(microseconds: (offset * 1000).truncate()));
+    return time.add(offset);
   }
-
-  static DateTime offsetByParts(
-      DateTime origin, DateTime start, DateTime end, int parts, double count) {
-    final int partNanos =
-        (end.microsecondsSinceEpoch - start.microsecondsSinceEpoch) * 1000 ~/
-            parts;
-    final int offsetNanos = (partNanos * count).truncate();
-    return origin.add(Duration(microseconds: _floorDivide(offsetNanos, 1000)));
-  }
-
-  static int _floorDivide(int dividend, int divisor) =>
-      (dividend - dividend % divisor) ~/ divisor;
 
   /// A utility method that returns the time of an offset by degrees below or above the horizon of
   /// [getSunrise]. Note that the degree offset is from the vertical, so for a calculation of 14°
@@ -296,7 +276,7 @@ class AstronomicalCalendar {
     if (dawn.isNaN) {
       return null;
     } else {
-      return getDateFromTime(dawn, SolarEvent.sunrise);
+      return getInstantFromTime(dawn, SolarEvent.SUNRISE);
     }
   }
 
@@ -316,7 +296,7 @@ class AstronomicalCalendar {
     if (sunset.isNaN) {
       return null;
     } else {
-      return getDateFromTime(sunset, SolarEvent.sunset);
+      return getInstantFromTime(sunset, SolarEvent.SUNSET);
     }
   }
 
@@ -328,10 +308,12 @@ class AstronomicalCalendar {
   ///   The location information used for calculating astronomical sun times.
   ///
   /// See also [setAstronomicalCalculator for changing the calculator class.].
-  AstronomicalCalendar({GeoLocation? geoLocation}) {
-    geoLocation ??= GeoLocation();
-    setCalendar(geoLocation.getDateTime());
-    setGeoLocation(geoLocation); // duplicate call
+  AstronomicalCalendar() : this.withGeoLocation(GeoLocation());
+
+  AstronomicalCalendar.withGeoLocation(GeoLocation geoLocation) {
+    final tz.TZDateTime now = tz.TZDateTime.now(geoLocation.getZoneId());
+    setLocalDate(DateTime.utc(now.year, now.month, now.day));
+    setGeoLocation(geoLocation);
     setAstronomicalCalculator(AstronomicalCalculator.getDefault());
   }
 
@@ -345,7 +327,7 @@ class AstronomicalCalendar {
   /// not set, double.nan will be returned. See detailed explanation on top of the page.
   double getUTCSunrise(double zenith) {
     return getAstronomicalCalculator()
-        .getUTCSunrise(getAdjustedCalendar(), getGeoLocation(), zenith, true);
+        .getUTCSunrise(getAdjustedLocalDate(), getGeoLocation(), zenith, true);
   }
 
   /// A method that returns the sunrise in UTC time without correction for time zone offset from GMT and without using
@@ -362,7 +344,7 @@ class AstronomicalCalendar {
   /// See also [AstronomicalCalendar.getUTCSeaLevelSunset].
   double getUTCSeaLevelSunrise(double zenith) {
     return getAstronomicalCalculator()
-        .getUTCSunrise(getAdjustedCalendar(), getGeoLocation(), zenith, false);
+        .getUTCSunrise(getAdjustedLocalDate(), getGeoLocation(), zenith, false);
   }
 
   /// A method that returns the sunset in UTC time without correction for time zone offset from GMT and without using
@@ -376,7 +358,7 @@ class AstronomicalCalendar {
   /// See also [AstronomicalCalendar.getUTCSeaLevelSunset].
   double getUTCSunset(double zenith) {
     return getAstronomicalCalculator()
-        .getUTCSunset(getAdjustedCalendar(), getGeoLocation(), zenith, true);
+        .getUTCSunset(getAdjustedLocalDate(), getGeoLocation(), zenith, true);
   }
 
   /// A method that returns the sunset in UTC time without correction for elevation, time zone offset from GMT and
@@ -394,7 +376,7 @@ class AstronomicalCalendar {
   /// See also [AstronomicalCalendar.getUTCSeaLevelSunrise].
   double getUTCSeaLevelSunset(double zenith) {
     return getAstronomicalCalculator()
-        .getUTCSunset(getAdjustedCalendar(), getGeoLocation(), zenith, false);
+        .getUTCSunset(getAdjustedLocalDate(), getGeoLocation(), zenith, false);
   }
 
   /// A utility method that will allow the calculation of a temporal (solar) hour based on the sunrise and sunset
@@ -402,34 +384,31 @@ class AstronomicalCalendar {
   /// non-elevation adjusted temporal hour by passing in [getSeaLevelSunrise] and
   /// [getSeaLevelSunset] as parameters.
   ///
-  /// - [startOfday]: 
+  /// - [startOfDay]:
   ///   The start of the day.
-  /// - [endOfDay]: 
+  /// - [endOfDay]:
   ///   The end of the day.
   ///
-  /// Returns the `long` millisecond length of the temporal hour. If the calculation can't be computed a
-  /// double.nan will be returned. See detailed explanation on top of the page.
-  ///
-  /// See also [getTemporalHour].
-  double getTemporalHour([DateTime? startOfDay = omitted, DateTime? endOfDay = omitted]) {
+  /// Returns the length of the temporal hour. If the calculation can't be computed null will be returned. See
+  /// detailed explanation on top of the page.
+  Duration? getTemporalHour([DateTime? startOfDay = omitted, DateTime? endOfDay = omitted]) {
     if (isOmitted(startOfDay) && isOmitted(endOfDay)) {
-      startOfDay = getSeaLevelSunrise();
-      endOfDay = getSeaLevelSunset();
+      return getTemporalHour(getSeaLevelSunrise(), getSeaLevelSunset());
     }
     if (startOfDay == null || endOfDay == null || isOmitted(startOfDay) || isOmitted(endOfDay)) {
-      return double.nan;
+      return null;
     }
-    return (endOfDay.microsecondsSinceEpoch - startOfDay.microsecondsSinceEpoch) / 12000;
+    return Duration(microseconds: ((endOfDay.microsecondsSinceEpoch - startOfDay.microsecondsSinceEpoch) / 12).round());
   }
 
   /// A method that returns sundial or solarnoon. It occurs when the Sun is [transiting](http://en.wikipedia.org/wiki/Transit_%28astronomy%29) the [celestial meridian](http://en.wikipedia.org/wiki/Meridian_%28astronomy%29). In this class it is
   /// calculated as halfway between the sunrise and sunset passed to this method. This time can be slightly off the
   /// real transit time due to changes in declination (the lengthening or shortening day).
   ///
-  /// - [startOfDay]: 
+  /// - [startOfDay]:
   ///   the start of day for calculating the sun's transit. This can be sea level sunrise, visual sunrise (or
   ///   any arbitrary start of day) passed to this method.
-  /// - [endOfDay]: 
+  /// - [endOfDay]:
   ///   the end of day for calculating the sun's transit. This can be sea level sunset, visual sunset (or any
   ///   arbitrary end of day) passed to this method.
   ///
@@ -438,78 +417,70 @@ class AstronomicalCalendar {
   /// not set, null will be returned. See detailed explanation on top of the page.
   DateTime? getSunTransit([DateTime? startOfDay = omitted, DateTime? endOfDay = omitted]) {
     if (isOmitted(startOfDay) && isOmitted(endOfDay)) {
-      return getDateFromTime(
-          getAstronomicalCalculator()
-              .getUTCNoon(getAdjustedCalendar(), getGeoLocation()),
-          SolarEvent.noon);
+      return getInstantFromTime(
+          getAstronomicalCalculator().getUTCNoon(getAdjustedLocalDate(), getGeoLocation()), SolarEvent.NOON);
     }
-    double temporalHour = getTemporalHour(startOfDay, endOfDay);
-    return temporalHour.isNaN ? null : getTimeOffset(startOfDay, temporalHour * 6);
+    if (isOmitted(startOfDay) || isOmitted(endOfDay)) {
+      return null;
+    }
+    final DateTime? start = startOfDay;
+    final DateTime? end = endOfDay;
+    if (start == null || end == null) {
+      return null;
+    }
+    return offsetByParts(start, start, end, 12, 6);
   }
 
   /// A method that returns astronomical _chatzos halayla_ - solar midnight, the moment the sun crosses the
   /// meridian on the far side of the earth.
   ///
   /// Returns the `DateTime` representing solar midnight, or null when it cannot be calculated.
-  DateTime? getSolarMidnight() => getDateFromTime(
-      getAstronomicalCalculator()
-          .getUTCMidnight(getAdjustedCalendar(), getGeoLocation()),
-      SolarEvent.midnight);
+  DateTime? getSolarMidnight() => getInstantFromTime(
+      getAstronomicalCalculator().getUTCMidnight(getAdjustedLocalDate(), getGeoLocation()), SolarEvent.MIDNIGHT);
 
-  DateTime? getTimeAtAzimuth90Or270(double azimuth) => getDateFromTime(
-      getAstronomicalCalculator()
-          .getUTCTimeAtAzimuth(getAdjustedCalendar(), getGeoLocation(), azimuth),
-      azimuth == 90 ? SolarEvent.sunrise : SolarEvent.sunset);
+  DateTime? getTimeAtAzimuth90Or270(double azimuth) => getInstantFromTime(
+      getAstronomicalCalculator().getTimeAtAzimuth(getAdjustedLocalDate(), getGeoLocation(), azimuth),
+      azimuth == 90 ? SolarEvent.SUNRISE : SolarEvent.SUNSET);
 
-  DateTime getLocalMeanTime(Duration timeOfDay) {
-    final DateTime date = getAdjustedCalendar();
-    final int longitudeOffset =
-        (getGeoLocation().getLongitude() * 4 * MINUTE_MILLIS * 1000).truncate();
-    return DateTime.utc(date.year, date.month, date.day)
-        .add(timeOfDay)
-        .subtract(Duration(microseconds: longitudeOffset))
-        .toLocal();
-  }
-
-  /// A method that returns a `Date` from the time passed in as a parameter.
+  /// A method that returns an instant from the time passed in as a parameter.
   ///
-  /// - [time]: 
-  ///   The time to be set as the time for the `Date`. The time expected is in the format: 18.75
-  ///   for 6:45:00 PM.time is sunrise and false if it is sunset
-  /// Returns The Date.
-  DateTime? getDateFromTime(double time, SolarEvent solarEvent) {
+  /// - [time]:
+  ///   The time to be set as the time for the instant. The time expected is in the format: 18.75
+  ///   for 6:45:00 PM.
+  /// - [solarEvent]:
+  ///   the type of event, used to adjust the date when the event crosses midnight UTC.
+  /// Returns the instant, in UTC.
+  @protected
+  DateTime? getInstantFromTime(double time, SolarEvent solarEvent) {
     if (time.isNaN) {
       return null;
     }
-    DateTime adjustedCalendar = getAdjustedCalendar();
+    final DateTime date = getAdjustedLocalDate();
     int dayShift = 0;
-    double localTimeHours = getGeoLocation().getLongitude() / 15 + time;
-    if (solarEvent == SolarEvent.sunrise && localTimeHours > 18) {
+    final double localTimeHours = getGeoLocation().getLongitude() / 15 + time;
+    if (solarEvent == SolarEvent.SUNRISE && localTimeHours > 18) {
       dayShift = -1;
-    } else if (solarEvent == SolarEvent.sunset && localTimeHours < 6) {
+    } else if (solarEvent == SolarEvent.SUNSET && localTimeHours < 6) {
       dayShift = 1;
-    } else if (solarEvent == SolarEvent.midnight && localTimeHours < 12) {
+    } else if (solarEvent == SolarEvent.MIDNIGHT && localTimeHours < 12) {
       dayShift = 1;
-    } else if (solarEvent == SolarEvent.noon) {
+    } else if (solarEvent == SolarEvent.NOON) {
       if (localTimeHours < 0) {
         dayShift = 1;
       } else if (localTimeHours > 24) {
         dayShift = -1;
       }
     }
-    DateTime cal = DateTime.utc(adjustedCalendar.year, adjustedCalendar.month,
-        adjustedCalendar.day + dayShift);
-    return cal
-        .add(Duration(microseconds: (time * HOUR_MILLIS * 1000).round()))
-        .toLocal();
+    final int nanos = (time * HOUR_NANOS + 0.5).floor();
+    return DateTime.utc(date.year, date.month, date.day + dayShift)
+        .add(Duration(microseconds: _floorDivide(nanos, 1000)));
   }
 
   /// Returns the dip below the horizon before sunrise that matches the offset minutes on passed in as a parameter. For
   /// example passing in 72 minutes for a calendar set to the equinox in Jerusalem returns a value close to 16.1°
-  /// Please note that this method is very slow and inefficient and should NEVER be used in a loop. TODO: Improve
-  /// efficiency.
+  /// Please note that this method is very slow and inefficient and should NEVER be used in a loop.
   ///
-  /// - [minutes]: 
+  /// - [minutes]:
   ///   offset
   /// Returns the degrees below the horizon before sunrise that match the offset in minutes passed it as a parameter.
   /// See also [getSunsetSolarDipFromOffset].
@@ -518,10 +489,9 @@ class AstronomicalCalendar {
 
   /// Returns the dip below the horizon after sunset that matches the offset minutes on passed in as a parameter. For
   /// example passing in 72 minutes for a calendar set to the equinox in Jerusalem returns a value close to 16.1°
-  /// Please note that this method is very slow and inefficient and should NEVER be used in a loop. TODO: Improve
-  /// efficiency.
+  /// Please note that this method is very slow and inefficient and should NEVER be used in a loop.
   ///
-  /// - [minutes]: 
+  /// - [minutes]:
   ///   offset
   /// Returns the degrees below the horizon after sunset that match the offset in minutes passed it as a parameter.
   /// See also [getSunriseSolarDipFromOffset].
@@ -538,9 +508,7 @@ class AstronomicalCalendar {
     }
     const double incrementor = 0.0001;
     final int offsetByTimeMillis = _floorDivide(
-        event.microsecondsSinceEpoch +
-            (direction * minutes * MINUTE_MILLIS * 1000).truncate(),
-        1000);
+        event.microsecondsSinceEpoch + _floorDivide((direction * minutes * MINUTE_NANOS).truncate(), 1000), 1000);
     final double step = minutes > 0.0 ? incrementor : -incrementor;
     final bool continuesWhileLater = (minutes > 0.0) == (direction < 0);
     double degrees = 0.0;
@@ -551,27 +519,42 @@ class AstronomicalCalendar {
         return double.nan;
       }
       final int millis = _floorDivide(time.microsecondsSinceEpoch, 1000);
-      final bool continues = continuesWhileLater
-          ? millis > offsetByTimeMillis
-          : millis < offsetByTimeMillis;
+      final bool continues = continuesWhileLater ? millis > offsetByTimeMillis : millis < offsetByTimeMillis;
       if (!continues) {
         return degrees;
       }
     }
   }
 
-  /// Adjusts the `Calendar` to deal with edge cases where the location crosses the antimeridian.
+  DateTime getLocalMeanTime(Duration localTime) {
+    final DateTime date = getAdjustedLocalDate();
+    final int totalNanos = (getGeoLocation().getLongitude() * 4 * MINUTE_NANOS).truncate();
+    return DateTime.utc(date.year, date.month, date.day)
+        .add(localTime)
+        .add(Duration(microseconds: _floorDivide(-totalNanos, 1000)));
+  }
+
+  /// Adjusts the local date to deal with edge cases where the location crosses the antimeridian.
   ///
   /// See also [GeoLocation.getAntimeridianAdjustment].
-  /// Returns the adjusted Calendar
-  DateTime getAdjustedCalendar() {
-    DateTime calendar = getCalendar();
-    int offset =
-        getGeoLocation().getAntimeridianAdjustment(startOfLocalDay(calendar));
-    if (offset == 0) {
-      return calendar;
-    }
-    return DateTime.utc(calendar.year, calendar.month, calendar.day + offset);
+  /// Returns the adjusted local date
+  @protected
+  DateTime getAdjustedLocalDate() {
+    final int offset = getGeoLocation().getAntimeridianAdjustment(getMidnightLastNight());
+    final DateTime localDate = getLocalDate();
+    return offset == 0 ? localDate : DateTime.utc(localDate.year, localDate.month, localDate.day + offset);
+  }
+
+  @protected
+  tz.TZDateTime getMidnightLastNight() {
+    final DateTime localDate = getLocalDate();
+    return startOfDay(getGeoLocation().getZoneId(), localDate.year, localDate.month, localDate.day);
+  }
+
+  @protected
+  tz.TZDateTime getMidnightTonight() {
+    final DateTime localDate = getLocalDate();
+    return startOfDay(getGeoLocation().getZoneId(), localDate.year, localDate.month, localDate.day + 1);
   }
 
   @override
@@ -579,50 +562,41 @@ class AstronomicalCalendar {
 
   String toJSON() => ZmanimFormatter.toJSON(this);
 
-  /// See also [Object.equals].
   @override
-  bool operator ==(Object object) {
-    if (identical(this, object)) {
+  bool operator ==(Object other) {
+    if (identical(this, other)) {
       return true;
     }
-    if (object is! AstronomicalCalendar) {
+    if (other is! AstronomicalCalendar || other.runtimeType != runtimeType) {
       return false;
     }
-    AstronomicalCalendar aCal = object;
-    return getCalendar().isAtSameMomentAs(aCal.getCalendar()) &&
-        getGeoLocation() == aCal.getGeoLocation() &&
-        getAstronomicalCalculator() == aCal.getAstronomicalCalculator();
+    return getLocalDate() == other.getLocalDate() &&
+        getGeoLocation() == other.getGeoLocation() &&
+        getAstronomicalCalculator() == other.getAstronomicalCalculator();
   }
 
   @override
-  int get hashCode {
-    return getCalendar().millisecondsSinceEpoch * geoLocation.hashCode;
-  }
+  int get hashCode => Object.hash(runtimeType, getLocalDate(), getGeoLocation(), getAstronomicalCalculator());
 
   /// A method that returns the currently set [GeoLocation] which contains location information used for the
   /// astronomical calculations.
   ///
   /// Returns the geoLocation.
-  GeoLocation getGeoLocation() {
-    return geoLocation;
-  }
+  GeoLocation getGeoLocation() => _geoLocation;
 
   /// Sets the [GeoLocation] `Object` to be used for astronomical calculations.
   ///
-  /// - [geoLocation]: 
+  /// - [geoLocation]:
   ///   The geoLocation to set.
   void setGeoLocation(GeoLocation geoLocation) {
-    this.geoLocation = geoLocation;
-    setCalendar(geoLocation.getDateTime());
+    _geoLocation = geoLocation;
   }
 
   /// A method that returns the currently set AstronomicalCalculator.
   ///
   /// Returns the astronomicalCalculator.
   /// See also [setAstronomicalCalculator].
-  AstronomicalCalculator getAstronomicalCalculator() {
-    return astronomicalCalculator;
-  }
+  AstronomicalCalculator getAstronomicalCalculator() => _astronomicalCalculator;
 
   /// A method to set the [AstronomicalCalculator] used for astronomical calculations. The Zmanim package ships
   /// with a number of different implementations of the `abstract` [AstronomicalCalculator] based on
@@ -631,39 +605,31 @@ class AstronomicalCalendar {
   /// [NOAACalculator] based on [NOAA's](http://noaa.gov)
   /// algorithm. This allows easy runtime switching and comparison of different algorithms.
   ///
-  /// - [astronomicalCalculator]: 
+  /// - [astronomicalCalculator]:
   ///   The astronomicalCalculator to set.
-  void setAstronomicalCalculator(
-      AstronomicalCalculator astronomicalCalculator) {
-    this.astronomicalCalculator = astronomicalCalculator;
+  void setAstronomicalCalculator(AstronomicalCalculator astronomicalCalculator) {
+    _astronomicalCalculator = astronomicalCalculator;
   }
 
-  /// returns the Calendar object encapsulated in this class.
-  ///
-  /// Returns the calendar.
-  DateTime getCalendar() {
-    return _calendar;
-  }
-
-  /// - [calendar]: 
-  ///   The calendar to set.
-  void setCalendar(DateTime calendar) {
-    _calendar = calendar;
-  }
-
-  DateTime getLocalDate() =>
-      DateTime.utc(_calendar.year, _calendar.month, _calendar.day);
+  DateTime getLocalDate() => _localDate;
 
   void setLocalDate(DateTime localDate) {
-    final DateTime target =
-        DateTime.utc(localDate.year, localDate.month, localDate.day);
-    for (int attempt = 0; attempt < 4; attempt++) {
-      final int days = target.difference(getLocalDate()).inDays;
-      if (days == 0 && attempt > 0) {
-        return;
-      }
-      setCalendar(
-          startOfLocalDay(_calendar).add(Duration(hours: days * 24 + 12)));
-    }
+    _localDate = DateTime.utc(localDate.year, localDate.month, localDate.day);
   }
+
+  AstronomicalCalendar clone() => copyCalendarSettings(this, AstronomicalCalendar.withGeoLocation(getGeoLocation()));
+
+  static int _floorDivide(int dividend, int divisor) => (dividend - dividend % divisor) ~/ divisor;
 }
+
+T copyCalendarSettings<T extends AstronomicalCalendar>(AstronomicalCalendar from, T to) => to
+  .._localDate = from._localDate
+  .._geoLocation = from._geoLocation.clone()
+  .._astronomicalCalculator = from._astronomicalCalculator.clone();
+
+DateTime offsetByParts(DateTime origin, DateTime start, DateTime end, int parts, double count) {
+  final int partNanos = (end.microsecondsSinceEpoch - start.microsecondsSinceEpoch) * 1000 ~/ parts;
+  return origin.add(durationOfNanos((partNanos * count).truncate()));
+}
+
+Duration durationOfNanos(int nanos) => Duration(microseconds: AstronomicalCalendar._floorDivide(nanos, 1000));

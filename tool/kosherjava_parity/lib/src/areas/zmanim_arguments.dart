@@ -4,8 +4,7 @@ import '../kosherjava.g.dart' as kj;
 import '../random_input.dart';
 import '../report.dart';
 import 'zman_getters.dart';
-import 'zmanim.dart' show durationMillis;
-import 'zmanim_removed.dart';
+import 'zmanim.dart' show dartDurationMillis, durationMillis;
 
 class Moment {
   const Moment(this.label, this.millis);
@@ -13,10 +12,19 @@ class Moment {
   final int? millis;
 
   kj.Instant? get java => instantAt(millis);
-  DateTime? get dart => millis == null ? null : DateTime.fromMillisecondsSinceEpoch(millis!);
+  DateTime? get dart => millis == null ? null : DateTime.fromMillisecondsSinceEpoch(millis!, isUtc: true);
 
   @override
   String toString() => millis == null ? '$label=null' : '$label=${iso(millis!)}';
+}
+
+kj.Instant? instantAt(int? millis) => millis == null ? null : kj.Instant.ofEpochMilli(millis);
+
+int? millisOrNull(kj.Instant? instant) {
+  if (instant == null) return null;
+  final millis = instant.toEpochMilli();
+  instant.release();
+  return millis;
 }
 
 List<Moment> candidateMoments(Random rng, JavaCalendar java, int midnight) => [
@@ -58,20 +66,18 @@ void runArgumentChecks(
   }
 
   pair('getSofZmanShma(s,e)', java.getSofZmanShma$1, dart.getSofZmanShma);
-  pair('getSofZmanShma(s,e) / getSofZmanShmaOfDay', java.getSofZmanShma$1, dart.getSofZmanShmaOfDay);
   pair('getSofZmanTfila(s,e)', java.getSofZmanTfila$1, dart.getSofZmanTfila);
-  pair('getSofZmanTfila(s,e) / getSofZmanTfilaOfDay', java.getSofZmanTfila$1, dart.getSofZmanTfilaOfDay);
   pair('getMinchaGedola(s,e)', java.getMinchaGedola$1, dart.getMinchaGedola);
-  pair('getMinchaGedola(s,e) / getMinchaGedolaOfDay', java.getMinchaGedola$1, dart.getMinchaGedolaOfDay);
-  pair('getSamuchLeMinchaKetana(s,e) / getSamuchLeMinchaKetanaOfDay', java.getSamuchLeMinchaKetana$1,
-      dart.getSamuchLeMinchaKetanaOfDay);
+  pair('getSamuchLeMinchaKetana(s,e)', java.getSamuchLeMinchaKetana$1, dart.getSamuchLeMinchaKetana);
   pair('getMinchaKetana(s,e)', java.getMinchaKetana$1, dart.getMinchaKetana);
-  pair('getMinchaKetana(s,e) / getMinchaKetanaOfDay', java.getMinchaKetana$1, dart.getMinchaKetanaOfDay);
   pair('getPlagHamincha(s,e)', java.getPlagHamincha$1, dart.getPlagHamincha);
-  pair('getPlagHamincha(s,e) / getPlagHaminchaOfDay', java.getPlagHamincha$1, dart.getPlagHaminchaOfDay);
-  pair('getSofZmanBiurChametz(s,e)', (s, e) => java.getSofZmanBiurChametz(s, e, false), dart.getSofZmanBiurChametz);
-  pair('getSofZmanAchilasChametz(s,e)', (s, e) => java.getSofZmanAchilasChametz(s, e, false),
-      dart.getSofZmanAchilasChametz);
+  pair('getChatzos(s,e)', java.getChatzos, dart.getChatzos);
+  for (var sample = 0; sample < 2; sample++) {
+    final minchaGedola = any();
+    report.instant('$prefix.getMinchaGedolaGreaterThan30(minchaGedola)', '$describe $minchaGedola',
+        attempt(() => millisOrNull(java.getMinchaGedolaGreaterThan30(minchaGedola.java))),
+        attempt(() => dart.getMinchaGedolaGreaterThan30(minchaGedola.dart)?.flooredMillis));
+  }
 
   for (final synchronous in [true, false]) {
     void synced(String name, kj.Instant? Function(kj.Instant?, kj.Instant?, bool) javaCall,
@@ -80,17 +86,11 @@ void runArgumentChecks(
     }
 
     synced('getSofZmanShma', java.getSofZmanShma, dart.getSofZmanShma);
-    synced('getSofZmanShma / getSofZmanShmaOfDay', java.getSofZmanShma, dart.getSofZmanShmaOfDay);
     synced('getSofZmanTfila', java.getSofZmanTfila, dart.getSofZmanTfila);
-    synced('getSofZmanTfila / getSofZmanTfilaOfDay', java.getSofZmanTfila, dart.getSofZmanTfilaOfDay);
     synced('getMinchaGedola', java.getMinchaGedola, dart.getMinchaGedola);
-    synced('getMinchaGedola / getMinchaGedolaOfDay', java.getMinchaGedola, dart.getMinchaGedolaOfDay);
-    synced('getSamuchLeMinchaKetana / getSamuchLeMinchaKetanaOfDay', java.getSamuchLeMinchaKetana,
-        dart.getSamuchLeMinchaKetanaOfDay);
+    synced('getSamuchLeMinchaKetana', java.getSamuchLeMinchaKetana, dart.getSamuchLeMinchaKetana);
     synced('getMinchaKetana', java.getMinchaKetana, dart.getMinchaKetana);
-    synced('getMinchaKetana / getMinchaKetanaOfDay', java.getMinchaKetana, dart.getMinchaKetanaOfDay);
     synced('getPlagHamincha', java.getPlagHamincha, dart.getPlagHamincha);
-    synced('getPlagHamincha / getPlagHaminchaOfDay', java.getPlagHamincha, dart.getPlagHaminchaOfDay);
     synced('getSofZmanBiurChametz', java.getSofZmanBiurChametz, dart.getSofZmanBiurChametz);
     synced('getSofZmanAchilasChametz', java.getSofZmanAchilasChametz, dart.getSofZmanAchilasChametz);
   }
@@ -100,8 +100,9 @@ void runArgumentChecks(
     final end = any();
     report.real('$prefix.getHalfDayBasedShaahZmanis(s,e)', '$describe $start $end',
         attempt(() => durationMillis(java.getHalfDayBasedShaahZmanis(start.java, end.java)) ?? double.nan),
-        attempt(() => dart.getHalfDayBasedShaahZmanis(start.dart, end.dart)),
-        tolerance: 1e-6);
+        attempt(() => dartDurationMillis(dart.getHalfDayBasedShaahZmanis(start.dart, end.dart)) ?? double.nan),
+        tolerance: 1e-6,
+        absolute: 0.001);
   }
 
   for (var sample = 0; sample < 2; sample++) {
@@ -152,17 +153,12 @@ void runArgumentChecks(
     final end = any();
     final hours = randomHours(rng);
     final input = '$describe $start $end hours=$hours';
-    if (start.millis != null && end.millis != null) {
-      report.instant('$prefix.getShaahZmanisBasedZman(s,e,hours)', input,
-          attempt(() => millisOrNull(java.getShaahZmanisBasedZman(start.java, end.java, hours))),
-          attempt(() => dart.getShaahZmanisBasedZman(start.dart!, end.dart!, hours)?.flooredMillis));
-    }
+    report.instant('$prefix.getShaahZmanisBasedZman(s,e,hours)', input,
+        attempt(() => millisOrNull(java.getShaahZmanisBasedZman(start.java, end.java, hours))),
+        attempt(() => dart.getShaahZmanisBasedZman(start.dart, end.dart, hours)?.flooredMillis));
     report.instant('$prefix.getHalfDayBasedZman(s,e,hours)', input,
         attempt(() => millisOrNull(java.getHalfDayBasedZman(start.java, end.java, hours))),
         attempt(() => dart.getHalfDayBasedZman(start.dart, end.dart, hours)?.flooredMillis));
-    report.instant('$prefix.getHalfDayBasedZman(s,e,hours) / getFixedLocalChatzosBasedZmanim', input,
-        attempt(() => millisOrNull(java.getHalfDayBasedZman(start.java, end.java, hours))),
-        attempt(() => dart.getFixedLocalChatzosBasedZmanim(start.dart, end.dart, hours)?.flooredMillis));
     report.instant('$prefix.getZmanisBasedOffset(hours)', input,
         attempt(() => millisOrNull(java.getZmanisBasedOffset(hours))),
         attempt(() => dart.getZmanisBasedOffset(hours)?.flooredMillis));
@@ -174,8 +170,8 @@ void runArgumentChecks(
     final inIsrael = chance(rng, 0.5);
     if (near.millis == null || tzaisMoment.millis == null) continue;
     final current = Moment('near ${near.label}', near.millis! + between(rng, 1, 1800000) * (chance(rng, 0.5) ? 1 : -1));
-    report.exact('$prefix.isAssurBemelacha / isAssurBemlacha', '$describe current=$current tzais=$tzaisMoment inIsrael=$inIsrael',
+    report.exact('$prefix.isAssurBemelacha', '$describe current=$current tzais=$tzaisMoment inIsrael=$inIsrael',
         attempt(() => java.isAssurBemelacha(current.java, tzaisMoment.java, inIsrael)),
-        attempt(() => dart.isAssurBemlacha(current.dart!, tzaisMoment.dart!, inIsrael)));
+        attempt(() => dart.isAssurBemelacha(current.dart!, tzaisMoment.dart!, inIsrael)));
   }
 }

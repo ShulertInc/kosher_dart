@@ -37,7 +37,7 @@ class YomiCalculator {
 
   ///  The Julian date that the cycle for Shekalim changed.
   /// See also [getDafYomiBavli for details.].
-  static final int shekalimJulianChangeDay = _getJulianDay(_shekalimChangeDay);
+  static final int _shekalimJulianChangeDay = _getJulianDay(_shekalimChangeDay);
 
   /// Returns the [Daf Yomi](http://en.wikipedia.org/wiki/Daf_yomi) [Bavli](http://en.wikipedia.org/wiki/Talmud) [Daf] for a given date. The first Daf Yomi cycle
   /// started on Rosh Hashana 5684 (September 11, 1923) and calculations prior to this date will result in an
@@ -106,8 +106,7 @@ class YomiCalculator {
       5,
       73
     ];
-    DateTime dateTime = DateTime.utc(jewishCalendar.getGregorianYear(),
-        jewishCalendar.getGregorianMonth(), jewishCalendar.getGregorianDayOfMonth());
+    DateTime dateTime = jewishCalendar.getLocalDate();
 
     Daf dafYomi = Daf(0, 0);
     int julianDay = _getJulianDay(dateTime);
@@ -119,8 +118,8 @@ class YomiCalculator {
     }
     if (dateTime.isAtSameMomentAs(_shekalimChangeDay) ||
         dateTime.isAfter(_shekalimChangeDay)) {
-      cycleNo = 8 + ((julianDay - shekalimJulianChangeDay) ~/ 2711);
-      dafNo = ((julianDay - shekalimJulianChangeDay) % 2711);
+      cycleNo = 8 + ((julianDay - _shekalimJulianChangeDay) ~/ 2711);
+      dafNo = ((julianDay - _shekalimJulianChangeDay) % 2711);
     } else {
       cycleNo = 1 + ((julianDay - _dafYomiJulianStartDay) ~/ 2702);
       dafNo = ((julianDay - _dafYomiJulianStartDay) % 2702);

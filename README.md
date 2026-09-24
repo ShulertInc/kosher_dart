@@ -28,8 +28,8 @@ import 'package:kosher_dart/kosher_dart.dart';
 ```
   JewishDate jewishDate = JewishDate();
   HebrewDateFormatter hebrewDateFormatter = HebrewDateFormatter();
-  hebrewDateFormatter.hebrewFormat = true; // optional
-  hebrewDateFormatter.useGershGershayim = true; // optional
+  hebrewDateFormatter.setHebrewFormat(true); // optional
+  hebrewDateFormatter.setUseGershGershayim(true); // optional
   String hebrewDate = hebrewDateFormatter.format(jewishDate);
 ```
 ##### Get jewish holiday
@@ -37,18 +37,23 @@ import 'package:kosher_dart/kosher_dart.dart';
   JewishCalendar jewishCalendar = JewishCalendar();
   HebrewDateFormatter hebrewDateFormatter = HebrewDateFormatter();
   
-  jewishCalendar.inIsrael = true; // set to true if your location is in israel
-  hebrewDateFormatter.hebrewFormat = true; // optional
-  hebrewDateFormatter.useGershGershayim = true; // optional
+  jewishCalendar.setInIsrael(true); // set to true if your location is in israel
+  hebrewDateFormatter.setHebrewFormat(true); // optional
+  hebrewDateFormatter.setUseGershGershayim(true); // optional
   
   String yomTov = hebrewDateFormatter.formatYomTov(jewishCalendar);
 ```
 
 ##### Get time of the day
+Zones come from [timezone](https://pub.dev/packages/timezone); load its database once before looking one up.
 ```
-  GeoLocation geoLocation = GeoLocation.setLocation(
-        'Jerusalem', 31.7962419, 35.2453988, DateTime.now());
-    ComplexZmanimCalendar complexZmanimCalendar = ComplexZmanimCalendar.intGeoLocation(geoLocation);
-    DateTime? sofZmanTfila = complexZmanimCalendar.getSofZmanTfilaGRA();
-    DateTime? minchaKetana = complexZmanimCalendar.getMinchaKetana();
+import 'package:timezone/data/latest.dart' as tzdata;
+import 'package:timezone/timezone.dart' as tz;
+
+  tzdata.initializeTimeZones();
+  GeoLocation geoLocation = GeoLocation.withZoneId(
+      'Jerusalem', 31.7962419, 35.2453988, tz.getLocation('Asia/Jerusalem'));
+  ComprehensiveZmanimCalendar calendar = ComprehensiveZmanimCalendar.withGeoLocation(geoLocation);
+  DateTime? sofZmanTfila = calendar.getSofZmanTfilaGRA();
+  DateTime? minchaKetana = calendar.getMinchaKetanaGRA();
 ```

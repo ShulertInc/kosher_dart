@@ -5,9 +5,8 @@ void main() {
   final rules = TefilaRules();
 
   JewishCalendar tishrei(int day, {required bool inIsrael}) =>
-      JewishCalendar.initDate(5784, JewishDate.TISHREI, day)..inIsrael = inIsrael;
+      JewishCalendar.fromJewishDate(5784, JewishDate.TISHREI, day)..setInIsrael(inIsrael);
 
-  /// Which korbanos the mussaf of this day reads, as day numbers of Succos.
   List<int> read(int day, {required bool inIsrael}) {
     final calendar = tishrei(day, inIsrael: inIsrael);
     return [
@@ -44,8 +43,8 @@ void main() {
     });
 
     test('chol hamoed Pesach reads none of them', () {
-      final pesach = JewishCalendar.initDate(5784, JewishDate.NISSAN, 18)
-        ..inIsrael = false;
+      final pesach = JewishCalendar.fromJewishDate(5784, JewishDate.NISSAN, 18)
+        ..setInIsrael(false);
       for (var korban = 2; korban <= 7; korban++) {
         expect(rules.isSuccosKorbanRecited(pesach, korban), isFalse);
       }

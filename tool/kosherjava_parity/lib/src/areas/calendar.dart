@@ -37,6 +37,25 @@ int? javaMillis(kj.Instant? instant) {
   return millis;
 }
 
+int? javaMicros(kj.Instant? instant) {
+  if (instant == null) return null;
+  final micros = instant.epochSecond * 1000000 + instant.nano ~/ 1000;
+  instant.release();
+  return micros;
+}
+
+String javaLocalDate(kj.LocalDate? local) {
+  final text = CivilDate(local!.year, local.monthValue, local.dayOfMonth).toString();
+  local.release();
+  return text;
+}
+
+String dartLocalDate(DateTime local) {
+  final midnightUtc = local.isUtc && local.hour == 0 && local.minute == 0 && local.second == 0 &&
+      local.millisecond == 0 && local.microsecond == 0;
+  return '${CivilDate(local.year, local.month, local.day)}${midnightUtc ? '' : ' not a UTC midnight'}';
+}
+
 class CalendarPair {
   CalendarPair(this.java, this.dart, this.describe);
 
@@ -58,8 +77,8 @@ class JewishDateFields {
 typedef CalendarCheck = (String, Object? Function(kj.JewishCalendar), Object? Function(kd.JewishCalendar));
 
 final List<CalendarCheck> calendarChecks = [
-  ('getInIsrael', (j) => j.inIsrael, (d) => d.inIsrael),
-  ('getIsMukafChoma', (j) => j.isMukafChoma, (d) => d.isMukafChoma),
+  ('getInIsrael', (j) => j.inIsrael, (d) => d.getInIsrael()),
+  ('getIsMukafChoma', (j) => j.isMukafChoma, (d) => d.getIsMukafChoma()),
   ('isUseModernHolidays', (j) => j.isUseModernHolidays, (d) => d.isUseModernHolidays()),
   ('getYomTovIndex', (j) => j.yomTovIndex, (d) => d.getYomTovIndex()),
   ('isBirkasHachamah', (j) => j.isBirkasHachamah, (d) => d.isBirkasHachamah()),
@@ -101,12 +120,58 @@ final List<CalendarCheck> calendarChecks = [
   ('getParshah', (j) => javaEnumName(j.parshah), (d) => d.getParshah().name),
   ('getSpecialShabbos', (j) => javaEnumName(j.specialShabbos), (d) => d.getSpecialShabbos().name),
   ('getUpcomingParshah', (j) => javaEnumName(j.upcomingParshah), (d) => d.getUpcomingParshah().name),
+  ('hashCode', (j) => j.hashCode1(), (d) => d.hashCode),
+];
+
+bool _javaIndex(kj.JewishCalendar j, int index) => j.yomTovIndex == index;
+
+final List<CalendarCheck> helperChecks = [
+  ('isErevPesach', (j) => _javaIndex(j, kd.JewishCalendar.EREV_PESACH), (d) => d.isErevPesach()),
+  ('isErevYomKippur', (j) => _javaIndex(j, kd.JewishCalendar.EREV_YOM_KIPPUR), (d) => d.isErevYomKippur()),
+  ('isErevRoshHashana', (j) => _javaIndex(j, kd.JewishCalendar.EREV_ROSH_HASHANA), (d) => d.isErevRoshHashana()),
+  ('isFastOfGedalyah', (j) => _javaIndex(j, kd.JewishCalendar.FAST_OF_GEDALYAH), (d) => d.isFastOfGedalyah()),
+  ('isTenthOfTeves', (j) => _javaIndex(j, kd.JewishCalendar.TENTH_OF_TEVES), (d) => d.isTenthOfTeves()),
+  ('isTaanisEsther', (j) => _javaIndex(j, kd.JewishCalendar.FAST_OF_ESTHER), (d) => d.isTaanisEsther()),
+  (
+    'isSeventeenthOfTammuz',
+    (j) => _javaIndex(j, kd.JewishCalendar.SEVENTEEN_OF_TAMMUZ),
+    (d) => d.isSeventeenthOfTammuz()
+  ),
+  ('isShushanPurim', (j) => _javaIndex(j, kd.JewishCalendar.SHUSHAN_PURIM), (d) => d.isShushanPurim()),
+  ('isPurimKatan', (j) => _javaIndex(j, kd.JewishCalendar.PURIM_KATAN), (d) => d.isPurimKatan()),
+  (
+    'isShushanPurimKatan',
+    (j) => _javaIndex(j, kd.JewishCalendar.SHUSHAN_PURIM_KATAN),
+    (d) => d.isShushanPurimKatan()
+  ),
+  ('isYomHaatzmaut', (j) => _javaIndex(j, kd.JewishCalendar.YOM_HAATZMAUT), (d) => d.isYomHaatzmaut()),
+  ('isYomYerushalayim', (j) => _javaIndex(j, kd.JewishCalendar.YOM_YERUSHALAYIM), (d) => d.isYomYerushalayim()),
+  ('isSefirasHaomer', (j) => j.dayOfOmer != -1, (d) => d.isSefirasHaomer()),
+  ('isMotzeiShabbos', (j) => j.dayOfWeek == 1, (d) => d.isMotzeiShabbos()),
+  ('isSunday', (j) => j.dayOfWeek == 1, (d) => d.isSunday()),
+  ('isMonday', (j) => j.dayOfWeek == 2, (d) => d.isMonday()),
+  ('isTuesday', (j) => j.dayOfWeek == 3, (d) => d.isTuesday()),
+  ('isWednesday', (j) => j.dayOfWeek == 4, (d) => d.isWednesday()),
+  ('isThursday', (j) => j.dayOfWeek == 5, (d) => d.isThursday()),
+  ('isFriday', (j) => j.dayOfWeek == 6, (d) => d.isFriday()),
+  ('isShabbos', (j) => j.dayOfWeek == 7, (d) => d.isShabbos()),
+  ('isMondayOrThursday', (j) => j.dayOfWeek == 2 || j.dayOfWeek == 5, (d) => d.isMondayOrThursday()),
+  (
+    'isLeDavidPeriod',
+    (j) => j.jewishMonth == kd.JewishDate.ELUL || (j.jewishMonth == kd.JewishDate.TISHREI && j.jewishDayOfMonth <= 21),
+    (d) => d.isLeDavidPeriod()
+  ),
+  (
+    'getGregorianYear/Month/DayOfMonth',
+    (j) => javaLocalDate(j.localDate),
+    (d) => CivilDate(d.getGregorianYear(), d.getGregorianMonth(), d.getGregorianDayOfMonth()).toString()
+  ),
 ];
 
 typedef CalendarInstant = (String, kj.Instant? Function(kj.JewishCalendar), DateTime? Function(kd.JewishCalendar));
 
 final List<CalendarInstant> calendarInstants = [
-  ('getMoladAsInstant / getMoladAsDateTime', (j) => j.moladAsInstant, (d) => d.getMoladAsDateTime()),
+  ('getMoladAsInstant', (j) => j.moladAsInstant, (d) => d.getMoladAsInstant()),
   ('getTchilasZmanKidushLevana3Days', (j) => j.tchilasZmanKidushLevana3Days, (d) => d.getTchilasZmanKidushLevana3Days()),
   ('getTchilasZmanKidushLevana7Days', (j) => j.tchilasZmanKidushLevana7Days, (d) => d.getTchilasZmanKidushLevana7Days()),
   (
@@ -130,8 +195,11 @@ const _arithmeticOperations = [
   'setJewishMonth',
   'setJewishDayOfMonth',
   'setJewishDate',
-  'setGregorianDate',
+  'setGregorianDate(LocalDate)',
+  'setGregorianDate(ZonedDateTime)',
 ];
+
+const _gregorianInputs = ['utc midnight', 'utc with time', 'local with time'];
 
 class CalendarArea extends Area {
   CalendarArea(super.zones);
@@ -141,13 +209,14 @@ class CalendarArea extends Area {
 
   @override
   void run(int seed, Iterable<int> indexes, Report report) {
+    if (indexes.contains(0)) compareParshahList(report);
     for (final index in indexes) {
       final rng = caseRandom(seed, 'calendar', index);
       final id = 'calendar#$index seed=$seed';
 
       final sweep = sweepPair(rng, index, id);
       compareCalendar(report, 'calendar', sweep);
-      compareDafYomi(rng, report, sweep, 'setGregorianDate');
+      compareDafYomi(rng, report, sweep, 'JewishCalendar(LocalDate)');
       sweep.java.release();
 
       final (random, path) = randomPair(rng, id);
@@ -161,6 +230,7 @@ class CalendarArea extends Area {
       }
       random.java.release();
 
+      compareJewishDate(rng, report, id);
       compareArithmetic(rng, report, id);
       compareMoladConstructor(rng, report, id);
       compareStatics(rng, report, id);
@@ -168,6 +238,19 @@ class CalendarArea extends Area {
       compareOrdering(rng, report, id);
       compareMasechtaNames(report, index, id);
     }
+  }
+
+  void compareParshahList(Report report) {
+    final table = kj.JewishCalendar.parshahList as JArray<JArray<kj.JewishCalendar$Parshah?>?>;
+    final rows = <String>[];
+    for (var i = 0; i < table.length; i++) {
+      final row = table[i]!;
+      rows.add([for (var j = 0; j < row.length; j++) javaEnumName(row[j])].join(','));
+      row.release();
+    }
+    table.release();
+    report.exact('calendar.parshahList', 'static', Value(rows.join('|')),
+        Value(kd.JewishCalendar.parshahList.map((row) => row.map((parshah) => parshah.name).join(',')).join('|')));
   }
 
   void compareMasechtaNames(Report report, int index, String id) {
@@ -187,7 +270,7 @@ class CalendarArea extends Area {
         attempt(() => dartDaf.getYerushalmiMasechtaTransliterated()));
     report.exact('calendar.Daf.getYerushalmiMasechta', input, attempt(() => javaString(javaDaf.yerushalmiMasechta)),
         attempt(() => dartDaf.getYerushalmiMasechta()));
-    report.exact('calendar.Daf.getDaf / setDaf', input, attempt(() {
+    report.exact('calendar.Daf.setDaf', input, attempt(() {
       javaDaf.daf = index % 180;
       return javaDaf.daf;
     }), attempt(() {
@@ -207,20 +290,20 @@ class CalendarArea extends Area {
       ..isMukafChoma = mukafChoma
       ..useModernHolidays = modern;
     dart
-      ..inIsrael = inIsrael
-      ..isMukafChoma = mukafChoma
+      ..setInIsrael(inIsrael)
+      ..setIsMukafChoma(mukafChoma)
       ..setUseModernHolidays(modern);
   }
 
   String flags(kd.JewishCalendar dart) =>
-      'inIsrael=${dart.inIsrael} mukafChoma=${dart.isMukafChoma} modern=${dart.isUseModernHolidays()}';
+      'inIsrael=${dart.getInIsrael()} mukafChoma=${dart.getIsMukafChoma()} modern=${dart.isUseModernHolidays()}';
 
   CalendarPair sweepPair(Random rng, int index, String id) {
     final date = DateTime.utc(1900, 1, 1).add(Duration(days: index % _sweepSpanDays));
     final localDate = kj.LocalDate.of$1(date.year, date.month, date.day)!;
     final java = kj.JewishCalendar.new4(localDate);
     localDate.release();
-    final dart = kd.JewishCalendar()..setGregorianDate(date.year, date.month, date.day);
+    final dart = kd.JewishCalendar.fromLocalDate(date);
     applyFlags(rng, java, dart);
     return CalendarPair(
         java, dart, '$id sweep gregorian=${CivilDate(date.year, date.month, date.day)} ${flags(dart)}');
@@ -242,6 +325,36 @@ class CalendarArea extends Area {
     if (roll < 0.65) return randomDate(rng, 1900, 2300);
     if (roll < 0.9) return randomDate(rng, 1, 9999);
     return randomDate(rng, 1920, 1985);
+  }
+
+  (DateTime, String) dartDate(Random rng, CivilDate date) {
+    final kind = pick(rng, _gregorianInputs);
+    final hour = between(rng, 0, 23);
+    final minute = between(rng, 0, 59);
+    final DateTime value = switch (kind) {
+      'utc midnight' => DateTime.utc(date.year, date.month, date.day),
+      'utc with time' => DateTime.utc(date.year, date.month, date.day, hour, minute),
+      _ => DateTime(date.year, date.month, date.day, hour, minute),
+    };
+    return (value, kind == 'utc midnight' ? kind : '$kind $hour:$minute');
+  }
+
+  (kj.ZonedDateTime, tz.TZDateTime, String) randomZoned(Random rng) {
+    final zone = pick(rng, zones.names);
+    final millis = uniform(rng, -2208988800000, 10413792000000).floor();
+    final instant = kj.Instant.ofEpochMilli(millis)!;
+    final zoned = instant.atZone(zones.java(zone))!;
+    instant.release();
+    final javaLocal = zoned.toLocalDate()!;
+    final javaDate = CivilDate(javaLocal.year, javaLocal.monthValue, javaLocal.dayOfMonth);
+    javaLocal.release();
+    final location = zones.dartFromJava(zone, millis - 3 * _day, millis + 3 * _day);
+    final zonedDart = tz.TZDateTime.fromMillisecondsSinceEpoch(location, millis);
+    return (
+      zoned,
+      zonedDart,
+      'instant=${iso(millis)} zone=$zone javaLocal=$javaDate dartLocal=${zonedDart.toIso8601String()}'
+    );
   }
 
   JewishDateFields randomJewish(Random rng) {
@@ -281,60 +394,64 @@ class CalendarArea extends Area {
   }
 
   (CalendarPair, String) randomPair(Random rng, String id) {
-    final path =
-        pick(rng, const ['localDateTime', 'utcDateTime', 'tzDateTime', 'setGregorianDate', 'setDate', 'jewish']);
+    final path = pick(rng, const [
+      'JewishCalendar(LocalDate)',
+      'JewishCalendar(ZonedDateTime)',
+      'setGregorianDate(LocalDate)',
+      'setGregorianDate(ZonedDateTime)',
+      'JewishCalendar(int, int, int)',
+      'JewishCalendar(int, int, int, boolean)',
+      'JewishCalendar()',
+    ]);
     final kj.JewishCalendar java;
     final kd.JewishCalendar dart;
     final String input;
+    var flagged = true;
     switch (path) {
-      case 'localDateTime':
+      case 'JewishCalendar(LocalDate)':
         final date = randomGregorian(rng);
-        final hour = between(rng, 0, 23);
+        final (value, kind) = dartDate(rng, date);
         java = javaFromLocalDate(date);
-        dart = kd.JewishCalendar.fromDateTime(DateTime(date.year, date.month, date.day, hour));
-        input = 'gregorian=$date hour=$hour';
-      case 'utcDateTime':
-        final date = randomGregorian(rng);
-        final hour = between(rng, 0, 23);
-        java = javaFromLocalDate(date);
-        dart = kd.JewishCalendar.fromDateTime(DateTime.utc(date.year, date.month, date.day, hour));
-        input = 'gregorian=$date hour=$hour';
-      case 'tzDateTime':
-        final zone = pick(rng, zones.names);
-        final millis = uniform(rng, -2208988800000, 10413792000000).floor();
-        final instant = kj.Instant.ofEpochMilli(millis)!;
-        final zoned = instant.atZone(zones.java(zone))!;
+        dart = kd.JewishCalendar.fromLocalDate(value);
+        input = 'gregorian=$date dart=$kind';
+      case 'JewishCalendar(ZonedDateTime)':
+        final (zoned, zonedDart, text) = randomZoned(rng);
         java = kj.JewishCalendar.new3(zoned);
-        final javaLocal = zoned.toLocalDate()!;
-        final javaDate = CivilDate(javaLocal.year, javaLocal.monthValue, javaLocal.dayOfMonth);
-        javaLocal.release();
         zoned.release();
-        instant.release();
-        final location = zones.dartFromJava(zone, millis - 3 * _day, millis + 3 * _day);
-        final zonedDart = tz.TZDateTime.fromMillisecondsSinceEpoch(location, millis);
-        dart = kd.JewishCalendar.fromDateTime(zonedDart);
-        input = 'instant=${iso(millis)} zone=$zone javaLocal=$javaDate dartLocal=${zonedDart.toIso8601String()}';
-      case 'setGregorianDate':
+        dart = kd.JewishCalendar.fromZonedDateTime(zonedDart);
+        input = text;
+      case 'setGregorianDate(LocalDate)':
         final date = randomGregorian(rng);
+        final (value, kind) = dartDate(rng, date);
         final localDate = kj.LocalDate.of$1(date.year, date.month, date.day)!;
         java = kj.JewishCalendar.new2()..gregorianDate$1 = localDate;
         localDate.release();
-        dart = kd.JewishCalendar()..setGregorianDate(date.year, date.month, date.day);
-        input = 'gregorian=$date';
-      case 'setDate':
-        final date = randomGregorian(rng);
-        final localDate = kj.LocalDate.of$1(date.year, date.month, date.day)!;
-        java = kj.JewishCalendar.new2()..gregorianDate$1 = localDate;
-        localDate.release();
-        dart = kd.JewishCalendar()..setDate(DateTime.utc(date.year, date.month, date.day));
-        input = 'gregorian=$date';
-      default:
+        dart = kd.JewishCalendar()..setGregorianDate(value);
+        input = 'gregorian=$date dart=$kind';
+      case 'setGregorianDate(ZonedDateTime)':
+        final (zoned, zonedDart, text) = randomZoned(rng);
+        java = kj.JewishCalendar.new2()..gregorianDate = zoned;
+        zoned.release();
+        dart = kd.JewishCalendar()..setGregorianDate(zonedDart);
+        input = text;
+      case 'JewishCalendar(int, int, int)':
         final date = randomJewish(rng);
         java = kj.JewishCalendar.new1(date.year, date.month, date.day);
-        dart = kd.JewishCalendar.initDate(date.year, date.month, date.day);
+        dart = kd.JewishCalendar.fromJewishDate(date.year, date.month, date.day);
         input = 'jewish=$date';
+      case 'JewishCalendar(int, int, int, boolean)':
+        final date = randomJewish(rng);
+        final inIsrael = chance(rng, 0.5);
+        java = kj.JewishCalendar.new$5(date.year, date.month, date.day, inIsrael);
+        dart = kd.JewishCalendar.fromJewishDateInIsrael(date.year, date.month, date.day, inIsrael);
+        input = 'jewish=$date inIsrael=$inIsrael';
+        flagged = chance(rng, 0.5);
+      default:
+        java = kj.JewishCalendar.new2();
+        dart = kd.JewishCalendar();
+        input = 'today';
     }
-    applyFlags(rng, java, dart);
+    if (flagged) applyFlags(rng, java, dart);
     return (CalendarPair(java, dart, '$id random path=$path $input ${flags(dart)}'), path);
   }
 
@@ -344,23 +461,8 @@ class CalendarArea extends Area {
         '$prefix.getJewishMonth', input, attempt(() => java.jewishMonth), attempt(() => dart.getJewishMonth()));
     report.exact('$prefix.getJewishDayOfMonth', input, attempt(() => java.jewishDayOfMonth),
         attempt(() => dart.getJewishDayOfMonth()));
-    report.exact('$prefix.getLocalDate / getGregorian*', input, attempt(() {
-      final local = java.localDate!;
-      final text = CivilDate(local.year, local.monthValue, local.dayOfMonth).toString();
-      local.release();
-      return text;
-    }),
-        attempt(() =>
-            CivilDate(dart.getGregorianYear(), dart.getGregorianMonth(), dart.getGregorianDayOfMonth()).toString()));
-    report.exact('$prefix.getLocalDate', input, attempt(() {
-      final local = java.localDate!;
-      final text = CivilDate(local.year, local.monthValue, local.dayOfMonth).toString();
-      local.release();
-      return text;
-    }), attempt(() {
-      final local = dart.getLocalDate();
-      return CivilDate(local.year, local.month, local.day).toString();
-    }));
+    report.exact('$prefix.getLocalDate', input, attempt(() => javaLocalDate(java.localDate)),
+        attempt(() => dartLocalDate(dart.getLocalDate())));
     report.exact('$prefix.getDayOfWeek', input, attempt(() => java.dayOfWeek), attempt(() => dart.getDayOfWeek()));
     report.exact('$prefix.getAbsDate', input, attempt(() => java.absDate), attempt(() => dart.getAbsDate()));
   }
@@ -385,7 +487,7 @@ class CalendarArea extends Area {
     report.exact('$prefix.getDaysSinceStartOfJewishYear', input, attempt(() => java.daysSinceStartOfJewishYear),
         attempt(() => dart.getDaysSinceStartOfJewishYear()));
     report.exact('$prefix.getChalakimSinceMoladTohu', input, attempt(() => java.chalakimSinceMoladTohu),
-        attempt(() => dart.getChalakimSinceMoladTohu().toInt()));
+        attempt(() => dart.getChalakimSinceMoladTohu()));
     report.exact(
         '$prefix.toString', input, attempt(() => javaString(java.toString$1())), attempt(() => dart.toString()));
     report.exact('$prefix.getMoladHours', input, attempt(() => java.moladHours), attempt(() => dart.getMoladHours()));
@@ -396,10 +498,15 @@ class CalendarArea extends Area {
     for (final (name, javaGetter, dartGetter) in calendarChecks) {
       report.exact('$prefix.$name', input, attempt(() => javaGetter(java)), attempt(() => dartGetter(dart)));
     }
+    for (final (name, javaGetter, dartGetter) in helperChecks) {
+      report.exact('$prefix.helper.$name', input, attempt(() => javaGetter(java)), attempt(() => dartGetter(dart)));
+    }
     for (final (name, javaGetter, dartGetter) in calendarInstants) {
       report.instant('$prefix.$name', input, attempt(() => javaMillis(javaGetter(java))),
           attempt(() => dartGetter(dart)?.flooredMillis));
     }
+    report.exact('$prefix.getMoladAsInstant microseconds', input, attempt(() => javaMicros(java.moladAsInstant)),
+        attempt(() => dart.getMoladAsInstant().microsecondsSinceEpoch));
   }
 
   void compareMolad(Report report, CalendarPair pair) {
@@ -462,10 +569,59 @@ class CalendarArea extends Area {
         }));
   }
 
+  void compareJewishDate(Random rng, Report report, String id) {
+    final path = pick(rng, const [
+      'JewishDate(LocalDate)',
+      'JewishDate(ZonedDateTime)',
+      'JewishDate(int, int, int)',
+      'JewishDate()',
+    ]);
+    final kj.JewishDate java;
+    final kd.JewishDate dart;
+    final String detail;
+    switch (path) {
+      case 'JewishDate(LocalDate)':
+        final date = randomGregorian(rng);
+        final (value, kind) = dartDate(rng, date);
+        final localDate = kj.LocalDate.of$1(date.year, date.month, date.day)!;
+        java = kj.JewishDate.new$4(localDate);
+        localDate.release();
+        dart = kd.JewishDate.fromLocalDate(value);
+        detail = 'gregorian=$date dart=$kind';
+      case 'JewishDate(ZonedDateTime)':
+        final (zoned, zonedDart, text) = randomZoned(rng);
+        java = kj.JewishDate.new$3(zoned);
+        zoned.release();
+        dart = kd.JewishDate.fromZonedDateTime(zonedDart);
+        detail = text;
+      case 'JewishDate(int, int, int)':
+        final date = randomJewish(rng);
+        java = kj.JewishDate.new$1(date.year, date.month, date.day);
+        dart = kd.JewishDate.fromJewishDate(date.year, date.month, date.day);
+        detail = 'jewish=$date';
+      default:
+        java = kj.JewishDate.new$2();
+        dart = kd.JewishDate();
+        detail = 'today';
+    }
+    final input = '$id jewishDate path=$path $detail';
+    compareDate(report, 'calendar.JewishDate', input, java, dart);
+    report.exact('calendar.JewishDate.toString', input, attempt(() => javaString(java.toString$1())),
+        attempt(() => dart.toString()));
+    report.exact('calendar.JewishDate.hashCode', input, attempt(() => java.hashCode$1()), attempt(() => dart.hashCode));
+    final javaClone = java.clone() as kj.JewishDate;
+    final dartClone = dart.clone();
+    compareDate(report, 'calendar.JewishDate.clone', input, javaClone, dartClone);
+    report.exact('calendar.JewishDate.clone equals', input, attempt(() => javaClone.equals(java)),
+        attempt(() => dartClone == dart));
+    javaClone.release();
+    java.release();
+  }
+
   void compareArithmetic(Random rng, Report report, String id) {
     final start = randomJewish(rng);
     final java = kj.JewishCalendar.new1(start.year, start.month, start.day);
-    final dart = kd.JewishCalendar.initDate(start.year, start.month, start.day);
+    final dart = kd.JewishCalendar.fromJewishDate(start.year, start.month, start.day);
     final operations = between(rng, 1, 3);
     var input = '$id arithmetic start=$start';
     for (var step = 0; step < operations; step++) {
@@ -528,15 +684,22 @@ class CalendarArea extends Area {
           detail = '$op($date)';
           javaResult = attempt(() => java.setJewishDate(date.year, date.month, date.day));
           dartResult = attempt(() => dart.setJewishDate(date.year, date.month, date.day));
+        case 'setGregorianDate(ZonedDateTime)':
+          final (zoned, zonedDart, text) = randomZoned(rng);
+          detail = '$op($text)';
+          javaResult = attempt(() => java.gregorianDate = zoned);
+          zoned.release();
+          dartResult = attempt(() => dart.setGregorianDate(zonedDart));
         default:
           final date = randomGregorian(rng);
-          detail = '$op($date)';
+          final (value, kind) = dartDate(rng, date);
+          detail = '$op($date dart=$kind)';
           javaResult = attempt(() {
             final local = kj.LocalDate.of$1(date.year, date.month, date.day)!;
             java.gregorianDate$1 = local;
             local.release();
           });
-          dartResult = attempt(() => dart.setGregorianDate(date.year, date.month, date.day));
+          dartResult = attempt(() => dart.setGregorianDate(value));
       }
       input = '$input -> $detail';
       final check = 'calendar.arithmetic.$op';
@@ -556,16 +719,12 @@ class CalendarArea extends Area {
           'dow=${java.dayOfWeek}';
       final dartState = '${dart.getJewishYear()}-${dart.getJewishMonth()}-${dart.getJewishDayOfMonth()} '
           'abs=${dart.getAbsDate()} dow=${dart.getDayOfWeek()}';
-      final javaGregorian = attempt(() {
-        final local = java.localDate!;
-        final text = CivilDate(local.year, local.monthValue, local.dayOfMonth).toString();
-        local.release();
-        return text;
-      });
-      final dartGregorian =
-          CivilDate(dart.getGregorianYear(), dart.getGregorianMonth(), dart.getGregorianDayOfMonth()).toString();
-      final javaFull = '$javaState ${javaGregorian is Value<String> ? javaGregorian.value : 'gregorian threw'}';
-      final dartFull = '$dartState $dartGregorian';
+      final javaGregorian = attempt(() => javaLocalDate(java.localDate));
+      final dartGregorian = attempt(() => dartLocalDate(dart.getLocalDate()));
+      final javaFull =
+          '$javaState ${javaGregorian is Value<String> ? javaGregorian.value : 'getLocalDate threw'}';
+      final dartFull =
+          '$dartState ${dartGregorian is Value<String> ? dartGregorian.value : 'getLocalDate threw'}';
       if (javaFull != dartFull) {
         report.record(check, Outcome.differs, before, '$detail java $javaFull | dart $dartFull');
         break;
@@ -578,7 +737,7 @@ class CalendarArea extends Area {
           ..inIsrael = israel
           ..useModernHolidays = modern;
         dart
-          ..inIsrael = israel
+          ..setInIsrael(israel)
           ..setUseModernHolidays(modern);
         compareCalendar(report, 'calendar.afterArithmetic', CalendarPair(java, dart, '$input inIsrael=$israel modern=$modern'));
       }
@@ -594,31 +753,31 @@ class CalendarArea extends Area {
     final chalakim = base + rng.nextInt(765433 * 13);
     final input = '$id molad chalakim=$chalakim';
     final Got<kj.JewishDate> java = attempt(() => kj.JewishDate(chalakim));
-    final Got<kd.JewishDate> dart = attempt(() => kd.JewishDate.fromMolad(chalakim.toDouble()));
+    final Got<kd.JewishDate> dart = attempt(() => kd.JewishDate.fromMolad(chalakim));
     if (java is! Value<kj.JewishDate> || dart is! Value<kd.JewishDate>) {
-      report.exact<Object?>('calendar.JewishDate(molad)', input, java, dart);
+      report.exact<Object?>('calendar.JewishDate(long)', input, java, dart);
       return;
     }
     final javaDate = java.value;
     final dartDate = dart.value;
-    compareDate(report, 'calendar.JewishDate(molad)', input, javaDate, dartDate);
+    compareDate(report, 'calendar.JewishDate(long)', input, javaDate, dartDate);
     final javaClone = javaDate.clone() as kj.JewishDate;
     final dartClone = dartDate.clone();
-    compareDate(report, 'calendar.JewishDate(molad).clone', input, javaClone, dartClone);
-    report.exact('calendar.JewishDate(molad).clone molad time', input,
+    compareDate(report, 'calendar.JewishDate(long).clone', input, javaClone, dartClone);
+    report.exact('calendar.JewishDate(long).clone molad time', input,
         attempt(() => '${javaClone.moladHours}:${javaClone.moladMinutes}:${javaClone.moladChalakim}'),
         attempt(() => '${dartClone.getMoladHours()}:${dartClone.getMoladMinutes()}:${dartClone.getMoladChalakim()}'));
     javaClone.release();
-    report.exact('calendar.JewishDate(molad).getMoladHours', input, attempt(() => javaDate.moladHours),
+    report.exact('calendar.JewishDate(long).getMoladHours', input, attempt(() => javaDate.moladHours),
         attempt(() => dartDate.getMoladHours()));
-    report.exact('calendar.JewishDate(molad).getMoladMinutes', input, attempt(() => javaDate.moladMinutes),
+    report.exact('calendar.JewishDate(long).getMoladMinutes', input, attempt(() => javaDate.moladMinutes),
         attempt(() => dartDate.getMoladMinutes()));
-    report.exact('calendar.JewishDate(molad).getMoladChalakim', input, attempt(() => javaDate.moladChalakim),
+    report.exact('calendar.JewishDate(long).getMoladChalakim', input, attempt(() => javaDate.moladChalakim),
         attempt(() => dartDate.getMoladChalakim()));
     final javaMolad = javaDate.molad!;
     final dartMolad = dartDate.getMolad();
-    compareDate(report, 'calendar.JewishDate(molad).getMolad', input, javaMolad, dartMolad);
-    report.exact('calendar.JewishDate(molad).getMolad.getMoladHours', input, attempt(() => javaMolad.moladHours),
+    compareDate(report, 'calendar.JewishDate(long).getMolad', input, javaMolad, dartMolad);
+    report.exact('calendar.JewishDate(long).getMolad.getMoladHours', input, attempt(() => javaMolad.moladHours),
         attempt(() => dartMolad.getMoladHours()));
     javaMolad.release();
     final target = randomJewish(rng);
@@ -649,18 +808,19 @@ class CalendarArea extends Area {
 
   void compareStatics(Random rng, Report report, String id) {
     final year = chance(rng, 0.7) ? between(rng, 5660, 6060) : between(rng, 3762, 13000);
-    final input = '$id statics year=$year';
-    report.exact('calendar.getJewishCalendarElapsedDays(year)', input,
+    final otherYear = between(rng, 3762, 13000);
+    final input = '$id statics year=$year on a date in $otherYear';
+    report.exact('calendar.getJewishCalendarElapsedDays(int)', input,
         attempt(() => kj.JewishDate.getJewishCalendarElapsedDays(year)),
         attempt(() => kd.JewishDate.getJewishCalendarElapsedDays(year)));
     report.exact('calendar.YOM_KIPPUR_KATAN BEHAB', input,
         Value('${kj.JewishCalendar.YOM_KIPPUR_KATAN} ${kj.JewishCalendar.BEHAB}'),
         Value('${kd.JewishCalendar.YOM_KIPPUR_KATAN} ${kd.JewishCalendar.BEHAB}'));
-    final dart = kd.JewishCalendar.initDate(year, kd.JewishDate.TISHREI, 1);
-    report.exact('calendar.isJewishLeapYear(year)', input, attempt(() => kj.JewishDate.isJewishLeapYear(year)),
-        attempt(() => dart.isJewishLeapYear()));
-    report.exact('calendar.getDaysInJewishYear(year)', input, attempt(() => kj.JewishDate.getDaysInJewishYear(year)),
-        attempt(() => dart.getDaysInJewishYear()));
+    final dart = kd.JewishCalendar.fromJewishDate(otherYear, kd.JewishDate.TISHREI, 1);
+    report.exact('calendar.isJewishLeapYear(int)', input, attempt(() => kj.JewishDate.isJewishLeapYear(year)),
+        attempt(() => dart.isJewishLeapYear(year)));
+    report.exact('calendar.getDaysInJewishYear(int)', input, attempt(() => kj.JewishDate.getDaysInJewishYear(year)),
+        attempt(() => dart.getDaysInJewishYear(year)));
   }
 
   void compareInvalid(Random rng, Report report, String id) {
@@ -673,13 +833,13 @@ class CalendarArea extends Area {
             ? pick(rng, const [0, 29, 30, 31])
             : between(rng, 1, 30);
     final input = '$id jewishDateValidation jewish=$year-$month-$day';
-    report.exact('calendar.JewishCalendar(y,m,d) validation', input, orThrows(() {
+    report.exact('calendar.JewishCalendar(int, int, int) validation', input, orThrows(() {
       final java = kj.JewishCalendar.new1(year, month, day);
       final text = '${java.jewishYear}-${java.jewishMonth}-${java.jewishDayOfMonth}';
       java.release();
       return text;
     }), orThrows(() {
-      final dart = kd.JewishCalendar.initDate(year, month, day);
+      final dart = kd.JewishCalendar.fromJewishDate(year, month, day);
       return '${dart.getJewishYear()}-${dart.getJewishMonth()}-${dart.getJewishDayOfMonth()}';
     }));
   }
@@ -692,12 +852,22 @@ class CalendarArea extends Area {
     final input = '$id ordering $first inIsrael=$israelFirst vs $second inIsrael=$israelSecond';
     final javaFirst = kj.JewishCalendar.new$5(first.year, first.month, first.day, israelFirst);
     final javaSecond = kj.JewishCalendar.new$5(second.year, second.month, second.day, israelSecond);
-    final dartFirst = kd.JewishCalendar.initDate(first.year, first.month, first.day, inIsrael: israelFirst);
-    final dartSecond = kd.JewishCalendar.initDate(second.year, second.month, second.day, inIsrael: israelSecond);
+    final dartFirst = kd.JewishCalendar.fromJewishDateInIsrael(first.year, first.month, first.day, israelFirst);
+    final dartSecond = kd.JewishCalendar.fromJewishDateInIsrael(second.year, second.month, second.day, israelSecond);
     report.exact('calendar.compareTo', input, attempt(() => javaFirst.compareTo(javaSecond).sign),
         attempt(() => dartFirst.compareTo(dartSecond).sign));
     report.exact(
         'calendar.equals', input, attempt(() => javaFirst.equals(javaSecond)), attempt(() => dartFirst == dartSecond));
+    report.exact('calendar.hashCode equal', input, attempt(() => javaFirst.hashCode1() == javaSecond.hashCode1()),
+        attempt(() => dartFirst.hashCode == dartSecond.hashCode));
+    final javaPlain = kj.JewishDate.new$1(second.year, second.month, second.day);
+    final dartPlain = kd.JewishDate.fromJewishDate(second.year, second.month, second.day);
+    report.exact('calendar.equals across JewishDate and JewishCalendar', input,
+        attempt(() => '${javaSecond.equals(javaPlain)} ${javaPlain.equals(javaSecond)}'),
+        attempt(() => '${dartSecond == dartPlain} ${dartPlain == dartSecond}'));
+    report.exact('calendar.JewishDate.compareTo JewishCalendar', input,
+        attempt(() => javaPlain.compareTo(javaFirst).sign), attempt(() => dartPlain.compareTo(dartFirst).sign));
+    javaPlain.release();
     javaFirst.release();
     javaSecond.release();
   }

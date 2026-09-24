@@ -3,7 +3,7 @@ import 'package:kosher_dart/kosher_dart.dart';
 
 void main() {
   group('JewishCalendar - motzei shabbos', () {
-    JewishCalendar cal() => JewishCalendar()..inIsrael = false;
+    JewishCalendar cal() => JewishCalendar()..setInIsrael(false);
 
     test('is the day whose night follows shabbos', () {
       final c = cal();

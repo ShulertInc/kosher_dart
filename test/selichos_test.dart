@@ -1,8 +1,3 @@
-/// Coverage for the _selichos_ count, which is the only rule here whose answer is an
-/// ordinal rather than a day: a print sets an order per numbered day, and a year holds
-/// between three and seven of the Elul ones.
-library;
-
 import 'package:test/test.dart';
 import 'package:kosher_dart/kosher_dart.dart';
 
@@ -10,16 +5,14 @@ void main() {
   final rules = TefilaRules();
 
   JewishCalendar day(int year, int month, int dayOfMonth) =>
-      JewishCalendar.initDate(year, month, dayOfMonth)..inIsrael = false;
+      JewishCalendar.fromJewishDate(year, month, dayOfMonth)..setInIsrael(false);
 
-  /// The days of Elul that carry a numbered order, as `day of Elul -> its number`.
   Map<int, int> elul(int year) => {
         for (var of = 1; of <= 29; of++)
           if (day(year, JewishDate.ELUL, of).getDayOfSelichos() != -1)
             of: day(year, JewishDate.ELUL, of).getDayOfSelichos(),
       };
 
-  /// The same for the days of Tishrei between Rosh Hashana and Yom Kippur.
   Map<int, int> teshuva(int year) => {
         for (var of = 1; of <= 10; of++)
           if (day(year, JewishDate.TISHREI, of).getDayOfSelichosOfTeshuva() !=
@@ -27,7 +20,6 @@ void main() {
             of: day(year, JewishDate.TISHREI, of).getDayOfSelichosOfTeshuva(),
       };
 
-  /// Which day of the week Rosh Hashana of the year after this one falls on.
   int roshHashanaFallsOn(int year) =>
       day(year + 1, JewishDate.TISHREI, 1).getDayOfWeek();
 
@@ -51,7 +43,7 @@ void main() {
         final falls = roshHashanaFallsOn(year);
         final opens = elul(year).keys.reduce((a, b) => a < b ? a : b);
 
-        if (falls == JewishDate.monday || falls == JewishDate.tuesday) {
+        if (falls == 2 || falls == 3) {
           expect(opens, equals(31 - falls - 7), reason: '$year');
           mondayOrTuesday++;
         } else {
@@ -178,7 +170,7 @@ void main() {
           said.add('${calendar.getJewishDayOfMonth()}/'
               '${calendar.getJewishMonth()}');
         }
-        calendar.forward(Calendar.DATE, 1);
+        calendar.plusDays(1);
       }
 
       expect(said.length, equals(elul(5783).length + 1 + 5 + 1));
@@ -186,7 +178,7 @@ void main() {
     });
 
     test('all Elul opens on the 1st of Elul and still skips shabbos', () {
-      final allElul = TefilaRules(selichosRecitedAllElul: true);
+      final allElul = (TefilaRules()..setSelichosRecitedAllElul(true));
 
       for (var year = 5781; year < 5831; year++) {
         expect(allElul.isSelichosRecited(day(year, JewishDate.AV, 30)), isFalse,

@@ -17,6 +17,7 @@
 import 'dart:core';
 import 'dart:math';
 import 'package:kosher_dart/src/util/noaa_calculator.dart';
+import 'package:meta/meta.dart';
 import 'package:vector_math/vector_math.dart';
 import 'package:kosher_dart/src/util/geo_location.dart';
 import 'package:kosher_dart/src/util/solar_radius.dart';
@@ -57,6 +58,8 @@ abstract class AstronomicalCalculator {
   /// See also [setEarthRadius].
   double _earthRadius = 6371.0088; // in KM
 
+  AstronomicalCalculator();
+
   /// A method that returns the earth radius in KM. The value currently defaults to 6356.9 KM if not set.
   ///
   /// Returns the earthRadius the earth radius in KM.
@@ -73,7 +76,7 @@ abstract class AstronomicalCalculator {
   }
 
   /// The zenith of astronomical sunrise and sunset. The sun is 90° from the vertical 0°
-  static const double GEOMETRIC_ZENITH = 90;
+  static const double _GEOMETRIC_ZENITH = 90;
 
   /// Returns the default class for calculating sunrise and sunset. This is currently the [NOAACalculator],
   /// but this may change.
@@ -89,15 +92,10 @@ abstract class AstronomicalCalculator {
   /// Returns the descriptive name of the algorithm.
   String getCalculatorName();
 
-  /// Setter method for the descriptive name of the calculator. This will typically not have to be set
-  ///
-  /// - [calculatorName]: 
-  ///   descriptive name of the algorithm.
-
   /// A method that calculates UTC sunrise as well as any time based on an angle above or below sunrise. This abstract
   /// method is implemented by the classes that extend this class.
   ///
-  /// - [calendar]: 
+  /// - [localDate]: 
   ///   Used to calculate day of year.
   /// - [geoLocation]: 
   ///   The location information used for astronomical calculating sun times.
@@ -112,13 +110,13 @@ abstract class AstronomicalCalculator {
   /// the calculation (expected behavior for some locations such as near the poles,
   /// double.nan will be returned.
   /// See also [getElevationAdjustment].
-  double getUTCSunrise(DateTime dateTime, GeoLocation geoLocation,
+  double getUTCSunrise(DateTime localDate, GeoLocation geoLocation,
       double zenith, bool adjustForElevation);
 
   /// A method that calculates UTC sunset as well as any time based on an angle above or below sunset. This abstract
   /// method is implemented by the classes that extend this class.
   ///
-  /// - [calendar]: 
+  /// - [localDate]: 
   ///   Used to calculate day of year.
   /// - [geoLocation]: 
   ///   The location information used for astronomical calculating sun times.
@@ -133,67 +131,18 @@ abstract class AstronomicalCalculator {
   /// the calculation (expected behavior for some locations such as near the poles,
   /// double.nan will be returned.
   /// See also [getElevationAdjustment].
-  double getUTCSunset(DateTime dateTime, GeoLocation geoLocation, double zenith,
+  double getUTCSunset(DateTime localDate, GeoLocation geoLocation, double zenith,
       bool adjustForElevation);
 
-  /// A method that calculates UTC solar transit - astronomical _chatzos_, the moment the sun crosses the
-  /// meridian, which is not quite the midpoint between sunrise and sunset. Subclasses that can compute the
-  /// transit directly should override this; the midpoint here is only a fallback.
-  ///
-  /// - [dateTime]:
-  ///   Used to calculate day of year.
-  /// - [geoLocation]:
-  ///   The location information used for astronomical calculating sun times.
-  /// Returns the UTC time of solar transit in 24 hour format, or double.nan when the sun does not rise or set.
-  double getUTCNoon(DateTime dateTime, GeoLocation geoLocation) {
-    final double sunrise = getUTCSunrise(dateTime, geoLocation, 90, false);
-    final double sunset = getUTCSunset(dateTime, geoLocation, 90, false);
-    if (sunrise.isNaN || sunset.isNaN) {
-      return double.nan;
-    }
-    return sunrise + (sunset - sunrise) / 2;
-  }
+  double getUTCNoon(DateTime localDate, GeoLocation geoLocation);
 
-  /// A method that calculates the UTC time the sun stands at a given azimuth. Only due
-  /// east (90) and due west (270) are supported, which are what the _Ben Ish Chai_'s
-  /// polar sunrise and sunset are taken from where the sun neither rises nor sets.
-  /// Subclasses that can compute it should override this.
-  ///
-  /// - [dateTime]:
-  ///   Used to calculate day of year.
-  /// - [geoLocation]:
-  ///   The location information used for astronomical calculating sun times.
-  /// - [azimuth]:
-  ///   90 for due east, 270 for due west.
-  /// Returns the UTC time in 24 hour format, or double.nan when it cannot be calculated.
-  double getUTCTimeAtAzimuth(
-          DateTime dateTime, GeoLocation geoLocation, double azimuth) =>
-      throw UnsupportedError(
-          "${getCalculatorName()} does not calculate the time at an azimuth. Use the NOAACalculator instead.");
+  double getUTCMidnight(DateTime localDate, GeoLocation geoLocation);
 
-  double getSolarElevation(DateTime instant, GeoLocation geoLocation) =>
-      throw UnsupportedError(
-          "${getCalculatorName()} does not calculate the solar elevation. Use the NOAACalculator instead.");
+  double getTimeAtAzimuth(DateTime localDate, GeoLocation geoLocation, double azimuth);
 
-  double getSolarAzimuth(DateTime instant, GeoLocation geoLocation) =>
-      throw UnsupportedError(
-          "${getCalculatorName()} does not calculate the solar azimuth. Use the NOAACalculator instead.");
+  double getSolarElevation(DateTime instant, GeoLocation geoLocation);
 
-  /// A method that calculates UTC solar midnight - astronomical _chatzos halayla_.
-  ///
-  /// - [dateTime]:
-  ///   Used to calculate day of year.
-  /// - [geoLocation]:
-  ///   The location information used for astronomical calculating sun times.
-  /// Returns the UTC time of solar midnight in 24 hour format, or double.nan when it cannot be calculated.
-  double getUTCMidnight(DateTime dateTime, GeoLocation geoLocation) {
-    final double noon = getUTCNoon(dateTime, geoLocation);
-    if (noon.isNaN) {
-      return double.nan;
-    }
-    final double midnight = noon + 12;
-    return midnight >= 24 ? midnight - 24 : midnight;
-  }
+  double getSolarAzimuth(DateTime instant, GeoLocation geoLocation);
 
   /// Method to return the adjustment to the zenith required to account for the elevation. Since a person at a higher
   /// elevation can see farther below the horizon, the calculation for sunrise / sunset is calculated below the horizon
@@ -220,12 +169,9 @@ abstract class AstronomicalCalculator {
   /// - [elevation]: 
   ///   elevation in Meters.
   /// Returns the adjusted zenith
-  double getElevationAdjustment(double elevation) {
-    // double elevationAdjustment = 0.0347 * Math.sqrt(elevation);
-    double elevationAdjustment =
-        degrees(acos(_earthRadius / (_earthRadius + (elevation / 1000))));
-    return elevationAdjustment;
-  }
+  @internal
+  double getElevationAdjustment(double elevation) =>
+      degrees(acos(_earthRadius / (_earthRadius + (elevation / 1000))));
 
   /// Adjusts the zenith of astronomical sunrise and sunset to account for solar refraction, solar radius and
   /// elevation. The value for Sun's zenith and true rise/set Zenith (used in this class and subclasses) is the angle
@@ -243,7 +189,7 @@ abstract class AstronomicalCalculator {
   /// 18° below the horizon or [AstronomicalCalendar.ASTRONOMICAL_ZENITH]. This is traditionally calculated with none of the above mentioned adjustments. The same goes
   /// for various _tzais_ and _alos_ times such as the
   /// [ZmanimCalendar.ZENITH_16_POINT_1] dip used in
-  /// [ComplexZmanimCalendar.getAlos16Point1Degrees].
+  /// [ComprehensiveZmanimCalendar.getAlos16Point1Degrees].
   ///
   /// - [zenith]: 
   ///   the azimuth below the vertical zenith of 90°. For sunset typically the [adjustZenith] used for the calculation uses geometric zenith of 90° and [adjustZenith]
@@ -255,13 +201,13 @@ abstract class AstronomicalCalculator {
   /// Returns The zenith adjusted to include the [getSolarRadius], [getRefraction] and [getElevationAdjustment] adjustment. This will only be adjusted for
   /// sunrise and sunset (if the zenith == 90°)
   /// See also [getElevationAdjustment].
-  double adjustZenith(double zenith, double elevation, [DateTime? date]) {
+  @internal
+  double adjustZenith(double zenith, double elevation, DateTime? localDate) {
     double adjustedZenith = zenith;
-    if (zenith == GEOMETRIC_ZENITH) {
-      // only adjust if it is exactly sunrise or sunset
+    if (zenith == _GEOMETRIC_ZENITH) {
       adjustedZenith = zenith +
-          ((isUseApparentSolarRadius() && date != null
-                  ? getApparentSolarRadius(date)
+          ((isUseApparentSolarRadius() && localDate != null
+                  ? getApparentSolarRadius(localDate)
                   : getSolarRadius()) +
               getRefraction() +
               getElevationAdjustment(elevation));
@@ -308,9 +254,6 @@ abstract class AstronomicalCalculator {
     return _solarRadius;
   }
 
-  double getApparentSolarRadius(DateTime? date) =>
-      date == null ? 16 / 60 : apparentSolarRadius(date);
-
   /// Method to set the sun's radius.
   ///
   /// - [solarRadius]: 
@@ -324,11 +267,46 @@ abstract class AstronomicalCalculator {
     _useApparentSolarRadius = false;
   }
 
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) {
+      return true;
+    }
+    if (other is! AstronomicalCalculator || other.runtimeType != runtimeType) {
+      return false;
+    }
+    return getEarthRadius().compareTo(other.getEarthRadius()) == 0 &&
+        getRefraction().compareTo(other.getRefraction()) == 0 &&
+        getSolarRadius().compareTo(other.getSolarRadius()) == 0 &&
+        isUseApparentSolarRadius() == other.isUseApparentSolarRadius();
+  }
+
+  @override
+  int get hashCode => Object.hash(getEarthRadius(), getRefraction(), getSolarRadius(), isUseApparentSolarRadius());
+
   AstronomicalCalculator clone();
 
-  T copySettingsTo<T extends AstronomicalCalculator>(T copy) => copy
-    .._refraction = _refraction
-    .._solarRadius = _solarRadius
-    .._useApparentSolarRadius = _useApparentSolarRadius
-    .._earthRadius = _earthRadius;
+  @protected
+  static double tanDegrees(double angle) => tan(radians(angle));
+
+  @protected
+  static double sinDegrees(double angle) => sin(radians(angle));
+
+  @protected
+  static double cosDegrees(double angle) => cos(radians(angle));
+
+  @protected
+  static double acosDegrees(double angle) => degrees(acos(angle));
+
+  @protected
+  static double asinDegrees(double angle) => degrees(asin(angle));
+
+  double getApparentSolarRadius(DateTime? localDate) =>
+      localDate == null ? 16 / 60 : apparentSolarRadius(localDate);
 }
+
+T copyCalculatorSettings<T extends AstronomicalCalculator>(AstronomicalCalculator from, T to) => to
+  .._refraction = from._refraction
+  .._solarRadius = from._solarRadius
+  .._useApparentSolarRadius = from._useApparentSolarRadius
+  .._earthRadius = from._earthRadius;

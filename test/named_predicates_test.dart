@@ -1,12 +1,8 @@
-/// Coverage for the predicates that name a day or a rule outright, so a caller never has
-/// to compare a holiday index or a weekday number itself.
-library;
-
 import 'package:test/test.dart';
 import 'package:kosher_dart/kosher_dart.dart';
 
 void main() {
-  JewishCalendar cal() => JewishCalendar()..inIsrael = false;
+  JewishCalendar cal() => JewishCalendar()..setInIsrael(false);
   final rules = TefilaRules();
 
   group('JewishCalendar - days named outright', () {
@@ -25,9 +21,6 @@ void main() {
       );
     });
 
-    // Taanis Esther moves off the 13th when the 13th is Friday or Shabbos, so the day is
-    // found rather than assumed: the predicate has to agree with the index, whichever day
-    // that turns out to be.
     test('isTaanisEsther agrees with the index, wherever the fast lands', () {
       final c = cal();
       var found = 0;
@@ -69,15 +62,13 @@ void main() {
       );
     });
 
-    // isPurim answers the day Purim is kept, which a walled city keeps on the 15th.
-    // isShushanPurim answers the 15th itself, whoever is asking.
     test('isShushanPurim is the day, isPurim is the observance', () {
       final open = cal()..setJewishDate(5784, JewishDate.ADAR_II, 15);
       expect(open.isShushanPurim(), isTrue);
       expect(open.isPurim(), isFalse);
 
       final walled = cal()
-        ..isMukafChoma = true
+        ..setIsMukafChoma(true)
         ..setJewishDate(5784, JewishDate.ADAR_II, 15);
       expect(walled.isShushanPurim(), isTrue);
       expect(walled.isPurim(), isTrue);

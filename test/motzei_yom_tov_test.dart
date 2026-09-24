@@ -4,16 +4,14 @@ import 'package:kosher_dart/kosher_dart.dart';
 void main() {
   group('JewishCalendar - motzei yom tov', () {
     JewishCalendar at(int year, int month, int day, {bool inIsrael = false}) =>
-        JewishCalendar.initDate(year, month, day)..inIsrael = inIsrael;
+        JewishCalendar.fromJewishDate(year, month, day)..setInIsrael(inIsrael);
 
     test('the day after a one day yom tov in Israel', () {
-      // 22 Tishrei is Shemini Atzeres, and in Israel the 23rd is a plain day.
       expect(at(5784, JewishDate.TISHREI, 22, inIsrael: true).isMotzeiYomTov(), isFalse);
       expect(at(5784, JewishDate.TISHREI, 23, inIsrael: true).isMotzeiYomTov(), isTrue);
     });
 
     test('the second day of yom tov is not motzei yom tov', () {
-      // Out of Israel the 23rd is Simchas Torah, so the night before it was still yom tov.
       expect(at(5784, JewishDate.TISHREI, 23).isMotzeiYomTov(), isFalse);
       expect(at(5784, JewishDate.TISHREI, 24).isMotzeiYomTov(), isTrue);
     });
@@ -56,11 +54,11 @@ void main() {
       for (var year = 5780; year <= 5800 && !found; year++) {
         for (var day = 1; day <= 29; day++) {
           c.setJewishDate(year, JewishDate.NISSAN, day);
-          if (!c.isYomTovAssurBemelacha() || c.getDayOfWeek() != JewishDate.friday) {
+          if (!c.isYomTovAssurBemelacha() || c.getDayOfWeek() != 6) {
             continue;
           }
 
-          c.forward();
+          c.plusDays(1);
           expect(c.isShabbos(), isTrue);
           expect(c.isMotzeiYomTov(), isTrue, reason: '$day Nissan $year');
           found = true;

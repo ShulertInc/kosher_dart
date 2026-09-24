@@ -115,9 +115,8 @@ class GeoArea extends Area {
     final javaFrom = kj.GeoLocation(name, lat1, lon1, zone);
     final javaTo = kj.GeoLocation(name, lat2, lon2, zone);
     name.release();
-    final epoch = DateTime.utc(2000);
-    final dartFrom = kd.GeoLocation.setLocation('geo', lat1, lon1, epoch);
-    final dartTo = kd.GeoLocation.setLocation('geo', lat2, lon2, epoch);
+    final dartFrom = kd.GeoLocation.withZoneId('geo', lat1, lon1, tz.UTC);
+    final dartTo = kd.GeoLocation.withZoneId('geo', lat2, lon2, tz.UTC);
     report.real(
       'geo.getGeodesicInitialBearing.$kind',
       input,
@@ -191,24 +190,22 @@ class GeoArea extends Area {
     name.release();
     final instant = kj.Instant.ofEpochMilli(at)!;
     final location = zones.dartFromJava(zone, at - 2 * 86400000, at + 2 * 86400000);
-    final dart = kd.GeoLocation.setLocation(
-      'geo',
-      latitude,
-      longitude,
-      tz.TZDateTime.fromMillisecondsSinceEpoch(location, at),
-    );
+    final dart = kd.GeoLocation.withZoneId('geo', latitude, longitude, location);
+    final DateTime dartInstant = chance(rng, 0.5)
+        ? tz.TZDateTime.fromMillisecondsSinceEpoch(location, at)
+        : DateTime.fromMillisecondsSinceEpoch(at, isUtc: true);
 
     report.exact(
       'geo.getLocalMeanTimeOffset',
       input,
       attempt(() => java.getLocalMeanTimeOffset(instant)),
-      attempt(() => dart.getLocalMeanTimeOffset().truncate()),
+      attempt(() => dart.getLocalMeanTimeOffset(dartInstant)),
     );
     report.exact(
       'geo.getAntimeridianAdjustment',
       input,
       attempt(() => java.getAntimeridianAdjustment(instant)),
-      attempt(() => dart.getAntimeridianAdjustment()),
+      attempt(() => dart.getAntimeridianAdjustment(dartInstant)),
     );
     instant.release();
     java.release();
@@ -221,7 +218,7 @@ class GeoArea extends Area {
     final name = 'geo'.toJString();
     final java = kj.GeoLocation(name, 0, 0, zone);
     name.release();
-    final dart = kd.GeoLocation.setLocation('geo', 0, 0, DateTime.utc(2000));
+    final dart = kd.GeoLocation.withZoneId('geo', 0, 0, tz.UTC);
     report.exact(
       'geo.setLatitude',
       input,
@@ -230,7 +227,7 @@ class GeoArea extends Area {
         return '${java.latitude}';
       }),
       _accepted(() {
-        dart.setLatitude(latitude: value);
+        dart.setLatitude(value);
         return '${dart.getLatitude()}';
       }),
     );
@@ -242,7 +239,7 @@ class GeoArea extends Area {
         return '${java.longitude}';
       }),
       _accepted(() {
-        dart.setLongitude(longitude: value);
+        dart.setLongitude(value);
         return '${dart.getLongitude()}';
       }),
     );

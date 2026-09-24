@@ -1,3 +1,22 @@
+## Unreleased
+- The public API is now KosherJava 3.0's: same class and member names, `ComplexZmanimCalendar` renamed to
+  `ComprehensiveZmanimCalendar`, `Parsha` to `Parshah`, fields replaced by KosherJava's getters and
+  setters, and every alias and 2.x name removed. Month names keep Marcheshvan / מרחשון.
+- Dates follow KosherJava's `LocalDate` and `ZoneId` model: `getLocalDate`/`setLocalDate` replace
+  `getCalendar`/`setCalendar`, the zone lives on `GeoLocation` (`withZoneId`, `withElevation`) as a `tz.Location`,
+  and zmanim are returned as UTC instants.
+- Durations (`getTemporalHour`, every `getShaahZmanis*`, `Zman.getDuration`, `getTimeOffset`) are `Duration`s
+  instead of milliseconds as a `double`.
+- `JewishDate`/`JewishCalendar` take KosherJava's constructors (`fromLocalDate`, `fromZonedDateTime`,
+  `fromJewishDate`) and navigation (`plusDays`, `minusDays`, `plusMonths`, `minusMonths`, `plusYears`,
+  `minusYears`); `forward`/`back` and the Gregorian setters are gone.
+- `TefilaRules` settings are KosherJava's `isX`/`setX` pairs instead of constructor arguments.
+- Zmanim KosherJava dropped upstream are gone, as are `getShabbos*`, `getYomTov*` and `getTaanis*` start/exit
+  times, `getTallisAndTefillin`, `getEventsList` and `formatWeeklyParsha`.
+- Helpers beyond KosherJava keep their own names: named-day predicates on `JewishCalendar` (`isErevPesach`,
+  `isMotzeiShabbos`, `getDayOfSelichos`, ...), the limudim getters, weekday and Gregorian-field getters on
+  `JewishDate`, the havdalah, selichos and other `TefilaRules` predicates, and `getCandleLightingTonight`.
+
 ## 2.0.20
 - Improve runtime performance across core calculation functions
 - Updated package description to be cleaner and more accurate

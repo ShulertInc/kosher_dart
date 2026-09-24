@@ -86,37 +86,17 @@ void main() {
   // ────────────────────────────────────────────────────────────────
   group('JewishDate - Gregorian leap year / February days', () {
     test('Feb 29 exists in Gregorian leap year 2000', () {
-      final d = JewishDate.fromDateTime(DateTime(2000, 2, 29));
-      expect(d.getGregorianMonth(), equals(2));
-      expect(d.getGregorianDayOfMonth(), equals(29));
+      final d = JewishDate.fromLocalDate(DateTime(2000, 2, 29));
+      expect(d.getLocalDate().month, equals(2));
+      expect(d.getLocalDate().day, equals(29));
     });
 
     test('Feb 29 exists in Gregorian leap year 2024', () {
-      final d = JewishDate.fromDateTime(DateTime(2024, 2, 29));
-      expect(d.getGregorianDayOfMonth(), equals(29));
-      expect(d.getGregorianMonth(), equals(2));
+      final d = JewishDate.fromLocalDate(DateTime(2024, 2, 29));
+      expect(d.getLocalDate().day, equals(29));
+      expect(d.getLocalDate().month, equals(2));
     });
 
-    test('getLastDayOfGregorianMonth returns 29 for Feb in leap year', () {
-      final d = JewishDate.fromDateTime(DateTime(2024, 1, 1));
-      expect(d.getLastDayOfGregorianMonth(2), equals(29));
-    });
-
-    test('getLastDayOfGregorianMonth returns 28 for Feb in non-leap year', () {
-      final d = JewishDate.fromDateTime(DateTime(2023, 1, 1));
-      expect(d.getLastDayOfGregorianMonth(2), equals(28));
-    });
-
-    test('century year 1900 is NOT a Gregorian leap year', () {
-      // 1900 is divisible by 100 but not 400, so NOT a leap year
-      final d = JewishDate.fromDateTime(DateTime(1900, 1, 1));
-      expect(d.getLastDayOfGregorianMonth(2), equals(28));
-    });
-
-    test('century year 2000 IS a Gregorian leap year (divisible by 400)', () {
-      final d = JewishDate.fromDateTime(DateTime(2000, 1, 1));
-      expect(d.getLastDayOfGregorianMonth(2), equals(29));
-    });
   });
 
   // ────────────────────────────────────────────────────────────────
@@ -217,30 +197,30 @@ void main() {
     test('1 Tishrei 5784 equals Sep 16, 2023', () {
       final d = JewishDate();
       d.setJewishDate(5784, JewishDate.TISHREI, 1);
-      expect(d.getGregorianYear(), equals(2023));
-      expect(d.getGregorianMonth(), equals(9));
-      expect(d.getGregorianDayOfMonth(), equals(16));
+      expect(d.getLocalDate().year, equals(2023));
+      expect(d.getLocalDate().month, equals(9));
+      expect(d.getLocalDate().day, equals(16));
     });
 
     test('1 Nisan 5784 equals Apr 9, 2024', () {
       final d = JewishDate();
       d.setJewishDate(5784, JewishDate.NISSAN, 1);
-      expect(d.getGregorianYear(), equals(2024));
-      expect(d.getGregorianMonth(), equals(4));
-      expect(d.getGregorianDayOfMonth(), equals(9));
+      expect(d.getLocalDate().year, equals(2024));
+      expect(d.getLocalDate().month, equals(4));
+      expect(d.getLocalDate().day, equals(9));
     });
 
     test('Gregorian to Jewish: Jan 1, 2024 is 20 Tevet 5784', () {
-      final d = JewishDate.fromDateTime(DateTime(2024, 1, 1));
+      final d = JewishDate.fromLocalDate(DateTime(2024, 1, 1));
       expect(d.getJewishYear(), equals(5784));
       expect(d.getJewishMonth(), equals(JewishDate.TEVES));
       expect(d.getJewishDayOfMonth(), equals(20));
     });
 
     test('Gregorian to Jewish: Feb 29, 2000 converts correctly', () {
-      final d = JewishDate.fromDateTime(DateTime(2000, 2, 29));
+      final d = JewishDate.fromLocalDate(DateTime(2000, 2, 29));
       expect(d.getJewishYear(), equals(5760));
-      expect(d.getGregorianDayOfMonth(), equals(29));
+      expect(d.getLocalDate().day, equals(29));
     });
 
     test('round-trip: Jewish -> Gregorian -> Jewish returns same date', () {
@@ -248,12 +228,12 @@ void main() {
       original.setJewishDate(5783, JewishDate.NISSAN, 15); // Pesach
 
       final gregorian = DateTime(
-        original.getGregorianYear(),
-        original.getGregorianMonth(),
-        original.getGregorianDayOfMonth(),
+        original.getLocalDate().year,
+        original.getLocalDate().month,
+        original.getLocalDate().day,
       );
 
-      final roundTrip = JewishDate.fromDateTime(gregorian);
+      final roundTrip = JewishDate.fromLocalDate(gregorian);
       expect(roundTrip.getJewishYear(), equals(5783));
       expect(roundTrip.getJewishMonth(), equals(JewishDate.NISSAN));
       expect(roundTrip.getJewishDayOfMonth(), equals(15));
@@ -267,7 +247,7 @@ void main() {
     test('forward one day across month boundary', () {
       final d = JewishDate();
       d.setJewishDate(5784, JewishDate.TISHREI, 30);
-      d.forward(Calendar.DATE, 1);
+      d.plusDays(1);
       expect(d.getJewishMonth(), equals(JewishDate.CHESHVAN));
       expect(d.getJewishDayOfMonth(), equals(1));
     });
@@ -275,7 +255,7 @@ void main() {
     test('forward one day across year boundary (Elul -> Tishrei)', () {
       final d = JewishDate();
       d.setJewishDate(5783, JewishDate.ELUL, 29); // last day of year
-      d.forward(Calendar.DATE, 1);
+      d.plusDays(1);
       expect(d.getJewishYear(), equals(5784));
       expect(d.getJewishMonth(), equals(JewishDate.TISHREI));
       expect(d.getJewishDayOfMonth(), equals(1));
@@ -284,7 +264,7 @@ void main() {
     test('back one day across month boundary', () {
       final d = JewishDate();
       d.setJewishDate(5784, JewishDate.CHESHVAN, 1);
-      d.back();
+      d.minusDays(1);
       expect(d.getJewishMonth(), equals(JewishDate.TISHREI));
       expect(d.getJewishDayOfMonth(), equals(30));
     });
@@ -292,7 +272,7 @@ void main() {
     test('back one day across year boundary (Tishrei 1 -> Elul 29)', () {
       final d = JewishDate();
       d.setJewishDate(5784, JewishDate.TISHREI, 1);
-      d.back();
+      d.minusDays(1);
       expect(d.getJewishYear(), equals(5783));
       expect(d.getJewishMonth(), equals(JewishDate.ELUL));
       expect(d.getJewishDayOfMonth(), equals(29));
@@ -301,7 +281,7 @@ void main() {
     test('forward one month', () {
       final d = JewishDate();
       d.setJewishDate(5784, JewishDate.TISHREI, 15);
-      d.forward(Calendar.MONTH, 1);
+      d.plusMonths(1);
       expect(d.getJewishMonth(), equals(JewishDate.CHESHVAN));
       expect(d.getJewishDayOfMonth(), equals(15));
     });
@@ -309,7 +289,7 @@ void main() {
     test('back one month (regular month)', () {
       final d = JewishDate();
       d.setJewishDate(5784, JewishDate.CHESHVAN, 15);
-      d.back(Calendar.MONTH, 1);
+      d.minusMonths(1);
       expect(d.getJewishMonth(), equals(JewishDate.TISHREI));
       expect(d.getJewishDayOfMonth(), equals(15));
     });
@@ -317,7 +297,7 @@ void main() {
     test('back one month from Tishrei goes to Elul of previous year', () {
       final d = JewishDate();
       d.setJewishDate(5784, JewishDate.TISHREI, 15);
-      d.back(Calendar.MONTH, 1);
+      d.minusMonths(1);
       expect(d.getJewishYear(), equals(5783));
       expect(d.getJewishMonth(), equals(JewishDate.ELUL));
       expect(d.getJewishDayOfMonth(), equals(15));
@@ -327,7 +307,7 @@ void main() {
       // 5785 is a non-leap year, so going back from Nissan should land on Adar (12)
       final d = JewishDate();
       d.setJewishDate(5785, JewishDate.NISSAN, 15);
-      d.back(Calendar.MONTH, 1);
+      d.minusMonths(1);
       expect(d.getJewishMonth(), equals(JewishDate.ADAR));
     });
 
@@ -335,7 +315,7 @@ void main() {
       // 5784 is a leap year, so going back from Nissan should land on Adar II (13)
       final d = JewishDate();
       d.setJewishDate(5784, JewishDate.NISSAN, 15);
-      d.back(Calendar.MONTH, 1);
+      d.minusMonths(1);
       expect(d.getJewishMonth(), equals(JewishDate.ADAR_II));
     });
 
@@ -343,7 +323,7 @@ void main() {
       // Tishrei has 30 days; Elul has only 29 days
       final d = JewishDate();
       d.setJewishDate(5784, JewishDate.TISHREI, 30);
-      d.back(Calendar.MONTH, 1);
+      d.minusMonths(1);
       expect(d.getJewishYear(), equals(5783));
       expect(d.getJewishMonth(), equals(JewishDate.ELUL));
       expect(d.getJewishDayOfMonth(), equals(29)); // adjusted from 30 to 29
@@ -352,7 +332,7 @@ void main() {
     test('back multiple months', () {
       final d = JewishDate();
       d.setJewishDate(5784, JewishDate.KISLEV, 15);
-      d.back(Calendar.MONTH, 2);
+      d.minusMonths(2);
       expect(d.getJewishMonth(), equals(JewishDate.TISHREI));
       expect(d.getJewishDayOfMonth(), equals(15));
     });
@@ -360,7 +340,7 @@ void main() {
     test('back one year', () {
       final d = JewishDate();
       d.setJewishDate(5784, JewishDate.NISSAN, 15);
-      d.back(Calendar.YEAR, 1);
+      d.minusYears(1, true);
       expect(d.getJewishYear(), equals(5783));
       expect(d.getJewishMonth(), equals(JewishDate.NISSAN));
     });
@@ -386,9 +366,9 @@ void main() {
       test('Rosh Hashana $jewishYear == ${gregorian.year}-${gregorian.month}-${gregorian.day}', () {
         final d = JewishDate();
         d.setJewishDate(jewishYear, JewishDate.TISHREI, 1);
-        expect(d.getGregorianYear(), equals(gregorian.year));
-        expect(d.getGregorianMonth(), equals(gregorian.month));
-        expect(d.getGregorianDayOfMonth(), equals(gregorian.day));
+        expect(d.getLocalDate().year, equals(gregorian.year));
+        expect(d.getLocalDate().month, equals(gregorian.month));
+        expect(d.getLocalDate().day, equals(gregorian.day));
       });
     });
   });
@@ -398,11 +378,7 @@ void main() {
   // ────────────────────────────────────────────────────────────────
   group('JewishDate.initDate constructor', () {
     test('creates date with correct Jewish fields', () {
-      final d = JewishDate.initDate(
-        jewishYear: 5784,
-        jewishMonth: JewishDate.NISSAN,
-        jewishDayOfMonth: 15,
-      );
+      final d = JewishDate.fromJewishDate(5784, JewishDate.NISSAN, 15);
       expect(d.getJewishYear(), equals(5784));
       expect(d.getJewishMonth(), equals(JewishDate.NISSAN));
       expect(d.getJewishDayOfMonth(), equals(15));
@@ -417,7 +393,7 @@ void main() {
       final d = JewishDate();
       d.setJewishDate(5784, JewishDate.NISSAN, 1);
       final before = d.getAbsDate();
-      d.forward(Calendar.DATE, 1);
+      d.plusDays(1);
       expect(d.getAbsDate(), equals(before + 1));
     });
 
@@ -425,7 +401,7 @@ void main() {
       final d = JewishDate();
       d.setJewishDate(5784, JewishDate.NISSAN, 15);
       final before = d.getAbsDate();
-      d.back();
+      d.minusDays(1);
       expect(d.getAbsDate(), equals(before - 1));
     });
   });

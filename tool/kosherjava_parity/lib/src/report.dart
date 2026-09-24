@@ -98,7 +98,8 @@ class Report {
         difference: difference, bucket: durationBucket(difference));
   }
 
-  void real(String check, String input, Got<double?> java, Got<double?> dart, {double tolerance = 1e-9}) {
+  void real(String check, String input, Got<double?> java, Got<double?> dart,
+      {double tolerance = 1e-9, double absolute = 0}) {
     if (_recordThrows(check, input, java, dart)) return;
     final j = (java as Value<double?>).value;
     final d = (dart as Value<double?>).value;
@@ -110,7 +111,7 @@ class Report {
     if (j == d) return record(check, Outcome.same, input, '');
     final difference = d - j;
     final scale = math.max(1.0, math.max(j.abs(), d.abs()));
-    final outcome = difference.abs() <= tolerance * scale ? Outcome.rounding : Outcome.differs;
+    final outcome = difference.abs() <= math.max(tolerance * scale, absolute) ? Outcome.rounding : Outcome.differs;
     record(check, outcome, input, 'java $j dart $d (dart ${signed(difference)})', difference: difference);
   }
 

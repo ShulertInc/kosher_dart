@@ -43,7 +43,7 @@ void main() {
   // Holidays - out of Israel
   // ────────────────────────────────────────────────────────────────
   group('JewishCalendar - holidays (outside Israel)', () {
-    JewishCalendar cal() => JewishCalendar()..inIsrael = false;
+    JewishCalendar cal() => JewishCalendar()..setInIsrael(false);
 
     test('Erev Pesach - 14 Nisan', () {
       final c = cal()..setJewishDate(5784, JewishDate.NISSAN, 14);
@@ -139,7 +139,7 @@ void main() {
   // Holidays - in Israel (different rules)
   // ────────────────────────────────────────────────────────────────
   group('JewishCalendar - holidays (inside Israel)', () {
-    JewishCalendar cal() => JewishCalendar()..inIsrael = true;
+    JewishCalendar cal() => JewishCalendar()..setInIsrael(true);
 
     test('Pesach in Israel: 16 Nisan is Chol Hamoed (not second Yom Tov)', () {
       final c = cal()..setJewishDate(5784, JewishDate.NISSAN, 16);
@@ -168,14 +168,14 @@ void main() {
 
     test('Chol Hamoed Pesach isYomTov returns false (work is permitted)', () {
       final c = JewishCalendar()
-        ..inIsrael = false
+        ..setInIsrael(false)
         ..setJewishDate(5784, JewishDate.NISSAN, 17);
       expect(c.isYomTovAssurBemelacha(), isFalse);
     });
 
     test('isCholHamoed returns true during Chol Hamoed Pesach', () {
       final c = JewishCalendar()
-        ..inIsrael = false
+        ..setInIsrael(false)
         ..setJewishDate(5784, JewishDate.NISSAN, 17);
       expect(c.isCholHamoed(), isTrue);
     });
@@ -192,14 +192,14 @@ void main() {
   group('JewishCalendar - Shabbat', () {
     test('isShabbos returns true on a known Saturday', () {
       // Sep 16, 2023 = Rosh Hashana 5784 = Saturday
-      final c = JewishCalendar.fromDateTime(DateTime(2023, 9, 16));
-      expect(c.getDayOfWeek(), equals(JewishDate.saturday));
+      final c = JewishCalendar.fromLocalDate(DateTime(2023, 9, 16));
+      expect(c.getDayOfWeek(), equals(7));
     });
 
     test('isShabbos returns false on a known Sunday', () {
       // Sep 17, 2023 = 2 Tishrei 5784 = Sunday
-      final c = JewishCalendar.fromDateTime(DateTime(2023, 9, 17));
-      expect(c.getDayOfWeek(), equals(JewishDate.sunday));
+      final c = JewishCalendar.fromLocalDate(DateTime(2023, 9, 17));
+      expect(c.getDayOfWeek(), equals(1));
     });
   });
 
@@ -254,7 +254,7 @@ void main() {
   group('JewishCalendar - leap year Adar edge cases', () {
     test('On a leap year, 14 Adar I is Purim Katan not Purim', () {
       final c = JewishCalendar()
-        ..inIsrael = false
+        ..setInIsrael(false)
         ..setJewishDate(5784, JewishDate.ADAR, 14); // Adar I
       expect(c.getYomTovIndex(), equals(JewishCalendar.PURIM_KATAN));
       expect(c.getYomTovIndex(), isNot(equals(JewishCalendar.PURIM)));
@@ -262,7 +262,7 @@ void main() {
 
     test('On a non-leap year, 14 Adar is Purim', () {
       final c = JewishCalendar()
-        ..inIsrael = false
+        ..setInIsrael(false)
         ..setJewishDate(5785, JewishDate.ADAR, 14); // only Adar
       expect(c.getYomTovIndex(), equals(JewishCalendar.PURIM));
     });
@@ -280,7 +280,7 @@ void main() {
   // ────────────────────────────────────────────────────────────────
   group('JewishCalendar - Yom Hazikaron & Yom Ha\'atzmaut postponements', () {
     JewishCalendar cal() => JewishCalendar()
-      ..inIsrael = true
+      ..setInIsrael(true)
       ..setUseModernHolidays(true);
 
     // ── 5783: 5 Iyar = Wednesday (standard, no postponement) ──────
@@ -357,7 +357,7 @@ void main() {
     // ── Verify useModernHolidays=false returns no modern holidays ──
     test('Modern holidays not returned when useModernHolidays is false', () {
       final c = JewishCalendar()
-        ..inIsrael = true
+        ..setInIsrael(true)
         ..setUseModernHolidays(false)
         ..setJewishDate(5784, JewishDate.IYAR, 6);
       expect(c.getYomTovIndex(), isNot(equals(JewishCalendar.YOM_HAATZMAUT)));
@@ -368,8 +368,8 @@ void main() {
   // Isru chag
   // ────────────────────────────────────────────────────────────────
   group('JewishCalendar - isru chag', () {
-    JewishCalendar diaspora() => JewishCalendar()..inIsrael = false;
-    JewishCalendar israel() => JewishCalendar()..inIsrael = true;
+    JewishCalendar diaspora() => JewishCalendar()..setInIsrael(false);
+    JewishCalendar israel() => JewishCalendar()..setInIsrael(true);
 
     test('22 Nisan is isru chag in Israel', () {
       final c = israel()..setJewishDate(5784, JewishDate.NISSAN, 22);
@@ -537,8 +537,8 @@ void main() {
   // Holiday helpers ported from KosherJava
   // ────────────────────────────────────────────────────────────────
   group('JewishCalendar - holiday helpers', () {
-    JewishCalendar diaspora() => JewishCalendar()..inIsrael = false;
-    JewishCalendar israel() => JewishCalendar()..inIsrael = true;
+    JewishCalendar diaspora() => JewishCalendar()..setInIsrael(false);
+    JewishCalendar israel() => JewishCalendar()..setInIsrael(true);
 
     test('isPesach covers yom tov and chol hamoed', () {
       expect(
@@ -621,12 +621,12 @@ void main() {
       expect(open.isPurim(), isTrue);
 
       final walled = diaspora()
-        ..isMukafChoma = true
+        ..setIsMukafChoma(true)
         ..setJewishDate(5784, JewishDate.ADAR_II, 14);
       expect(walled.isPurim(), isFalse);
 
       final shushan = diaspora()
-        ..isMukafChoma = true
+        ..setIsMukafChoma(true)
         ..setJewishDate(5784, JewishDate.ADAR_II, 15);
       expect(shushan.isPurim(), isTrue);
     });

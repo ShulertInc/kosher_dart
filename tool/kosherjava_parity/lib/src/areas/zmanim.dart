@@ -6,13 +6,13 @@ import 'package:timezone/timezone.dart' as tz;
 
 import '../calculator_kinds.dart';
 import '../kosherjava.g.dart' as kj;
+import '../protected_probe.dart';
 import '../random_input.dart';
 import '../report.dart';
 import '../area.dart';
 import '../zones.dart';
 import 'zman_getters.dart';
 import 'zmanim_arguments.dart';
-import 'zmanim_removed.dart';
 
 class CalculatorSettings {
   CalculatorSettings(Random rng)
@@ -69,7 +69,6 @@ class ZmanimCase {
     settings = chance(rng, 0.2) ? CalculatorSettings(rng) : null;
     timeOfDay = chance(rng, 0.5) ? null : rng.nextDouble();
     cloned = chance(rng, 0.1);
-    viaSetLocalDate = chance(rng, 0.5);
     movedFromDays = straddle != null
         ? pick(rng, const [182, -182, 91, -91])
         : chance(rng, 0.1)
@@ -108,7 +107,6 @@ class ZmanimCase {
   late final double? timeOfDay;
   late final bool cloned;
   late final int? movedFromDays;
-  late final bool viaSetLocalDate;
 
   static double offset(Random rng, double usual) {
     final roll = rng.nextDouble();
@@ -124,20 +122,19 @@ class ZmanimCase {
         pick(rng, const [0.0, 0.001, 8848.0]), pick(rng, zones.names));
   }
 
-  String describe(String id) => '$id date=$date $place${machineLocal ? ' as a local DateTime' : ''} '
+  String describe(String id) => '$id date=$date $place${machineLocal ? ' (the machine zone)' : ''} '
       'useElevation=${useElevation ?? 'default'} astronomicalChatzos=${useAstronomicalChatzos ?? 'default'} '
       'forOtherZmanim=${useAstronomicalChatzosForOtherZmanim ?? 'default'} candle=${candleLightingOffset ?? 'default'} '
       'ateret=${ateretTorahSunsetOffset ?? 'default'} calculator=${calculator.label}${precision == null ? '' : ' $precision'}'
       '${settings == null ? '' : ' $settings'}${timeOfDay == null ? '' : ' timeOfDay=$timeOfDay'}'
-      '${cloned ? ' cloned' : ''}${movedFromDays == null ? '' : ' builtOn=$movedFromDays days away, then ${viaSetLocalDate ? 'setLocalDate' : 'setCalendar'}'}';
+      '${cloned ? ' cloned' : ''}${movedFromDays == null ? '' : ' builtOn=$movedFromDays days away, then setLocalDate'}';
 }
 
 const day = 86400000;
 
 CivilDate erevPesach(Random rng) {
-  final jewishDate =
-      kd.JewishDate.initDate(jewishYear: between(rng, 5661, 6060), jewishMonth: kd.JewishDate.NISSAN, jewishDayOfMonth: 14);
-  return CivilDate(jewishDate.getGregorianYear(), jewishDate.getGregorianMonth(), jewishDate.getGregorianDayOfMonth());
+  final date = kd.JewishDate.fromJewishDate(between(rng, 5661, 6060), kd.JewishDate.NISSAN, 14).getLocalDate();
+  return CivilDate(date.year, date.month, date.day);
 }
 
 int? millisOf(kj.Instant? instant) {
@@ -154,11 +151,20 @@ double? durationMillis(kj.Duration? duration) {
   return nanos / 1e6;
 }
 
+double? dartDurationMillis(Duration? duration) => duration == null ? null : duration.inMicroseconds / 1000;
+
+String isoDate(DateTime date) => '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-'
+    '${date.day.toString().padLeft(2, '0')}';
+
+String javaDateText(kj.LocalDate date) => date.toString$1()!.toDartString(releaseOriginal: true);
+
 class ZmanimArea extends Area {
   ZmanimArea(super.zones);
 
   @override
   String get name => 'zmanim';
+
+  final ProtectedProbe probe = ProtectedProbe();
 
   @override
   void run(int seed, Iterable<int> indexes, Report report) {
@@ -172,49 +178,22 @@ class ZmanimArea extends Area {
       final other = otherDate(input);
       final otherMidnight =
           other == null ? javaMidnight : zones.javaStartOfDay(zone, other.year, other.month, other.day);
-      if (input.machineLocal &&
-          !zones.machineAgrees(
-              min(javaMidnight, otherMidnight) - 3 * day, max(javaMidnight, otherMidnight) + 4 * day)) {
-        report.note('skipped: the machine zone disagrees with java.time near the date');
-        continue;
-      }
-      if (!input.machineLocal &&
-          tz.TZDateTime(zones.dart(zone), input.date.year, input.date.month, input.date.day).millisecondsSinceEpoch !=
-              javaMidnight) {
+      if (tz.TZDateTime(zones.dart(zone), input.date.year, input.date.month, input.date.day).millisecondsSinceEpoch !=
+          javaMidnight) {
         report.note('package:timezone disagrees with java.time about midnight, zone rebuilt from java.time');
       }
       final location =
-          input.machineLocal ? null : zones.dartFromJava(zone, javaMidnight - 3 * day, javaMidnight + 4 * day);
-      DateTime at(int millis) => location == null
-          ? DateTime.fromMillisecondsSinceEpoch(millis)
-          : tz.TZDateTime.fromMillisecondsSinceEpoch(location, millis);
-      final midnight = at(javaMidnight);
-      if (midnight.year != input.date.year || midnight.month != input.date.month || midnight.day != input.date.day) {
-        report.note('skipped: the date does not exist in its zone, so no DateTime can name it');
-        continue;
-      }
-      final named = location == null
-          ? DateTime(input.date.year, input.date.month, input.date.day)
-          : tz.TZDateTime(location, input.date.year, input.date.month, input.date.day);
-      if (named.millisecondsSinceEpoch != javaMidnight) {
-        report.note('midnight repeats or is skipped, the DateTime constructor picks a different instant than java.time');
-      }
-      var dartDate = input.timeOfDay == null ? midnight : withinDay(zone, at, midnight, input.timeOfDay!);
-      if (dartDate.day != midnight.day) {
-        report.note('the clocks went back past midnight, so the time of day named the previous date; used midnight');
-        dartDate = midnight;
-      }
-      final builtOn = other == null ? dartDate : dartMidnight(input, otherMidnight, javaMidnight);
-      if (input.machineLocal) report.note('compared as a plain local DateTime in the machine zone');
+          zones.dartFromJava(zone, min(javaMidnight, otherMidnight) - 3 * day, max(javaMidnight, otherMidnight) + 4 * day);
+      final localDate = localDateArgument(input, location, javaMidnight, report);
+      if (input.machineLocal) report.note('the zone is the machine zone');
 
-      var javaCalendar = javaCalendarFor(input);
-      var dartCalendar = dartCalendarFor(input, builtOn);
-      if (input.movedFromDays != null) {
-        if (input.viaSetLocalDate) {
-          dartCalendar.setLocalDate(DateTime.utc(input.date.year, input.date.month, input.date.day));
-        } else {
-          dartCalendar.setCalendar(dartDate);
-        }
+      var javaCalendar = javaCalendarFor(input, other);
+      var dartCalendar = dartCalendarFor(input, location, other ?? localDate);
+      if (other != null) {
+        final date = kj.LocalDate.of$1(input.date.year, input.date.month, input.date.day);
+        javaCalendar.localDate = date;
+        date?.release();
+        dartCalendar.setLocalDate(localDate);
       }
       if (input.cloned) {
         final javaClone = javaCalendar.clone() as JavaCalendar;
@@ -223,7 +202,7 @@ class ZmanimArea extends Area {
         dartCalendar = dartCalendar.clone();
       }
       final prefix = 'zmanim.${input.calculator.name}';
-      for (final getter in [...zmanGetters, ...removedZmanGetters]) {
+      for (final getter in zmanGetters) {
         final name = '$prefix.${getter.name}';
         switch (getter) {
           case InstantZman(:final java, :final dart):
@@ -231,35 +210,42 @@ class ZmanimArea extends Area {
                 attempt(() => dart(dartCalendar)?.flooredMillis));
           case DurationZman(:final java, :final dart):
             report.real(name, describe, attempt(() => durationMillis(java(javaCalendar))),
-                attempt(() => dart(dartCalendar)), tolerance: 1e-6);
+                attempt(() => dartDurationMillis(dart(dartCalendar))), tolerance: 1e-6, absolute: 0.001);
           case RealZman(:final java, :final dart):
             report.real(name, describe, attempt(() => java(javaCalendar)), attempt(() => dart(dartCalendar)));
         }
       }
       runArgumentChecks(rng, prefix, describe, javaCalendar, dartCalendar, javaMidnight, report);
-      compareProtectedDays(prefix, describe, javaCalendar, dartCalendar, report);
+      compareProtected(prefix, describe, javaCalendar, dartCalendar, report);
       javaCalendar.release();
     }
   }
 
-  void compareProtectedDays(String prefix, String describe, JavaCalendar java, DartCalendar dart, Report report) {
-    report.exact('$prefix.getLocalDate', describe, attempt(() {
-      final date = java.localDate!;
-      final text = date.toString$1()!.toDartString(releaseOriginal: true);
-      date.release();
-      return text;
-    }), attempt(() {
-      final date = dart.getLocalDate();
-      return '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-'
-          '${date.day.toString().padLeft(2, '0')}';
-    }));
+  DateTime localDateArgument(ZmanimCase input, tz.Location location, int javaMidnight, Report report) {
+    final date = input.date;
+    final fraction = input.timeOfDay;
+    if (fraction == null) return DateTime.utc(date.year, date.month, date.day);
+    final next = DateTime.utc(date.year, date.month, date.day + 1);
+    final nextMidnight = zones.javaStartOfDay(input.place.zone, next.year, next.month, next.day);
+    final within = tz.TZDateTime.fromMillisecondsSinceEpoch(
+        location, javaMidnight + ((nextMidnight - javaMidnight) * fraction).floor());
+    if (within.year != date.year || within.month != date.month || within.day != date.day) {
+      report.note('the time of day named another date in the zone, so the date was passed at UTC midnight');
+      return DateTime.utc(date.year, date.month, date.day);
+    }
+    return within;
+  }
+
+  void compareProtected(String prefix, String describe, JavaCalendar java, DartCalendar dart, Report report) {
+    report.exact('$prefix.getLocalDate', describe, attempt(() => javaDateText(java.localDate!)),
+        attempt(() => isoDate(dart.getLocalDate())));
     final lastNight = attempt(() => javaMidnightAfter(java, 0));
-    report.instant('$prefix.getMidnightLastNight (protected in Java)', describe, lastNight,
-        attempt(() => dart.getMidnightLastNight()?.flooredMillis));
-    report.instant('$prefix.getMidnightTonight (protected in Java)', describe, attempt(() => javaMidnightAfter(java, 1)),
-        attempt(() => dart.getMidnightTonight()?.flooredMillis));
+    report.instant('$prefix.getMidnightLastNight (protected)', describe, lastNight,
+        attempt(() => probe.midnightLastNight(dart).flooredMillis));
+    report.instant('$prefix.getMidnightTonight (protected)', describe, attempt(() => javaMidnightAfter(java, 1)),
+        attempt(() => probe.midnightTonight(dart).flooredMillis));
     report.exact(
-      '$prefix.getAdjustedCalendar / getAdjustedLocalDate (protected in Java)',
+      '$prefix.getAdjustedLocalDate (protected)',
       describe,
       attempt(() {
         final instant = kj.Instant.ofEpochMilli((lastNight as Value<int>).value)!;
@@ -268,18 +254,24 @@ class ZmanimArea extends Area {
         geo.release();
         instant.release();
         final date = java.localDate!;
-        final adjusted = date.plusDays(adjustment)!;
-        final text = adjusted.toString$1()!.toDartString(releaseOriginal: true);
-        adjusted.release();
+        final text = javaDateText(date.plusDays(adjustment)!);
         date.release();
         return text;
       }),
-      attempt(() {
-        final date = dart.getAdjustedCalendar();
-        return '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-'
-            '${date.day.toString().padLeft(2, '0')}';
-      }),
+      attempt(() => isoDate(probe.adjustedLocalDate(dart))),
     );
+    report.instant('$prefix.getSunriseBasedOnElevationSetting (protected)', describe,
+        attempt(() => millisOf(java.isUseElevation ? java.sunrise : java.seaLevelSunrise)),
+        attempt(() => probe.sunriseBasedOnElevationSetting(dart)?.flooredMillis));
+    report.instant('$prefix.getSunsetBasedOnElevationSetting (protected)', describe,
+        attempt(() => millisOf(java.isUseElevation ? java.sunset : java.seaLevelSunset)),
+        attempt(() => probe.sunsetBasedOnElevationSetting(dart)?.flooredMillis));
+    report.instant('$prefix.getSunriseBaalHatanya (protected)', describe,
+        attempt(() => millisOf(java.getSunriseOffsetByDegrees(90 + 1.583))),
+        attempt(() => probe.sunriseBaalHatanya(dart)?.flooredMillis));
+    report.instant('$prefix.getSunsetBaalHatanya (protected)', describe,
+        attempt(() => millisOf(java.getSunsetOffsetByDegrees(90 + 1.583))),
+        attempt(() => probe.sunsetBaalHatanya(dart)?.flooredMillis));
   }
 
   int javaMidnightAfter(JavaCalendar java, int days) {
@@ -303,26 +295,15 @@ class ZmanimArea extends Area {
     return DateTime.utc(input.date.year, input.date.month, input.date.day + days);
   }
 
-  DateTime dartMidnight(ZmanimCase input, int midnight, int targetMidnight) {
-    if (input.machineLocal) return DateTime.fromMillisecondsSinceEpoch(midnight);
-    final zone = input.place.zone;
-    return tz.TZDateTime.fromMillisecondsSinceEpoch(zones.dartFromJava(zone, min(midnight, targetMidnight) - 3 * day, max(midnight, targetMidnight) + 4 * day), midnight);
-  }
-
-  DateTime withinDay(String zone, DateTime Function(int) at, DateTime midnight, double fraction) {
-    final next = midnight.add(const Duration(hours: 36));
-    final nextMidnight = zones.javaStartOfDay(zone, next.year, next.month, next.day);
-    final span = nextMidnight - midnight.millisecondsSinceEpoch;
-    return at(midnight.millisecondsSinceEpoch + (span * fraction).floor());
-  }
-
-  JavaCalendar javaCalendarFor(ZmanimCase input) {
+  JavaCalendar javaCalendarFor(ZmanimCase input, DateTime? builtOn) {
     final place = input.place;
     final name = 'case'.toJString();
     final geo = kj.GeoLocation.new$1(name, place.latitude, place.longitude, place.elevation, zones.java(place.zone));
     name.release();
     final calendar = kj.ComprehensiveZmanimCalendar.new1(geo);
-    final date = kj.LocalDate.of$1(input.date.year, input.date.month, input.date.day);
+    final date = builtOn == null
+        ? kj.LocalDate.of$1(input.date.year, input.date.month, input.date.day)
+        : kj.LocalDate.of$1(builtOn.year, builtOn.month, builtOn.day);
     calendar.localDate = date;
     date?.release();
     if (input.useElevation != null) calendar.useElevation = input.useElevation!;
@@ -350,10 +331,11 @@ class ZmanimArea extends Area {
     return calendar;
   }
 
-  DartCalendar dartCalendarFor(ZmanimCase input, DateTime date) {
+  DartCalendar dartCalendarFor(ZmanimCase input, tz.Location location, DateTime localDate) {
     final place = input.place;
-    final geo = kd.GeoLocation.setLocation('case', place.latitude, place.longitude, date, place.elevation);
-    final calendar = kd.ComplexZmanimCalendar.intGeoLocation(geo);
+    final geo = kd.GeoLocation.withElevation('case', place.latitude, place.longitude, place.elevation, location);
+    final calendar = kd.ComprehensiveZmanimCalendar.withGeoLocation(geo);
+    calendar.setLocalDate(localDate);
     if (input.useElevation != null) calendar.setUseElevation(input.useElevation!);
     if (input.useAstronomicalChatzos != null) calendar.setUseAstronomicalChatzos(input.useAstronomicalChatzos!);
     if (input.useAstronomicalChatzosForOtherZmanim != null) {

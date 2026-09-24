@@ -31,7 +31,7 @@ class NOAACalculator extends AstronomicalCalculator {
   static const double _JULIAN_DAYS_PER_CENTURY = 36525.0;
 
   @override
-  NOAACalculator clone() => copySettingsTo(NOAACalculator());
+  NOAACalculator clone() => copyCalculatorSettings(this, NOAACalculator());
 
   /// See also [AstronomicalCalculator.getCalculatorName].
   @override
@@ -44,7 +44,7 @@ class NOAACalculator extends AstronomicalCalculator {
   double getUTCSunrise(DateTime dateTime, GeoLocation geoLocation,
       double zenith, bool adjustForElevation) {
     double elevation =
-        adjustForElevation ? (geoLocation.getElevation() ?? 0) : 0;
+        adjustForElevation ? geoLocation.getElevation() : 0;
     double adjustedZenith = adjustZenith(zenith, elevation, dateTime);
 
     double sunrise = _getSunriseUTC(_getJulianDay(dateTime),
@@ -66,7 +66,7 @@ class NOAACalculator extends AstronomicalCalculator {
   double getUTCSunset(DateTime dateTime, GeoLocation geoLocation, double zenith,
       bool adjustForElevation) {
     double elevation =
-        adjustForElevation ? (geoLocation.getElevation() ?? 0) : 0;
+        adjustForElevation ? geoLocation.getElevation() : 0;
     double adjustedZenith = adjustZenith(zenith, elevation, dateTime);
 
     double sunset = _getSunsetUTC(_getJulianDay(dateTime),
@@ -97,9 +97,9 @@ class NOAACalculator extends AstronomicalCalculator {
               _getJulianDay(dateTime), -geoLocation.getLongitude(), false) /
           60);
 
-  /// See also [AstronomicalCalculator.getUTCTimeAtAzimuth].
+  /// See also [AstronomicalCalculator.getTimeAtAzimuth].
   @override
-  double getUTCTimeAtAzimuth(
+  double getTimeAtAzimuth(
       DateTime dateTime, GeoLocation geoLocation, double azimuth) {
     if (azimuth != 90 && azimuth != 270) {
       throw ArgumentError(

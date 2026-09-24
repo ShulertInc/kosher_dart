@@ -1,16 +1,16 @@
 import 'package:kosher_dart/kosher_dart.dart';
+import 'package:timezone/timezone.dart' as tz;
 import 'package:test/test.dart';
 
 /// Longyearbyen. The sun neither rises nor sets there for months at a time, which every
 /// zman getter's doc comment says returns null.
-ZmanimCalendar polarCalendar(DateTime date) => ZmanimCalendar.intGeolocation(
-      GeoLocation.setLocation('Longyearbyen', 78.22, 15.63, date),
-    );
+ZmanimCalendar polarCalendar(DateTime date) =>
+    ZmanimCalendar.withGeoLocation(GeoLocation.withZoneId('Longyearbyen', 78.22, 15.63, tz.UTC))..setLocalDate(date);
 
 void main() {
   group('where the sun does not rise or set', () {
     // Midsummer, when it does not set, and midwinter, when it does not rise.
-    final dates = [DateTime(2026, 6, 21, 12), DateTime(2026, 12, 21, 12)];
+    final dates = [DateTime.utc(2026, 6, 21), DateTime.utc(2026, 12, 21)];
 
     test('the day-proportion zmanim return null instead of recursing', () {
       // Each of these used to call itself with sunrise and sunset, so where the sun did
@@ -19,9 +19,9 @@ void main() {
         final calendar = polarCalendar(date);
 
         expect(calendar.getSofZmanShma(null, null), isNull, reason: '$date');
-        expect(calendar.getMinchaGedola(), isNull, reason: '$date');
-        expect(calendar.getMinchaKetana(), isNull, reason: '$date');
-        expect(calendar.getPlagHamincha(), isNull, reason: '$date');
+        expect(calendar.getMinchaGedolaGRA(), isNull, reason: '$date');
+        expect(calendar.getMinchaKetanaGRA(), isNull, reason: '$date');
+        expect(calendar.getPlagHaminchaGRA(), isNull, reason: '$date');
       }
     });
 
@@ -35,14 +35,13 @@ void main() {
 
   group('where the sun does rise and set', () {
     // Lakewood, on an ordinary day.
-    final calendar = ZmanimCalendar.intGeolocation(
-      GeoLocation.setLocation('Lakewood', 40.096, -74.222, DateTime(2026, 9, 12)),
-    );
+    final calendar = ZmanimCalendar.withGeoLocation(GeoLocation.withZoneId('Lakewood', 40.096, -74.222, tz.UTC))
+      ..setLocalDate(DateTime.utc(2026, 9, 12));
 
     test('the day-proportion zmanim still answer, and in order', () {
-      final minchaGedola = calendar.getMinchaGedola()!;
-      final minchaKetana = calendar.getMinchaKetana()!;
-      final plag = calendar.getPlagHamincha()!;
+      final minchaGedola = calendar.getMinchaGedolaGRA()!;
+      final minchaKetana = calendar.getMinchaKetanaGRA()!;
+      final plag = calendar.getPlagHaminchaGRA()!;
       final sunrise = calendar.getSunrise()!;
       final sunset = calendar.getSunset()!;
 
@@ -58,11 +57,11 @@ void main() {
 
       expect(
         calendar.getPlagHamincha(sunrise, sunset),
-        calendar.getPlagHamincha(),
+        calendar.getPlagHaminchaGRA(),
       );
       expect(
         calendar.getMinchaGedola(sunrise, sunset),
-        calendar.getMinchaGedola(),
+        calendar.getMinchaGedolaGRA(),
       );
     });
   });

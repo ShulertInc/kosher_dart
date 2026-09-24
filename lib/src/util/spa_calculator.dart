@@ -14,7 +14,7 @@ class SPACalculator extends AstronomicalCalculator {
   double _temperature = 10.0;
 
   @override
-  SPACalculator clone() => copySettingsTo(SPACalculator())
+  SPACalculator clone() => copyCalculatorSettings(this, SPACalculator())
     .._applyDeltaT = _applyDeltaT
     .._deltaTOverride = _deltaTOverride
     .._pressure = _pressure
@@ -48,6 +48,23 @@ class SPACalculator extends AstronomicalCalculator {
   double getTemperature() => _temperature;
 
   @override
+  bool operator ==(Object other) {
+    if (super != other) {
+      return false;
+    }
+    final SPACalculator spa = other as SPACalculator;
+    return _applyDeltaT == spa._applyDeltaT &&
+        (_deltaTOverride == null
+            ? spa._deltaTOverride == null
+            : spa._deltaTOverride != null && _deltaTOverride!.compareTo(spa._deltaTOverride!) == 0) &&
+        _pressure.compareTo(spa._pressure) == 0 &&
+        _temperature.compareTo(spa._temperature) == 0;
+  }
+
+  @override
+  int get hashCode => Object.hash(super.hashCode, _applyDeltaT, _deltaTOverride, _pressure, _temperature);
+
+  @override
   double getUTCSunrise(DateTime dateTime, GeoLocation geoLocation,
           double zenith, bool adjustForElevation) =>
       _getUTCSunRiseSet(dateTime, geoLocation, zenith, adjustForElevation,
@@ -62,7 +79,7 @@ class SPACalculator extends AstronomicalCalculator {
   double _getUTCSunRiseSet(DateTime dateTime, GeoLocation geoLocation,
       double zenith, bool adjustForElevation, _SolarEvent solarEvent) {
     final double elevation =
-        adjustForElevation ? (geoLocation.getElevation() ?? 0) : 0;
+        adjustForElevation ? geoLocation.getElevation() : 0;
     final double adjustedZenith = adjustZenith(zenith, elevation, dateTime);
     final double riseSet =
         _solveRiseSet(dateTime, geoLocation, adjustedZenith, solarEvent);
@@ -81,7 +98,7 @@ class SPACalculator extends AstronomicalCalculator {
     final double lonWest = -geoLocation.getLongitude();
     final double lat = geoLocation.getLatitude();
     final double longitude = geoLocation.getLongitude();
-    final double elevation = geoLocation.getElevation() ?? 0;
+    final double elevation = geoLocation.getElevation();
 
     final double noonMin = _solveNoonMidnight(jdDay, lonWest, _SolarEvent.noon);
     final double declNoon = _solarCoords(jdDay + noonMin / 1440.0)[1];
@@ -152,7 +169,7 @@ class SPACalculator extends AstronomicalCalculator {
   }
 
   @override
-  double getUTCTimeAtAzimuth(
+  double getTimeAtAzimuth(
       DateTime dateTime, GeoLocation geoLocation, double azimuth) {
     if (azimuth != 90.0 && azimuth != 270.0) {
       throw ArgumentError(
@@ -178,12 +195,12 @@ class SPACalculator extends AstronomicalCalculator {
   @override
   double getSolarElevation(DateTime instant, GeoLocation geoLocation) =>
       _topocentric(julianDayOfInstant(instant), geoLocation.getLatitude(),
-          geoLocation.getLongitude(), geoLocation.getElevation() ?? 0)[1];
+          geoLocation.getLongitude(), geoLocation.getElevation())[1];
 
   @override
   double getSolarAzimuth(DateTime instant, GeoLocation geoLocation) =>
       _topocentric(julianDayOfInstant(instant), geoLocation.getLatitude(),
-          geoLocation.getLongitude(), geoLocation.getElevation() ?? 0)[2];
+          geoLocation.getLongitude(), geoLocation.getElevation())[2];
 
   double _deltaTSeconds(double julianDayUT) => _applyDeltaT
       ? (_deltaTOverride ?? estimateDeltaT(julianDayUT))

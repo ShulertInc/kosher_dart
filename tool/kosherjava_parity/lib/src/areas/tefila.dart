@@ -8,64 +8,136 @@ import '../random_input.dart';
 import '../report.dart';
 import 'tefila_calendar.dart';
 
-const tefilaFlags = [
-  'tachanunRecitedEndOfTishrei',
-  'tachanunRecitedWeekAfterShavuos',
-  'tachanunRecited13SivanOutOfIsrael',
-  'tachanunRecitedPesachSheni',
-  'tachanunRecited15IyarOutOfIsrael',
-  'tachanunRecitedMinchaErevLagBaomer',
-  'tachanunRecitedShivasYemeiHamiluim',
-  'tachanunRecitedWeekOfHod',
-  'tachanunRecitedWeekOfPurim',
-  'tachanunRecitedFridays',
-  'tachanunRecitedSundays',
-  'tachanunRecitedMinchaAllYear',
-  'mizmorLesodaRecitedErevYomKippurAndPesach',
+typedef TefilaFlag = (
+  String,
+  void Function(kj.TefilaRules, bool),
+  bool Function(kj.TefilaRules),
+  void Function(kd.TefilaRules, bool),
+  bool Function(kd.TefilaRules),
+);
+
+final List<TefilaFlag> tefilaFlags = [
+  (
+    'TachanunRecitedEndOfTishrei',
+    (r, v) => r.tachanunRecitedEndOfTishrei = v,
+    (r) => r.isTachanunRecitedEndOfTishrei,
+    (r, v) => r.setTachanunRecitedEndOfTishrei(v),
+    (r) => r.isTachanunRecitedEndOfTishrei(),
+  ),
+  (
+    'TachanunRecitedWeekAfterShavuos',
+    (r, v) => r.tachanunRecitedWeekAfterShavuos = v,
+    (r) => r.isTachanunRecitedWeekAfterShavuos,
+    (r, v) => r.setTachanunRecitedWeekAfterShavuos(v),
+    (r) => r.isTachanunRecitedWeekAfterShavuos(),
+  ),
+  (
+    'TachanunRecited13SivanOutOfIsrael',
+    (r, v) => r.tachanunRecited13SivanOutOfIsrael = v,
+    (r) => r.isTachanunRecited13SivanOutOfIsrael,
+    (r, v) => r.setTachanunRecited13SivanOutOfIsrael(v),
+    (r) => r.isTachanunRecited13SivanOutOfIsrael(),
+  ),
+  (
+    'TachanunRecitedPesachSheni',
+    (r, v) => r.tachanunRecitedPesachSheni = v,
+    (r) => r.isTachanunRecitedPesachSheni,
+    (r, v) => r.setTachanunRecitedPesachSheni(v),
+    (r) => r.isTachanunRecitedPesachSheni(),
+  ),
+  (
+    'TachanunRecited15IyarOutOfIsrael',
+    (r, v) => r.tachanunRecited15IyarOutOfIsrael = v,
+    (r) => r.isTachanunRecited15IyarOutOfIsrael,
+    (r, v) => r.setTachanunRecited15IyarOutOfIsrael(v),
+    (r) => r.isTachanunRecited15IyarOutOfIsrael(),
+  ),
+  (
+    'TachanunRecitedMinchaErevLagBaomer',
+    (r, v) => r.tachanunRecitedMinchaErevLagBaomer = v,
+    (r) => r.isTachanunRecitedMinchaErevLagBaomer,
+    (r, v) => r.setTachanunRecitedMinchaErevLagBaomer(v),
+    (r) => r.isTachanunRecitedMinchaErevLagBaomer(),
+  ),
+  (
+    'TachanunRecitedShivasYemeiHamiluim',
+    (r, v) => r.tachanunRecitedShivasYemeiHamiluim = v,
+    (r) => r.isTachanunRecitedShivasYemeiHamiluim,
+    (r, v) => r.setTachanunRecitedShivasYemeiHamiluim(v),
+    (r) => r.isTachanunRecitedShivasYemeiHamiluim(),
+  ),
+  (
+    'TachanunRecitedWeekOfHod',
+    (r, v) => r.tachanunRecitedWeekOfHod = v,
+    (r) => r.isTachanunRecitedWeekOfHod,
+    (r, v) => r.setTachanunRecitedWeekOfHod(v),
+    (r) => r.isTachanunRecitedWeekOfHod(),
+  ),
+  (
+    'TachanunRecitedWeekOfPurim',
+    (r, v) => r.tachanunRecitedWeekOfPurim = v,
+    (r) => r.isTachanunRecitedWeekOfPurim,
+    (r, v) => r.setTachanunRecitedWeekOfPurim(v),
+    (r) => r.isTachanunRecitedWeekOfPurim(),
+  ),
+  (
+    'TachanunRecitedFridays',
+    (r, v) => r.tachanunRecitedFridays = v,
+    (r) => r.isTachanunRecitedFridays,
+    (r, v) => r.setTachanunRecitedFridays(v),
+    (r) => r.isTachanunRecitedFridays(),
+  ),
+  (
+    'TachanunRecitedSundays',
+    (r, v) => r.tachanunRecitedSundays = v,
+    (r) => r.isTachanunRecitedSundays,
+    (r, v) => r.setTachanunRecitedSundays(v),
+    (r) => r.isTachanunRecitedSundays(),
+  ),
+  (
+    'TachanunRecitedMinchaAllYear',
+    (r, v) => r.tachanunRecitedMinchaAllYear = v,
+    (r) => r.isTachanunRecitedMinchaAllYear,
+    (r, v) => r.setTachanunRecitedMinchaAllYear(v),
+    (r) => r.isTachanunRecitedMinchaAllYear(),
+  ),
+  (
+    'MizmorLesodaRecitedErevYomKippurAndPesach',
+    (r, v) => r.mizmorLesodaRecitedErevYomKippurAndPesach = v,
+    (r) => r.isMizmorLesodaRecitedErevYomKippurAndPesach,
+    (r, v) => r.setMizmorLesodaRecitedErevYomKippurAndPesach(v),
+    (r) => r.isMizmorLesodaRecitedErevYomKippurAndPesach(),
+  ),
 ];
 
 class TefilaInput {
   TefilaInput(Random rng)
       : day = CalendarDay.random(rng),
-        flags = {for (final flag in tefilaFlags) flag: chance(rng, 0.5)};
+        flags = {for (final (name, _, _, _, _) in tefilaFlags) name: chance(rng, 0.5)},
+        setFlags = {for (final (name, _, _, _, _) in tefilaFlags) name: chance(rng, 0.8)};
 
   final CalendarDay day;
   final Map<String, bool> flags;
+  final Map<String, bool> setFlags;
 
-  bool flag(String name) => flags[name]!;
+  String describe(String id) => '$id $day '
+      'set=${setFlags.entries.where((e) => e.value).map((e) => '${e.key}:${flags[e.key]}').join(',')}';
 
-  String describe(String id) => '$id $day on=${flags.entries.where((e) => e.value).map((e) => e.key).join(',')}';
+  kj.TefilaRules java() {
+    final rules = kj.TefilaRules();
+    for (final (name, set, _, _, _) in tefilaFlags) {
+      if (setFlags[name]!) set(rules, flags[name]!);
+    }
+    return rules;
+  }
 
-  kj.TefilaRules java() => kj.TefilaRules()
-    ..tachanunRecitedEndOfTishrei = flag('tachanunRecitedEndOfTishrei')
-    ..tachanunRecitedWeekAfterShavuos = flag('tachanunRecitedWeekAfterShavuos')
-    ..tachanunRecited13SivanOutOfIsrael = flag('tachanunRecited13SivanOutOfIsrael')
-    ..tachanunRecitedPesachSheni = flag('tachanunRecitedPesachSheni')
-    ..tachanunRecited15IyarOutOfIsrael = flag('tachanunRecited15IyarOutOfIsrael')
-    ..tachanunRecitedMinchaErevLagBaomer = flag('tachanunRecitedMinchaErevLagBaomer')
-    ..tachanunRecitedShivasYemeiHamiluim = flag('tachanunRecitedShivasYemeiHamiluim')
-    ..tachanunRecitedWeekOfHod = flag('tachanunRecitedWeekOfHod')
-    ..tachanunRecitedWeekOfPurim = flag('tachanunRecitedWeekOfPurim')
-    ..tachanunRecitedFridays = flag('tachanunRecitedFridays')
-    ..tachanunRecitedSundays = flag('tachanunRecitedSundays')
-    ..tachanunRecitedMinchaAllYear = flag('tachanunRecitedMinchaAllYear')
-    ..mizmorLesodaRecitedErevYomKippurAndPesach = flag('mizmorLesodaRecitedErevYomKippurAndPesach');
-
-  kd.TefilaRules dart() => kd.TefilaRules(
-        tachanunRecitedEndOfTishrei: flag('tachanunRecitedEndOfTishrei'),
-        tachanunRecitedWeekAfterShavuos: flag('tachanunRecitedWeekAfterShavuos'),
-        tachanunRecited13SivanOutOfIsrael: flag('tachanunRecited13SivanOutOfIsrael'),
-        tachanunRecitedPesachSheni: flag('tachanunRecitedPesachSheni'),
-        tachanunRecited15IyarOutOfIsrael: flag('tachanunRecited15IyarOutOfIsrael'),
-        tachanunRecitedMinchaErevLagBaomer: flag('tachanunRecitedMinchaErevLagBaomer'),
-        tachanunRecitedShivasYemeiHamiluim: flag('tachanunRecitedShivasYemeiHamiluim'),
-        tachanunRecitedWeekOfHod: flag('tachanunRecitedWeekOfHod'),
-        tachanunRecitedWeekOfPurim: flag('tachanunRecitedWeekOfPurim'),
-        tachanunRecitedFridays: flag('tachanunRecitedFridays'),
-        tachanunRecitedSundays: flag('tachanunRecitedSundays'),
-        tachanunRecitedMinchaAllYear: flag('tachanunRecitedMinchaAllYear'),
-        mizmorLesodaRecitedErevYomKippurAndPesach: flag('mizmorLesodaRecitedErevYomKippurAndPesach'),
-      );
+  kd.TefilaRules dart() {
+    final rules = kd.TefilaRules();
+    for (final (name, _, _, set, _) in tefilaFlags) {
+      if (setFlags[name]!) set(rules, flags[name]!);
+    }
+    return rules;
+  }
 }
 
 typedef JavaRule = bool Function(kj.TefilaRules rules, kj.JewishCalendar calendar);
@@ -90,26 +162,22 @@ final tefilaRules = <String, (JavaRule, DartRule)>{
   'isAlHanissimRecited': ((r, c) => r.isAlHanissimRecited(c), (r, c) => r.isAlHanissimRecited(c)),
   'isYaalehVeyavoRecited': ((r, c) => r.isYaalehVeyavoRecited(c), (r, c) => r.isYaalehVeyavoRecited(c)),
   'isMizmorLesodaRecited': ((r, c) => r.isMizmorLesodaRecited(c), (r, c) => r.isMizmorLesodaRecited(c)),
-  'JewishCalendar.isVeseinTalUmatarStartDate': (
-    (r, c) => r.isVeseinTalUmatarStartDate(c),
-    (r, c) => c.isVeseinTalUmatarStartDate()
+  'helper.isTashlichRecited': (
+    (r, c) => c.jewishMonth == kd.JewishDate.TISHREI && c.jewishDayOfMonth <= 21,
+    (r, c) => r.isTashlichRecited(c)
   ),
-  'JewishCalendar.isVeseinTalUmatarStartingTonight': (
-    (r, c) => r.isVeseinTalUmatarStartingTonight(c),
-    (r, c) => c.isVeseinTalUmatarStartingTonight()
+  'helper.isMussafRecited': (
+    (r, c) => c.dayOfWeek == 7 || c.isRoshChodesh || c.isYomTovAssurBemelacha || c.isCholHamoed,
+    (r, c) => r.isMussafRecited(c)
   ),
-  'JewishCalendar.isVeseinTalUmatarRecited': (
-    (r, c) => r.isVeseinTalUmatarRecited(c),
-    (r, c) => c.isVeseinTalUmatarRecited()
+  'helper.isAvinuMalkeinuRecited': (
+    (r, c) => c.dayOfWeek != 7 && (c.isAseresYemeiTeshuva || (c.isTaanis && !c.isTishaBav)),
+    (r, c) => r.isAvinuMalkeinuRecited(c)
   ),
-  'JewishCalendar.isVeseinBerachaRecited': ((r, c) => r.isVeseinBerachaRecited(c), (r, c) => c.isVeseinBerachaRecited()),
-  'JewishCalendar.isMashivHaruachStartDate': (
-    (r, c) => r.isMashivHaruachStartDate(c),
-    (r, c) => c.isMashivHaruachStartDate()
+  'helper.isLongTachanunRecited': (
+    (r, c) => (c.dayOfWeek == 2 || c.dayOfWeek == 5) && r.isTachanunRecitedShacharis(c),
+    (r, c) => r.isLongTachanunRecited(c)
   ),
-  'JewishCalendar.isMashivHaruachEndDate': ((r, c) => r.isMashivHaruachEndDate(c), (r, c) => c.isMashivHaruachEndDate()),
-  'JewishCalendar.isMashivHaruachRecited': ((r, c) => r.isMashivHaruachRecited(c), (r, c) => c.isMashivHaruachRecited()),
-  'JewishCalendar.isMoridHatalRecited': ((r, c) => r.isMoridHatalRecited(c), (r, c) => c.isMoridHatalRecited()),
 };
 
 class TefilaArea extends Area {
@@ -124,9 +192,15 @@ class TefilaArea extends Area {
     for (final index in indexes) {
       final input = TefilaInput(caseRandom(seed, name, index));
       final describe = input.describe('tefila#$index seed=$seed');
-      if (!input.day.agrees(report, name, describe)) continue;
       final javaRules = input.java();
       final dartRules = input.dart();
+      for (final (flag, _, javaGet, _, dartGet) in tefilaFlags) {
+        report.exact('tefila.is$flag', describe, attempt(() => javaGet(javaRules)), attempt(() => dartGet(dartRules)));
+      }
+      if (!input.day.agrees(report, name, describe)) {
+        javaRules.release();
+        continue;
+      }
       for (final MapEntry(key: rule, value: (java, dart)) in tefilaRules.entries) {
         final javaCalendar = input.day.java();
         final dartCalendar = input.day.dart();
@@ -144,39 +218,9 @@ class TefilaArea extends Area {
   void compareDefaults(Report report) {
     final java = kj.TefilaRules();
     final dart = kd.TefilaRules();
-    report.exact(
-        'tefila.default flags',
-        'defaults',
-        Value([
-          java.isTachanunRecitedEndOfTishrei,
-          java.isTachanunRecitedWeekAfterShavuos,
-          java.isTachanunRecited13SivanOutOfIsrael,
-          java.isTachanunRecitedPesachSheni,
-          java.isTachanunRecited15IyarOutOfIsrael,
-          java.isTachanunRecitedMinchaErevLagBaomer,
-          java.isTachanunRecitedShivasYemeiHamiluim,
-          java.isTachanunRecitedWeekOfHod,
-          java.isTachanunRecitedWeekOfPurim,
-          java.isTachanunRecitedFridays,
-          java.isTachanunRecitedSundays,
-          java.isTachanunRecitedMinchaAllYear,
-          java.isMizmorLesodaRecitedErevYomKippurAndPesach,
-        ].join(',')),
-        Value([
-          dart.tachanunRecitedEndOfTishrei,
-          dart.tachanunRecitedWeekAfterShavuos,
-          dart.tachanunRecited13SivanOutOfIsrael,
-          dart.tachanunRecitedPesachSheni,
-          dart.tachanunRecited15IyarOutOfIsrael,
-          dart.tachanunRecitedMinchaErevLagBaomer,
-          dart.tachanunRecitedShivasYemeiHamiluim,
-          dart.tachanunRecitedWeekOfHod,
-          dart.tachanunRecitedWeekOfPurim,
-          dart.tachanunRecitedFridays,
-          dart.tachanunRecitedSundays,
-          dart.tachanunRecitedMinchaAllYear,
-          dart.mizmorLesodaRecitedErevYomKippurAndPesach,
-        ].join(',')));
+    for (final (flag, _, javaGet, _, dartGet) in tefilaFlags) {
+      report.exact('tefila.default is$flag', 'defaults', attempt(() => javaGet(java)), attempt(() => dartGet(dart)));
+    }
     java.release();
   }
 }

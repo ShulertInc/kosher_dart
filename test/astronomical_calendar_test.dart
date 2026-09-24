@@ -37,21 +37,19 @@
 /// - **Sun transit (solar noon)** — verifies that solar noon falls strictly
 ///   between sunrise and sunset.
 ///
-/// Note: [AstronomicalCalendar] is not exported from `kosher_dart.dart`, so
-/// this file imports it directly from its source path.
 library;
 
 import 'package:test/test.dart';
 import 'package:kosher_dart/kosher_dart.dart';
+import 'package:timezone/timezone.dart' as tz;
 
 // ─────────────────────────────────────────────────────────────────
 // Helper: build an AstronomicalCalendar for a given lat/lon on a date
 // ─────────────────────────────────────────────────────────────────
 AstronomicalCalendar _calendar(
     String name, double lat, double lon, DateTime date) {
-  final geo = GeoLocation.setLocation(name, lat, lon, date);
-  final cal = AstronomicalCalendar(geoLocation: geo);
-  cal.setCalendar(date);
+  final cal = AstronomicalCalendar.withGeoLocation(GeoLocation.withZoneId(name, lat, lon, tz.UTC));
+  cal.setLocalDate(date);
   return cal;
 }
 

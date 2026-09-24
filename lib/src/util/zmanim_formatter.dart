@@ -1,11 +1,10 @@
 import 'package:timezone/timezone.dart';
 
 import '../astronomical_calendar.dart';
-import '../complex_zmanim_calendar.dart';
+import '../comprehensive_zmanim_calendar.dart';
 import '../zmanim_calendar.dart';
 import 'date_time_formatter.dart';
 import 'java_double.dart';
-import 'time.dart';
 import 'zman.dart';
 
 typedef _Getter = (String, Object? Function(AstronomicalCalendar));
@@ -80,14 +79,6 @@ class ZmanimFormatter {
     return _format(seconds, nanos);
   }
 
-  String formatMillis(double millis) {
-    if (millis.isNaN) return format(null);
-    final (seconds, nanos) = spanOfMillis(millis);
-    return _format(seconds, nanos);
-  }
-
-  String formatTime(Time time) => formatMillis(time.isNegative() ? -time.getTime() : time.getTime());
-
   String _format(int seconds, int nanos) {
     if (_timeFormat == XSD_DURATION_FORMAT) return javaDurationText(seconds, nanos);
     final negative = seconds < 0;
@@ -128,8 +119,6 @@ class ZmanimFormatter {
     return javaDurationText(seconds, nanos);
   }
 
-  String formatXSDDurationMillis(double millis) => millis.isNaN ? '' : javaDurationTextOfMillis(millis);
-
   static String toXML(AstronomicalCalendar astronomicalCalendar) {
     final metadata = _Metadata(astronomicalCalendar);
     final sb = StringBuffer('<${metadata.tag}');
@@ -149,7 +138,7 @@ class ZmanimFormatter {
       sb.write('\t<${zman.getLabel()}>${metadata.instantText(zman.getZman()!)}</${zman.getLabel()}>\n');
     }
     for (final zman in values.durations) {
-      sb.write('\t<${zman.getLabel()}>${javaDurationTextOfMillis(zman.getDuration()!)}</${zman.getLabel()}>\n');
+      sb.write('\t<${zman.getLabel()}>${_durationText(zman.getDuration()!)}</${zman.getLabel()}>\n');
     }
     for (final label in values.missing) {
       sb.write('\t<$label>N/A</$label>\n');
@@ -177,7 +166,7 @@ class ZmanimFormatter {
       sb.write('\t"${zman.getLabel()}":"${metadata.instantText(zman.getZman()!)}",\n');
     }
     for (final zman in values.durations) {
-      sb.write('\t"${zman.getLabel()}":"${javaDurationTextOfMillis(zman.getDuration()!)}",\n');
+      sb.write('\t"${zman.getLabel()}":"${_durationText(zman.getDuration()!)}",\n');
     }
     for (final label in values.missing) {
       sb.write('\t"$label":"N/A",\n');
@@ -190,7 +179,7 @@ class ZmanimFormatter {
     final getters = [
       ..._astronomicalGetters,
       if (calendar is ZmanimCalendar) ..._zmanimGetters,
-      if (calendar is ComplexZmanimCalendar) ..._complexGetters,
+      if (calendar is ComprehensiveZmanimCalendar) ..._complexGetters,
     ];
     return getters..sort((first, second) => first.$1.compareTo(second.$1));
   }
@@ -212,188 +201,193 @@ class ZmanimFormatter {
   ];
 
   static final List<_Getter> _zmanimGetters = [
-    ('Alos16Point1Degrees', (calendar) => (calendar as ZmanimCalendar).getAlosHashachar()),
-    ('Alos72Minutes', (calendar) => (calendar as ZmanimCalendar).getAlos72()),
+    ('Alos16Point1Degrees', (calendar) => (calendar as ZmanimCalendar).getAlos16Point1Degrees()),
+    ('Alos72Minutes', (calendar) => (calendar as ZmanimCalendar).getAlos72Minutes()),
     ('CandleLighting', (calendar) => (calendar as ZmanimCalendar).getCandleLighting()),
     ('ChatzosHalayla', (calendar) => (calendar as ZmanimCalendar).getChatzosHalayla()),
-    ('ChatzosHayom', (calendar) => (calendar as ZmanimCalendar).getChatzos()),
-    ('ChatzosHayomAsHalfDay', (calendar) => (calendar as ZmanimCalendar).getChatzosAsHalfDay()),
-    ('MinchaGedolaGRA', (calendar) => (calendar as ZmanimCalendar).getMinchaGedola()),
-    ('MinchaKetanaGRA', (calendar) => (calendar as ZmanimCalendar).getMinchaKetana()),
-    ('PlagHaminchaGRA', (calendar) => (calendar as ZmanimCalendar).getPlagHamincha()),
-    ('ShaahZmanis72Minutes', (calendar) => (calendar as ZmanimCalendar).getShaahZmanisMGA()),
-    ('ShaahZmanisGRA', (calendar) => (calendar as ZmanimCalendar).getShaahZmanisGra()),
+    ('ChatzosHayom', (calendar) => (calendar as ZmanimCalendar).getChatzosHayom()),
+    ('ChatzosHayomAsHalfDay', (calendar) => (calendar as ZmanimCalendar).getChatzosHayomAsHalfDay()),
+    ('MinchaGedolaGRA', (calendar) => (calendar as ZmanimCalendar).getMinchaGedolaGRA()),
+    ('MinchaKetanaGRA', (calendar) => (calendar as ZmanimCalendar).getMinchaKetanaGRA()),
+    ('PlagHaminchaGRA', (calendar) => (calendar as ZmanimCalendar).getPlagHaminchaGRA()),
+    ('ShaahZmanis72Minutes', (calendar) => (calendar as ZmanimCalendar).getShaahZmanis72Minutes()),
+    ('ShaahZmanisGRA', (calendar) => (calendar as ZmanimCalendar).getShaahZmanisGRA()),
     ('SofZmanShmaGRA', (calendar) => (calendar as ZmanimCalendar).getSofZmanShmaGRA()),
-    ('SofZmanShmaMGA72Minutes', (calendar) => (calendar as ZmanimCalendar).getSofZmanShmaMGA()),
+    ('SofZmanShmaMGA72Minutes', (calendar) => (calendar as ZmanimCalendar).getSofZmanShmaMGA72Minutes()),
     ('SofZmanTfilaGRA', (calendar) => (calendar as ZmanimCalendar).getSofZmanTfilaGRA()),
-    ('SofZmanTfilaMGA72Minutes', (calendar) => (calendar as ZmanimCalendar).getSofZmanTfilaMGA()),
-    ('Tzais72Minutes', (calendar) => (calendar as ZmanimCalendar).getTzais72()),
-    ('TzaisGeonim8Point5Degrees', (calendar) => (calendar as ZmanimCalendar).getTzais()),
+    ('SofZmanTfilaMGA72Minutes', (calendar) => (calendar as ZmanimCalendar).getSofZmanTfilaMGA72Minutes()),
+    ('Tzais72Minutes', (calendar) => (calendar as ZmanimCalendar).getTzais72Minutes()),
+    ('TzaisGeonim8Point5Degrees', (calendar) => (calendar as ZmanimCalendar).getTzaisGeonim8Point5Degrees()),
   ];
 
   static final List<_Getter> _complexGetters = [
-    ('Alos120Minutes', (calendar) => (calendar as ComplexZmanimCalendar).getAlos120()),
-    ('Alos120Zmanis', (calendar) => (calendar as ComplexZmanimCalendar).getAlos120Zmanis()),
-    ('Alos18Degrees', (calendar) => (calendar as ComplexZmanimCalendar).getAlos18Degrees()),
-    ('Alos19Degrees', (calendar) => (calendar as ComplexZmanimCalendar).getAlos19Degrees()),
-    ('Alos19Point8Degrees', (calendar) => (calendar as ComplexZmanimCalendar).getAlos19Point8Degrees()),
-    ('Alos26Degrees', (calendar) => (calendar as ComplexZmanimCalendar).getAlos26Degrees()),
-    ('Alos60Minutes', (calendar) => (calendar as ComplexZmanimCalendar).getAlos60()),
-    ('Alos72Zmanis', (calendar) => (calendar as ComplexZmanimCalendar).getAlos72Zmanis()),
-    ('Alos90Minutes', (calendar) => (calendar as ComplexZmanimCalendar).getAlos90()),
-    ('Alos90Zmanis', (calendar) => (calendar as ComplexZmanimCalendar).getAlos90Zmanis()),
-    ('Alos96Minutes', (calendar) => (calendar as ComplexZmanimCalendar).getAlos96()),
-    ('Alos96Zmanis', (calendar) => (calendar as ComplexZmanimCalendar).getAlos96Zmanis()),
-    ('AlosBaalHatanya', (calendar) => (calendar as ComplexZmanimCalendar).getAlosBaalHatanya()),
-    ('BainHashmashosRT13Point24Degrees', (calendar) => (calendar as ComplexZmanimCalendar).getBainHasmashosRT13Point24Degrees()),
-    ('BainHashmashosRT13Point5MinutesBefore7Point083Degrees', (calendar) => (calendar as ComplexZmanimCalendar).getBainHasmashosRT13Point5MinutesBefore7Point083Degrees()),
-    ('BainHashmashosRT2Stars', (calendar) => (calendar as ComplexZmanimCalendar).getBainHasmashosRT2Stars()),
-    ('BainHashmashosRT58Point5Minutes', (calendar) => (calendar as ComplexZmanimCalendar).getBainHasmashosRT58Point5Minutes()),
-    ('BainHashmashosYereim13Point5Minutes', (calendar) => (calendar as ComplexZmanimCalendar).getBainHasmashosYereim13Point5Minutes()),
-    ('BainHashmashosYereim16Point875Minutes', (calendar) => (calendar as ComplexZmanimCalendar).getBainHasmashosYereim16Point875Minutes()),
-    ('BainHashmashosYereim18Minutes', (calendar) => (calendar as ComplexZmanimCalendar).getBainHasmashosYereim18Minutes()),
-    ('BainHashmashosYereim2Point1Degrees', (calendar) => (calendar as ComplexZmanimCalendar).getBainHasmashosYereim2Point1Degrees()),
-    ('BainHashmashosYereim2Point8Degrees', (calendar) => (calendar as ComplexZmanimCalendar).getBainHasmashosYereim2Point8Degrees()),
-    ('BainHashmashosYereim3Point05Degrees', (calendar) => (calendar as ComplexZmanimCalendar).getBainHasmashosYereim3Point5Degrees()),
-    ('FixedLocalChatzosHayom', (calendar) => (calendar as ComplexZmanimCalendar).getFixedLocalChatzos()),
-    ('MinchaGedola16Point1Degrees', (calendar) => (calendar as ComplexZmanimCalendar).getMinchaGedola16Point1Degrees()),
-    ('MinchaGedola30Minutes', (calendar) => (calendar as ComplexZmanimCalendar).getMinchaGedola30Minutes()),
-    ('MinchaGedola72Minutes', (calendar) => (calendar as ComplexZmanimCalendar).getMinchaGedola72Minutes()),
-    ('MinchaGedolaAhavatShalom', (calendar) => (calendar as ComplexZmanimCalendar).getMinchaGedolaAhavatShalom()),
-    ('MinchaGedolaAteretTorah', (calendar) => (calendar as ComplexZmanimCalendar).getMinchaGedolaAteretTorah()),
-    ('MinchaGedolaBaalHatanya', (calendar) => (calendar as ComplexZmanimCalendar).getMinchaGedolaBaalHatanya()),
-    ('MinchaGedolaGRAFixedLocalChatzos30Minutes', (calendar) => (calendar as ComplexZmanimCalendar).getMinchaGedolaGRAFixedLocalChatzos30Minutes()),
-    ('MinchaGedolaGRAGreaterThan30', (calendar) => (calendar as ComplexZmanimCalendar).getMinchaGedolaGreaterThan30()),
-    ('MinchaKetana16Point1Degrees', (calendar) => (calendar as ComplexZmanimCalendar).getMinchaKetana16Point1Degrees()),
-    ('MinchaKetana72Minutes', (calendar) => (calendar as ComplexZmanimCalendar).getMinchaKetana72Minutes()),
-    ('MinchaKetanaAhavatShalom', (calendar) => (calendar as ComplexZmanimCalendar).getMinchaKetanaAhavatShalom()),
-    ('MinchaKetanaAteretTorah', (calendar) => (calendar as ComplexZmanimCalendar).getMinchaKetanaAteretTorah()),
-    ('MinchaKetanaBaalHatanya', (calendar) => (calendar as ComplexZmanimCalendar).getMinchaKetanaBaalHatanya()),
-    ('MinchaKetanaGRAFixedLocalChatzosToSunset', (calendar) => (calendar as ComplexZmanimCalendar).getMinchaKetanaGRAFixedLocalChatzosToSunset()),
-    ('Misheyakir10Point2Degrees', (calendar) => (calendar as ComplexZmanimCalendar).getMisheyakir10Point2Degrees()),
-    ('Misheyakir11Degrees', (calendar) => (calendar as ComplexZmanimCalendar).getMisheyakir11Degrees()),
-    ('Misheyakir11Point5Degrees', (calendar) => (calendar as ComplexZmanimCalendar).getMisheyakir11Point5Degrees()),
-    ('Misheyakir12Point85Degrees', (calendar) => (calendar as ComplexZmanimCalendar).getMisheyakir12Point85Degrees()),
-    ('Misheyakir7Point65Degrees', (calendar) => (calendar as ComplexZmanimCalendar).getMisheyakir7Point65Degrees()),
-    ('Misheyakir9Point5Degrees', (calendar) => (calendar as ComplexZmanimCalendar).getMisheyakir9Point5Degrees()),
-    ('PlagAhavatShalom', (calendar) => (calendar as ComplexZmanimCalendar).getPlagAhavatShalom()),
-    ('PlagAlos16Point1DegreesToTzaisGeonim7Point083Degrees', (calendar) => (calendar as ComplexZmanimCalendar).getPlagAlos16Point1ToTzaisGeonim7Point083Degrees()),
-    ('PlagAlosToSunset', (calendar) => (calendar as ComplexZmanimCalendar).getPlagAlosToSunset()),
-    ('PlagHamincha120Minutes', (calendar) => (calendar as ComplexZmanimCalendar).getPlagHamincha120Minutes()),
-    ('PlagHamincha120MinutesZmanis', (calendar) => (calendar as ComplexZmanimCalendar).getPlagHamincha120MinutesZmanis()),
-    ('PlagHamincha16Point1Degrees', (calendar) => (calendar as ComplexZmanimCalendar).getPlagHamincha16Point1Degrees()),
-    ('PlagHamincha18Degrees', (calendar) => (calendar as ComplexZmanimCalendar).getPlagHamincha18Degrees()),
-    ('PlagHamincha19Point8Degrees', (calendar) => (calendar as ComplexZmanimCalendar).getPlagHamincha19Point8Degrees()),
-    ('PlagHamincha26Degrees', (calendar) => (calendar as ComplexZmanimCalendar).getPlagHamincha26Degrees()),
-    ('PlagHamincha60Minutes', (calendar) => (calendar as ComplexZmanimCalendar).getPlagHamincha60Minutes()),
-    ('PlagHamincha72Minutes', (calendar) => (calendar as ComplexZmanimCalendar).getPlagHamincha72Minutes()),
-    ('PlagHamincha72MinutesZmanis', (calendar) => (calendar as ComplexZmanimCalendar).getPlagHamincha72MinutesZmanis()),
-    ('PlagHamincha90Minutes', (calendar) => (calendar as ComplexZmanimCalendar).getPlagHamincha90Minutes()),
-    ('PlagHamincha90MinutesZmanis', (calendar) => (calendar as ComplexZmanimCalendar).getPlagHamincha90MinutesZmanis()),
-    ('PlagHamincha96Minutes', (calendar) => (calendar as ComplexZmanimCalendar).getPlagHamincha96Minutes()),
-    ('PlagHamincha96MinutesZmanis', (calendar) => (calendar as ComplexZmanimCalendar).getPlagHamincha96MinutesZmanis()),
-    ('PlagHaminchaAteretTorah', (calendar) => (calendar as ComplexZmanimCalendar).getPlagHaminchaAteretTorah()),
-    ('PlagHaminchaBaalHatanya', (calendar) => (calendar as ComplexZmanimCalendar).getPlagHaminchaBaalHatanya()),
-    ('PlagHaminchaGRAFixedLocalChatzosToSunset', (calendar) => (calendar as ComplexZmanimCalendar).getPlagHaminchaGRAFixedLocalChatzosToSunset()),
-    ('PolarPlagHaminchaBenIshChai', (calendar) => (calendar as ComplexZmanimCalendar).getPolarPlagHaminchaBenIshChai()),
-    ('PolarPlagHaminchaTeshuvosVehanhagos', (calendar) => (calendar as ComplexZmanimCalendar).getPolarPlagHaminchaTeshuvosVehanhagos()),
-    ('PolarStartOfDayTeshuvosVehanhagos', (calendar) => (calendar as ComplexZmanimCalendar).getPolarStartOfDayTeshuvosVehanhagos()),
-    ('PolarSunriseBenIshChai', (calendar) => (calendar as ComplexZmanimCalendar).getPolarSunriseBenIshChai()),
-    ('PolarSunsetBenIshChai', (calendar) => (calendar as ComplexZmanimCalendar).getPolarSunsetBenIshChai()),
-    ('SamuchLeMinchaKetana16Point1Degrees', (calendar) => (calendar as ComplexZmanimCalendar).getSamuchLeMinchaKetana16Point1Degrees()),
-    ('SamuchLeMinchaKetana72Minutes', (calendar) => (calendar as ComplexZmanimCalendar).getSamuchLeMinchaKetana72Minutes()),
-    ('SamuchLeMinchaKetanaGRA', (calendar) => (calendar as ComplexZmanimCalendar).getSamuchLeMinchaKetanaGRA()),
-    ('ShaahZmanis120Minutes', (calendar) => (calendar as ComplexZmanimCalendar).getShaahZmanis120Minutes()),
-    ('ShaahZmanis120MinutesZmanis', (calendar) => (calendar as ComplexZmanimCalendar).getShaahZmanis120MinutesZmanis()),
-    ('ShaahZmanis16Point1Degrees', (calendar) => (calendar as ComplexZmanimCalendar).getShaahZmanis16Point1Degrees()),
-    ('ShaahZmanis18Degrees', (calendar) => (calendar as ComplexZmanimCalendar).getShaahZmanis18Degrees()),
-    ('ShaahZmanis19Point8Degrees', (calendar) => (calendar as ComplexZmanimCalendar).getShaahZmanis19Point8Degrees()),
-    ('ShaahZmanis26Degrees', (calendar) => (calendar as ComplexZmanimCalendar).getShaahZmanis26Degrees()),
-    ('ShaahZmanis60Minutes', (calendar) => (calendar as ComplexZmanimCalendar).getShaahZmanis60Minutes()),
-    ('ShaahZmanis72MinutesZmanis', (calendar) => (calendar as ComplexZmanimCalendar).getShaahZmanis72MinutesZmanis()),
-    ('ShaahZmanis90Minutes', (calendar) => (calendar as ComplexZmanimCalendar).getShaahZmanis90Minutes()),
-    ('ShaahZmanis90MinutesZmanis', (calendar) => (calendar as ComplexZmanimCalendar).getShaahZmanis90MinutesZmanis()),
-    ('ShaahZmanis96Minutes', (calendar) => (calendar as ComplexZmanimCalendar).getShaahZmanis96Minutes()),
-    ('ShaahZmanis96MinutesZmanis', (calendar) => (calendar as ComplexZmanimCalendar).getShaahZmanis96MinutesZmanis()),
-    ('ShaahZmanisAlos16Point1DegreesToTzaisGeonim3Point7Degrees', (calendar) => (calendar as ComplexZmanimCalendar).getShaahZmanisAlos16Point1DegreesToTzaisGeonim3Point7Degrees()),
-    ('ShaahZmanisAlos16Point1DegreesToTzaisGeonim3Point8Degrees', (calendar) => (calendar as ComplexZmanimCalendar).getShaahZmanisAlos16Point1DegreesToTzaisGeonim3Point8Degrees()),
-    ('ShaahZmanisAlos16Point1DegreesToTzaisGeonim7Point083Degrees', (calendar) => (calendar as ComplexZmanimCalendar).getShaahZmanisAlos16Point1DegreesToTzaisGeonim7Point083Degrees()),
-    ('ShaahZmanisAteretTorah', (calendar) => (calendar as ComplexZmanimCalendar).getShaahZmanisAteretTorah()),
-    ('ShaahZmanisBaalHatanya', (calendar) => (calendar as ComplexZmanimCalendar).getShaahZmanisBaalHatanya()),
-    ('SofZmanAchilasChametzBaalHatanya', (calendar) => (calendar as ComplexZmanimCalendar).getSofZmanAchilasChametzBaalHatanya()),
-    ('SofZmanAchilasChametzGRA', (calendar) => (calendar as ComplexZmanimCalendar).getSofZmanAchilasChametzGRA()),
-    ('SofZmanAchilasChametzMGA16Point1Degrees', (calendar) => (calendar as ComplexZmanimCalendar).getSofZmanAchilasChametzMGA16Point1Degrees()),
-    ('SofZmanAchilasChametzMGA72Minutes', (calendar) => (calendar as ComplexZmanimCalendar).getSofZmanAchilasChametzMGA72Minutes()),
-    ('SofZmanAchilasChametzMGA72MinutesZmanis', (calendar) => (calendar as ComplexZmanimCalendar).getSofZmanAchilasChametzMGA72MinutesZmanis()),
-    ('SofZmanBiurChametzBaalHatanya', (calendar) => (calendar as ComplexZmanimCalendar).getSofZmanBiurChametzBaalHatanya()),
-    ('SofZmanBiurChametzGRA', (calendar) => (calendar as ComplexZmanimCalendar).getSofZmanBiurChametzGRA()),
-    ('SofZmanBiurChametzMGA16Point1Degrees', (calendar) => (calendar as ComplexZmanimCalendar).getSofZmanBiurChametzMGA16Point1Degrees()),
-    ('SofZmanBiurChametzMGA72Minutes', (calendar) => (calendar as ComplexZmanimCalendar).getSofZmanBiurChametzMGA72Minutes()),
-    ('SofZmanBiurChametzMGA72MinutesZmanis', (calendar) => (calendar as ComplexZmanimCalendar).getSofZmanBiurChametzMGA72MinutesZmanis()),
-    ('SofZmanKidushLevana15Days', (calendar) => (calendar as ComplexZmanimCalendar).getSofZmanKidushLevana15Days()),
-    ('SofZmanKidushLevanaBetweenMoldos', (calendar) => (calendar as ComplexZmanimCalendar).getSofZmanKidushLevanaBetweenMoldos()),
-    ('SofZmanShma3HoursBeforeChatzos', (calendar) => (calendar as ComplexZmanimCalendar).getSofZmanShma3HoursBeforeChatzos()),
-    ('SofZmanShmaAlos16Point1DegreesToTzaisGeonim7Point083Degrees', (calendar) => (calendar as ComplexZmanimCalendar).getSofZmanShmaAlos16Point1ToTzaisGeonim7Point083Degrees()),
-    ('SofZmanShmaAlos16Point1ToSunset', (calendar) => (calendar as ComplexZmanimCalendar).getSofZmanShmaAlos16Point1ToSunset()),
-    ('SofZmanShmaAteretTorah', (calendar) => (calendar as ComplexZmanimCalendar).getSofZmanShmaAteretTorah()),
-    ('SofZmanShmaBaalHatanya', (calendar) => (calendar as ComplexZmanimCalendar).getSofZmanShmaBaalHatanya()),
-    ('SofZmanShmaGRASunriseToFixedLocalChatzos', (calendar) => (calendar as ComplexZmanimCalendar).getSofZmanShmaGRASunriseToFixedLocalChatzos()),
-    ('SofZmanShmaMGA120Minutes', (calendar) => (calendar as ComplexZmanimCalendar).getSofZmanShmaMGA120Minutes()),
-    ('SofZmanShmaMGA16Point1Degrees', (calendar) => (calendar as ComplexZmanimCalendar).getSofZmanShmaMGA16Point1Degrees()),
-    ('SofZmanShmaMGA16Point1DegreesToFixedLocalChatzos', (calendar) => (calendar as ComplexZmanimCalendar).getSofZmanShmaMGA16Point1DegreesToFixedLocalChatzos()),
-    ('SofZmanShmaMGA18Degrees', (calendar) => (calendar as ComplexZmanimCalendar).getSofZmanShmaMGA18Degrees()),
-    ('SofZmanShmaMGA18DegreesToFixedLocalChatzos', (calendar) => (calendar as ComplexZmanimCalendar).getSofZmanShmaMGA18DegreesToFixedLocalChatzos()),
-    ('SofZmanShmaMGA19Point8Degrees', (calendar) => (calendar as ComplexZmanimCalendar).getSofZmanShmaMGA19Point8Degrees()),
-    ('SofZmanShmaMGA72MinutesToFixedLocalChatzos', (calendar) => (calendar as ComplexZmanimCalendar).getSofZmanShmaMGA72MinutesToFixedLocalChatzos()),
-    ('SofZmanShmaMGA72MinutesZmanis', (calendar) => (calendar as ComplexZmanimCalendar).getSofZmanShmaMGA72MinutesZmanis()),
-    ('SofZmanShmaMGA90Minutes', (calendar) => (calendar as ComplexZmanimCalendar).getSofZmanShmaMGA90Minutes()),
-    ('SofZmanShmaMGA90MinutesToFixedLocalChatzos', (calendar) => (calendar as ComplexZmanimCalendar).getSofZmanShmaMGA90MinutesToFixedLocalChatzos()),
-    ('SofZmanShmaMGA90MinutesZmanis', (calendar) => (calendar as ComplexZmanimCalendar).getSofZmanShmaMGA90MinutesZmanis()),
-    ('SofZmanShmaMGA96Minutes', (calendar) => (calendar as ComplexZmanimCalendar).getSofZmanShmaMGA96Minutes()),
-    ('SofZmanShmaMGA96MinutesZmanis', (calendar) => (calendar as ComplexZmanimCalendar).getSofZmanShmaMGA96MinutesZmanis()),
-    ('SofZmanTfila2HoursBeforeChatzos', (calendar) => (calendar as ComplexZmanimCalendar).getSofZmanTfila2HoursBeforeChatzos()),
-    ('SofZmanTfilaAteretTorah', (calendar) => (calendar as ComplexZmanimCalendar).getSofZmanTfilahAteretTorah()),
-    ('SofZmanTfilaBaalHatanya', (calendar) => (calendar as ComplexZmanimCalendar).getSofZmanTfilaBaalHatanya()),
-    ('SofZmanTfilaGRASunriseToFixedLocalChatzos', (calendar) => (calendar as ComplexZmanimCalendar).getSofZmanTfilaGRASunriseToFixedLocalChatzos()),
-    ('SofZmanTfilaMGA120Minutes', (calendar) => (calendar as ComplexZmanimCalendar).getSofZmanTfilaMGA120Minutes()),
-    ('SofZmanTfilaMGA16Point1Degrees', (calendar) => (calendar as ComplexZmanimCalendar).getSofZmanTfilaMGA16Point1Degrees()),
-    ('SofZmanTfilaMGA18Degrees', (calendar) => (calendar as ComplexZmanimCalendar).getSofZmanTfilaMGA18Degrees()),
-    ('SofZmanTfilaMGA19Point8Degrees', (calendar) => (calendar as ComplexZmanimCalendar).getSofZmanTfilaMGA19Point8Degrees()),
-    ('SofZmanTfilaMGA72MinutesZmanis', (calendar) => (calendar as ComplexZmanimCalendar).getSofZmanTfilaMGA72MinutesZmanis()),
-    ('SofZmanTfilaMGA90Minutes', (calendar) => (calendar as ComplexZmanimCalendar).getSofZmanTfilaMGA90Minutes()),
-    ('SofZmanTfilaMGA90MinutesZmanis', (calendar) => (calendar as ComplexZmanimCalendar).getSofZmanTfilaMGA90MinutesZmanis()),
-    ('SofZmanTfilaMGA96Minutes', (calendar) => (calendar as ComplexZmanimCalendar).getSofZmanTfilaMGA96Minutes()),
-    ('SofZmanTfilaMGA96MinutesZmanis', (calendar) => (calendar as ComplexZmanimCalendar).getSofZmanTfilaMGA96MinutesZmanis()),
-    ('TchilasZmanKidushLevana3Days', (calendar) => (calendar as ComplexZmanimCalendar).getTchilasZmanKidushLevana3Days()),
-    ('TchilasZmanKidushLevana7Days', (calendar) => (calendar as ComplexZmanimCalendar).getTchilasZmanKidushLevana7Days()),
-    ('Tzais120Minutes', (calendar) => (calendar as ComplexZmanimCalendar).getTzais120()),
-    ('Tzais120Zmanis', (calendar) => (calendar as ComplexZmanimCalendar).getTzais120Zmanis()),
-    ('Tzais16Point1Degrees', (calendar) => (calendar as ComplexZmanimCalendar).getTzais16Point1Degrees()),
-    ('Tzais18Degrees', (calendar) => (calendar as ComplexZmanimCalendar).getTzais18Degrees()),
-    ('Tzais19Point8Degrees', (calendar) => (calendar as ComplexZmanimCalendar).getTzais19Point8Degrees()),
-    ('Tzais26Degrees', (calendar) => (calendar as ComplexZmanimCalendar).getTzais26Degrees()),
-    ('Tzais50Minutes', (calendar) => (calendar as ComplexZmanimCalendar).getTzais50()),
-    ('Tzais60Minutes', (calendar) => (calendar as ComplexZmanimCalendar).getTzais60()),
-    ('Tzais72Zmanis', (calendar) => (calendar as ComplexZmanimCalendar).getTzais72Zmanis()),
-    ('Tzais90Minutes', (calendar) => (calendar as ComplexZmanimCalendar).getTzais90()),
-    ('Tzais90Zmanis', (calendar) => (calendar as ComplexZmanimCalendar).getTzais90Zmanis()),
-    ('Tzais96Minutes', (calendar) => (calendar as ComplexZmanimCalendar).getTzais96()),
-    ('Tzais96Zmanis', (calendar) => (calendar as ComplexZmanimCalendar).getTzais96Zmanis()),
-    ('TzaisAteretTorah', (calendar) => (calendar as ComplexZmanimCalendar).getTzaisAteretTorah()),
-    ('TzaisBaalHatanya', (calendar) => (calendar as ComplexZmanimCalendar).getTzaisBaalHatanya()),
-    ('TzaisGeonim3Point7Degrees', (calendar) => (calendar as ComplexZmanimCalendar).getTzaisGeonim3Point7Degrees()),
-    ('TzaisGeonim3Point8Degrees', (calendar) => (calendar as ComplexZmanimCalendar).getTzaisGeonim3Point8Degrees()),
-    ('TzaisGeonim4Point42Degrees', (calendar) => (calendar as ComplexZmanimCalendar).getTzaisGeonim4Point42Degrees()),
-    ('TzaisGeonim4Point66Degrees', (calendar) => (calendar as ComplexZmanimCalendar).getTzaisGeonim4Point66Degrees()),
-    ('TzaisGeonim4Point8Degrees', (calendar) => (calendar as ComplexZmanimCalendar).getTzaisGeonim4Point8Degrees()),
-    ('TzaisGeonim5Point95Degrees', (calendar) => (calendar as ComplexZmanimCalendar).getTzaisGeonim5Point95Degrees()),
-    ('TzaisGeonim6Point45Degrees', (calendar) => (calendar as ComplexZmanimCalendar).getTzaisGeonim6Point45Degrees()),
-    ('TzaisGeonim7Point083Degrees', (calendar) => (calendar as ComplexZmanimCalendar).getTzaisGeonim7Point083Degrees()),
-    ('TzaisGeonim7Point67Degrees', (calendar) => (calendar as ComplexZmanimCalendar).getTzaisGeonim7Point67Degrees()),
-    ('TzaisGeonim9Point3Degrees', (calendar) => (calendar as ComplexZmanimCalendar).getTzaisGeonim9Point3Degrees()),
-    ('TzaisGeonim9Point75Degrees', (calendar) => (calendar as ComplexZmanimCalendar).getTzaisGeonim9Point75Degrees()),
-    ('ZmanMolad', (calendar) => (calendar as ComplexZmanimCalendar).getZmanMolad()),
+    ('Alos120Minutes', (calendar) => (calendar as ComprehensiveZmanimCalendar).getAlos120Minutes()),
+    ('Alos120Zmanis', (calendar) => (calendar as ComprehensiveZmanimCalendar).getAlos120Zmanis()),
+    ('Alos18Degrees', (calendar) => (calendar as ComprehensiveZmanimCalendar).getAlos18Degrees()),
+    ('Alos19Degrees', (calendar) => (calendar as ComprehensiveZmanimCalendar).getAlos19Degrees()),
+    ('Alos19Point8Degrees', (calendar) => (calendar as ComprehensiveZmanimCalendar).getAlos19Point8Degrees()),
+    ('Alos26Degrees', (calendar) => (calendar as ComprehensiveZmanimCalendar).getAlos26Degrees()),
+    ('Alos60Minutes', (calendar) => (calendar as ComprehensiveZmanimCalendar).getAlos60Minutes()),
+    ('Alos72Zmanis', (calendar) => (calendar as ComprehensiveZmanimCalendar).getAlos72Zmanis()),
+    ('Alos90Minutes', (calendar) => (calendar as ComprehensiveZmanimCalendar).getAlos90Minutes()),
+    ('Alos90Zmanis', (calendar) => (calendar as ComprehensiveZmanimCalendar).getAlos90Zmanis()),
+    ('Alos96Minutes', (calendar) => (calendar as ComprehensiveZmanimCalendar).getAlos96Minutes()),
+    ('Alos96Zmanis', (calendar) => (calendar as ComprehensiveZmanimCalendar).getAlos96Zmanis()),
+    ('AlosBaalHatanya', (calendar) => (calendar as ComprehensiveZmanimCalendar).getAlosBaalHatanya()),
+    ('BainHashmashosRT13Point24Degrees', (calendar) => (calendar as ComprehensiveZmanimCalendar).getBainHashmashosRT13Point24Degrees()),
+    ('BainHashmashosRT13Point5MinutesBefore7Point083Degrees', (calendar) => (calendar as ComprehensiveZmanimCalendar).getBainHashmashosRT13Point5MinutesBefore7Point083Degrees()),
+    ('BainHashmashosRT2Stars', (calendar) => (calendar as ComprehensiveZmanimCalendar).getBainHashmashosRT2Stars()),
+    ('BainHashmashosRT58Point5Minutes', (calendar) => (calendar as ComprehensiveZmanimCalendar).getBainHashmashosRT58Point5Minutes()),
+    ('BainHashmashosYereim13Point5Minutes', (calendar) => (calendar as ComprehensiveZmanimCalendar).getBainHashmashosYereim13Point5Minutes()),
+    ('BainHashmashosYereim16Point875Minutes', (calendar) => (calendar as ComprehensiveZmanimCalendar).getBainHashmashosYereim16Point875Minutes()),
+    ('BainHashmashosYereim18Minutes', (calendar) => (calendar as ComprehensiveZmanimCalendar).getBainHashmashosYereim18Minutes()),
+    ('BainHashmashosYereim2Point1Degrees', (calendar) => (calendar as ComprehensiveZmanimCalendar).getBainHashmashosYereim2Point1Degrees()),
+    ('BainHashmashosYereim2Point8Degrees', (calendar) => (calendar as ComprehensiveZmanimCalendar).getBainHashmashosYereim2Point8Degrees()),
+    ('BainHashmashosYereim3Point05Degrees', (calendar) => (calendar as ComprehensiveZmanimCalendar).getBainHashmashosYereim3Point05Degrees()),
+    ('FixedLocalChatzosHayom', (calendar) => (calendar as ComprehensiveZmanimCalendar).getFixedLocalChatzosHayom()),
+    ('MinchaGedola16Point1Degrees', (calendar) => (calendar as ComprehensiveZmanimCalendar).getMinchaGedola16Point1Degrees()),
+    ('MinchaGedola30Minutes', (calendar) => (calendar as ComprehensiveZmanimCalendar).getMinchaGedola30Minutes()),
+    ('MinchaGedola72Minutes', (calendar) => (calendar as ComprehensiveZmanimCalendar).getMinchaGedola72Minutes()),
+    ('MinchaGedolaAhavatShalom', (calendar) => (calendar as ComprehensiveZmanimCalendar).getMinchaGedolaAhavatShalom()),
+    ('MinchaGedolaAteretTorah', (calendar) => (calendar as ComprehensiveZmanimCalendar).getMinchaGedolaAteretTorah()),
+    ('MinchaGedolaBaalHatanya', (calendar) => (calendar as ComprehensiveZmanimCalendar).getMinchaGedolaBaalHatanya()),
+    ('MinchaGedolaGRAFixedLocalChatzos30Minutes', (calendar) => (calendar as ComprehensiveZmanimCalendar).getMinchaGedolaGRAFixedLocalChatzos30Minutes()),
+    ('MinchaGedolaGRAGreaterThan30', (calendar) => (calendar as ComprehensiveZmanimCalendar).getMinchaGedolaGRAGreaterThan30()),
+    ('MinchaKetana16Point1Degrees', (calendar) => (calendar as ComprehensiveZmanimCalendar).getMinchaKetana16Point1Degrees()),
+    ('MinchaKetana72Minutes', (calendar) => (calendar as ComprehensiveZmanimCalendar).getMinchaKetana72Minutes()),
+    ('MinchaKetanaAhavatShalom', (calendar) => (calendar as ComprehensiveZmanimCalendar).getMinchaKetanaAhavatShalom()),
+    ('MinchaKetanaAteretTorah', (calendar) => (calendar as ComprehensiveZmanimCalendar).getMinchaKetanaAteretTorah()),
+    ('MinchaKetanaBaalHatanya', (calendar) => (calendar as ComprehensiveZmanimCalendar).getMinchaKetanaBaalHatanya()),
+    ('MinchaKetanaGRAFixedLocalChatzosToSunset', (calendar) => (calendar as ComprehensiveZmanimCalendar).getMinchaKetanaGRAFixedLocalChatzosToSunset()),
+    ('Misheyakir10Point2Degrees', (calendar) => (calendar as ComprehensiveZmanimCalendar).getMisheyakir10Point2Degrees()),
+    ('Misheyakir11Degrees', (calendar) => (calendar as ComprehensiveZmanimCalendar).getMisheyakir11Degrees()),
+    ('Misheyakir11Point5Degrees', (calendar) => (calendar as ComprehensiveZmanimCalendar).getMisheyakir11Point5Degrees()),
+    ('Misheyakir12Point85Degrees', (calendar) => (calendar as ComprehensiveZmanimCalendar).getMisheyakir12Point85Degrees()),
+    ('Misheyakir7Point65Degrees', (calendar) => (calendar as ComprehensiveZmanimCalendar).getMisheyakir7Point65Degrees()),
+    ('Misheyakir9Point5Degrees', (calendar) => (calendar as ComprehensiveZmanimCalendar).getMisheyakir9Point5Degrees()),
+    ('PlagAhavatShalom', (calendar) => (calendar as ComprehensiveZmanimCalendar).getPlagAhavatShalom()),
+    ('PlagAlos16Point1DegreesToTzaisGeonim7Point083Degrees', (calendar) => (calendar as ComprehensiveZmanimCalendar).getPlagAlos16Point1DegreesToTzaisGeonim7Point083Degrees()),
+    ('PlagAlosToSunset', (calendar) => (calendar as ComprehensiveZmanimCalendar).getPlagAlosToSunset()),
+    ('PlagHamincha120Minutes', (calendar) => (calendar as ComprehensiveZmanimCalendar).getPlagHamincha120Minutes()),
+    ('PlagHamincha120MinutesZmanis', (calendar) => (calendar as ComprehensiveZmanimCalendar).getPlagHamincha120MinutesZmanis()),
+    ('PlagHamincha16Point1Degrees', (calendar) => (calendar as ComprehensiveZmanimCalendar).getPlagHamincha16Point1Degrees()),
+    ('PlagHamincha18Degrees', (calendar) => (calendar as ComprehensiveZmanimCalendar).getPlagHamincha18Degrees()),
+    ('PlagHamincha19Point8Degrees', (calendar) => (calendar as ComprehensiveZmanimCalendar).getPlagHamincha19Point8Degrees()),
+    ('PlagHamincha26Degrees', (calendar) => (calendar as ComprehensiveZmanimCalendar).getPlagHamincha26Degrees()),
+    ('PlagHamincha60Minutes', (calendar) => (calendar as ComprehensiveZmanimCalendar).getPlagHamincha60Minutes()),
+    ('PlagHamincha72Minutes', (calendar) => (calendar as ComprehensiveZmanimCalendar).getPlagHamincha72Minutes()),
+    ('PlagHamincha72MinutesZmanis', (calendar) => (calendar as ComprehensiveZmanimCalendar).getPlagHamincha72MinutesZmanis()),
+    ('PlagHamincha90Minutes', (calendar) => (calendar as ComprehensiveZmanimCalendar).getPlagHamincha90Minutes()),
+    ('PlagHamincha90MinutesZmanis', (calendar) => (calendar as ComprehensiveZmanimCalendar).getPlagHamincha90MinutesZmanis()),
+    ('PlagHamincha96Minutes', (calendar) => (calendar as ComprehensiveZmanimCalendar).getPlagHamincha96Minutes()),
+    ('PlagHamincha96MinutesZmanis', (calendar) => (calendar as ComprehensiveZmanimCalendar).getPlagHamincha96MinutesZmanis()),
+    ('PlagHaminchaAteretTorah', (calendar) => (calendar as ComprehensiveZmanimCalendar).getPlagHaminchaAteretTorah()),
+    ('PlagHaminchaBaalHatanya', (calendar) => (calendar as ComprehensiveZmanimCalendar).getPlagHaminchaBaalHatanya()),
+    ('PlagHaminchaGRAFixedLocalChatzosToSunset', (calendar) => (calendar as ComprehensiveZmanimCalendar).getPlagHaminchaGRAFixedLocalChatzosToSunset()),
+    ('PolarPlagHaminchaBenIshChai', (calendar) => (calendar as ComprehensiveZmanimCalendar).getPolarPlagHaminchaBenIshChai()),
+    ('PolarPlagHaminchaTeshuvosVehanhagos', (calendar) => (calendar as ComprehensiveZmanimCalendar).getPolarPlagHaminchaTeshuvosVehanhagos()),
+    ('PolarStartOfDayTeshuvosVehanhagos', (calendar) => (calendar as ComprehensiveZmanimCalendar).getPolarStartOfDayTeshuvosVehanhagos()),
+    ('PolarSunriseBenIshChai', (calendar) => (calendar as ComprehensiveZmanimCalendar).getPolarSunriseBenIshChai()),
+    ('PolarSunsetBenIshChai', (calendar) => (calendar as ComprehensiveZmanimCalendar).getPolarSunsetBenIshChai()),
+    ('SamuchLeMinchaKetana16Point1Degrees', (calendar) => (calendar as ComprehensiveZmanimCalendar).getSamuchLeMinchaKetana16Point1Degrees()),
+    ('SamuchLeMinchaKetana72Minutes', (calendar) => (calendar as ComprehensiveZmanimCalendar).getSamuchLeMinchaKetana72Minutes()),
+    ('SamuchLeMinchaKetanaGRA', (calendar) => (calendar as ComprehensiveZmanimCalendar).getSamuchLeMinchaKetanaGRA()),
+    ('ShaahZmanis120Minutes', (calendar) => (calendar as ComprehensiveZmanimCalendar).getShaahZmanis120Minutes()),
+    ('ShaahZmanis120MinutesZmanis', (calendar) => (calendar as ComprehensiveZmanimCalendar).getShaahZmanis120MinutesZmanis()),
+    ('ShaahZmanis16Point1Degrees', (calendar) => (calendar as ComprehensiveZmanimCalendar).getShaahZmanis16Point1Degrees()),
+    ('ShaahZmanis18Degrees', (calendar) => (calendar as ComprehensiveZmanimCalendar).getShaahZmanis18Degrees()),
+    ('ShaahZmanis19Point8Degrees', (calendar) => (calendar as ComprehensiveZmanimCalendar).getShaahZmanis19Point8Degrees()),
+    ('ShaahZmanis26Degrees', (calendar) => (calendar as ComprehensiveZmanimCalendar).getShaahZmanis26Degrees()),
+    ('ShaahZmanis60Minutes', (calendar) => (calendar as ComprehensiveZmanimCalendar).getShaahZmanis60Minutes()),
+    ('ShaahZmanis72MinutesZmanis', (calendar) => (calendar as ComprehensiveZmanimCalendar).getShaahZmanis72MinutesZmanis()),
+    ('ShaahZmanis90Minutes', (calendar) => (calendar as ComprehensiveZmanimCalendar).getShaahZmanis90Minutes()),
+    ('ShaahZmanis90MinutesZmanis', (calendar) => (calendar as ComprehensiveZmanimCalendar).getShaahZmanis90MinutesZmanis()),
+    ('ShaahZmanis96Minutes', (calendar) => (calendar as ComprehensiveZmanimCalendar).getShaahZmanis96Minutes()),
+    ('ShaahZmanis96MinutesZmanis', (calendar) => (calendar as ComprehensiveZmanimCalendar).getShaahZmanis96MinutesZmanis()),
+    ('ShaahZmanisAlos16Point1DegreesToTzaisGeonim3Point7Degrees', (calendar) => (calendar as ComprehensiveZmanimCalendar).getShaahZmanisAlos16Point1DegreesToTzaisGeonim3Point7Degrees()),
+    ('ShaahZmanisAlos16Point1DegreesToTzaisGeonim3Point8Degrees', (calendar) => (calendar as ComprehensiveZmanimCalendar).getShaahZmanisAlos16Point1DegreesToTzaisGeonim3Point8Degrees()),
+    ('ShaahZmanisAlos16Point1DegreesToTzaisGeonim7Point083Degrees', (calendar) => (calendar as ComprehensiveZmanimCalendar).getShaahZmanisAlos16Point1DegreesToTzaisGeonim7Point083Degrees()),
+    ('ShaahZmanisAteretTorah', (calendar) => (calendar as ComprehensiveZmanimCalendar).getShaahZmanisAteretTorah()),
+    ('ShaahZmanisBaalHatanya', (calendar) => (calendar as ComprehensiveZmanimCalendar).getShaahZmanisBaalHatanya()),
+    ('SofZmanAchilasChametzBaalHatanya', (calendar) => (calendar as ComprehensiveZmanimCalendar).getSofZmanAchilasChametzBaalHatanya()),
+    ('SofZmanAchilasChametzGRA', (calendar) => (calendar as ComprehensiveZmanimCalendar).getSofZmanAchilasChametzGRA()),
+    ('SofZmanAchilasChametzMGA16Point1Degrees', (calendar) => (calendar as ComprehensiveZmanimCalendar).getSofZmanAchilasChametzMGA16Point1Degrees()),
+    ('SofZmanAchilasChametzMGA72Minutes', (calendar) => (calendar as ComprehensiveZmanimCalendar).getSofZmanAchilasChametzMGA72Minutes()),
+    ('SofZmanAchilasChametzMGA72MinutesZmanis', (calendar) => (calendar as ComprehensiveZmanimCalendar).getSofZmanAchilasChametzMGA72MinutesZmanis()),
+    ('SofZmanBiurChametzBaalHatanya', (calendar) => (calendar as ComprehensiveZmanimCalendar).getSofZmanBiurChametzBaalHatanya()),
+    ('SofZmanBiurChametzGRA', (calendar) => (calendar as ComprehensiveZmanimCalendar).getSofZmanBiurChametzGRA()),
+    ('SofZmanBiurChametzMGA16Point1Degrees', (calendar) => (calendar as ComprehensiveZmanimCalendar).getSofZmanBiurChametzMGA16Point1Degrees()),
+    ('SofZmanBiurChametzMGA72Minutes', (calendar) => (calendar as ComprehensiveZmanimCalendar).getSofZmanBiurChametzMGA72Minutes()),
+    ('SofZmanBiurChametzMGA72MinutesZmanis', (calendar) => (calendar as ComprehensiveZmanimCalendar).getSofZmanBiurChametzMGA72MinutesZmanis()),
+    ('SofZmanKidushLevana15Days', (calendar) => (calendar as ComprehensiveZmanimCalendar).getSofZmanKidushLevana15Days()),
+    ('SofZmanKidushLevanaBetweenMoldos', (calendar) => (calendar as ComprehensiveZmanimCalendar).getSofZmanKidushLevanaBetweenMoldos()),
+    ('SofZmanShma3HoursBeforeChatzos', (calendar) => (calendar as ComprehensiveZmanimCalendar).getSofZmanShma3HoursBeforeChatzos()),
+    ('SofZmanShmaAlos16Point1DegreesToTzaisGeonim7Point083Degrees', (calendar) => (calendar as ComprehensiveZmanimCalendar).getSofZmanShmaAlos16Point1DegreesToTzaisGeonim7Point083Degrees()),
+    ('SofZmanShmaAlos16Point1ToSunset', (calendar) => (calendar as ComprehensiveZmanimCalendar).getSofZmanShmaAlos16Point1ToSunset()),
+    ('SofZmanShmaAteretTorah', (calendar) => (calendar as ComprehensiveZmanimCalendar).getSofZmanShmaAteretTorah()),
+    ('SofZmanShmaBaalHatanya', (calendar) => (calendar as ComprehensiveZmanimCalendar).getSofZmanShmaBaalHatanya()),
+    ('SofZmanShmaGRASunriseToFixedLocalChatzos', (calendar) => (calendar as ComprehensiveZmanimCalendar).getSofZmanShmaGRASunriseToFixedLocalChatzos()),
+    ('SofZmanShmaMGA120Minutes', (calendar) => (calendar as ComprehensiveZmanimCalendar).getSofZmanShmaMGA120Minutes()),
+    ('SofZmanShmaMGA16Point1Degrees', (calendar) => (calendar as ComprehensiveZmanimCalendar).getSofZmanShmaMGA16Point1Degrees()),
+    ('SofZmanShmaMGA16Point1DegreesToFixedLocalChatzos', (calendar) => (calendar as ComprehensiveZmanimCalendar).getSofZmanShmaMGA16Point1DegreesToFixedLocalChatzos()),
+    ('SofZmanShmaMGA18Degrees', (calendar) => (calendar as ComprehensiveZmanimCalendar).getSofZmanShmaMGA18Degrees()),
+    ('SofZmanShmaMGA18DegreesToFixedLocalChatzos', (calendar) => (calendar as ComprehensiveZmanimCalendar).getSofZmanShmaMGA18DegreesToFixedLocalChatzos()),
+    ('SofZmanShmaMGA19Point8Degrees', (calendar) => (calendar as ComprehensiveZmanimCalendar).getSofZmanShmaMGA19Point8Degrees()),
+    ('SofZmanShmaMGA72MinutesToFixedLocalChatzos', (calendar) => (calendar as ComprehensiveZmanimCalendar).getSofZmanShmaMGA72MinutesToFixedLocalChatzos()),
+    ('SofZmanShmaMGA72MinutesZmanis', (calendar) => (calendar as ComprehensiveZmanimCalendar).getSofZmanShmaMGA72MinutesZmanis()),
+    ('SofZmanShmaMGA90Minutes', (calendar) => (calendar as ComprehensiveZmanimCalendar).getSofZmanShmaMGA90Minutes()),
+    ('SofZmanShmaMGA90MinutesToFixedLocalChatzos', (calendar) => (calendar as ComprehensiveZmanimCalendar).getSofZmanShmaMGA90MinutesToFixedLocalChatzos()),
+    ('SofZmanShmaMGA90MinutesZmanis', (calendar) => (calendar as ComprehensiveZmanimCalendar).getSofZmanShmaMGA90MinutesZmanis()),
+    ('SofZmanShmaMGA96Minutes', (calendar) => (calendar as ComprehensiveZmanimCalendar).getSofZmanShmaMGA96Minutes()),
+    ('SofZmanShmaMGA96MinutesZmanis', (calendar) => (calendar as ComprehensiveZmanimCalendar).getSofZmanShmaMGA96MinutesZmanis()),
+    ('SofZmanTfila2HoursBeforeChatzos', (calendar) => (calendar as ComprehensiveZmanimCalendar).getSofZmanTfila2HoursBeforeChatzos()),
+    ('SofZmanTfilaAteretTorah', (calendar) => (calendar as ComprehensiveZmanimCalendar).getSofZmanTfilaAteretTorah()),
+    ('SofZmanTfilaBaalHatanya', (calendar) => (calendar as ComprehensiveZmanimCalendar).getSofZmanTfilaBaalHatanya()),
+    ('SofZmanTfilaGRASunriseToFixedLocalChatzos', (calendar) => (calendar as ComprehensiveZmanimCalendar).getSofZmanTfilaGRASunriseToFixedLocalChatzos()),
+    ('SofZmanTfilaMGA120Minutes', (calendar) => (calendar as ComprehensiveZmanimCalendar).getSofZmanTfilaMGA120Minutes()),
+    ('SofZmanTfilaMGA16Point1Degrees', (calendar) => (calendar as ComprehensiveZmanimCalendar).getSofZmanTfilaMGA16Point1Degrees()),
+    ('SofZmanTfilaMGA18Degrees', (calendar) => (calendar as ComprehensiveZmanimCalendar).getSofZmanTfilaMGA18Degrees()),
+    ('SofZmanTfilaMGA19Point8Degrees', (calendar) => (calendar as ComprehensiveZmanimCalendar).getSofZmanTfilaMGA19Point8Degrees()),
+    ('SofZmanTfilaMGA72MinutesZmanis', (calendar) => (calendar as ComprehensiveZmanimCalendar).getSofZmanTfilaMGA72MinutesZmanis()),
+    ('SofZmanTfilaMGA90Minutes', (calendar) => (calendar as ComprehensiveZmanimCalendar).getSofZmanTfilaMGA90Minutes()),
+    ('SofZmanTfilaMGA90MinutesZmanis', (calendar) => (calendar as ComprehensiveZmanimCalendar).getSofZmanTfilaMGA90MinutesZmanis()),
+    ('SofZmanTfilaMGA96Minutes', (calendar) => (calendar as ComprehensiveZmanimCalendar).getSofZmanTfilaMGA96Minutes()),
+    ('SofZmanTfilaMGA96MinutesZmanis', (calendar) => (calendar as ComprehensiveZmanimCalendar).getSofZmanTfilaMGA96MinutesZmanis()),
+    ('TchilasZmanKidushLevana3Days', (calendar) => (calendar as ComprehensiveZmanimCalendar).getTchilasZmanKidushLevana3Days()),
+    ('TchilasZmanKidushLevana7Days', (calendar) => (calendar as ComprehensiveZmanimCalendar).getTchilasZmanKidushLevana7Days()),
+    ('Tzais120Minutes', (calendar) => (calendar as ComprehensiveZmanimCalendar).getTzais120Minutes()),
+    ('Tzais120Zmanis', (calendar) => (calendar as ComprehensiveZmanimCalendar).getTzais120Zmanis()),
+    ('Tzais16Point1Degrees', (calendar) => (calendar as ComprehensiveZmanimCalendar).getTzais16Point1Degrees()),
+    ('Tzais18Degrees', (calendar) => (calendar as ComprehensiveZmanimCalendar).getTzais18Degrees()),
+    ('Tzais19Point8Degrees', (calendar) => (calendar as ComprehensiveZmanimCalendar).getTzais19Point8Degrees()),
+    ('Tzais26Degrees', (calendar) => (calendar as ComprehensiveZmanimCalendar).getTzais26Degrees()),
+    ('Tzais50Minutes', (calendar) => (calendar as ComprehensiveZmanimCalendar).getTzais50Minutes()),
+    ('Tzais60Minutes', (calendar) => (calendar as ComprehensiveZmanimCalendar).getTzais60Minutes()),
+    ('Tzais72Zmanis', (calendar) => (calendar as ComprehensiveZmanimCalendar).getTzais72Zmanis()),
+    ('Tzais90Minutes', (calendar) => (calendar as ComprehensiveZmanimCalendar).getTzais90Minutes()),
+    ('Tzais90Zmanis', (calendar) => (calendar as ComprehensiveZmanimCalendar).getTzais90Zmanis()),
+    ('Tzais96Minutes', (calendar) => (calendar as ComprehensiveZmanimCalendar).getTzais96Minutes()),
+    ('Tzais96Zmanis', (calendar) => (calendar as ComprehensiveZmanimCalendar).getTzais96Zmanis()),
+    ('TzaisAteretTorah', (calendar) => (calendar as ComprehensiveZmanimCalendar).getTzaisAteretTorah()),
+    ('TzaisBaalHatanya', (calendar) => (calendar as ComprehensiveZmanimCalendar).getTzaisBaalHatanya()),
+    ('TzaisGeonim3Point7Degrees', (calendar) => (calendar as ComprehensiveZmanimCalendar).getTzaisGeonim3Point7Degrees()),
+    ('TzaisGeonim3Point8Degrees', (calendar) => (calendar as ComprehensiveZmanimCalendar).getTzaisGeonim3Point8Degrees()),
+    ('TzaisGeonim4Point42Degrees', (calendar) => (calendar as ComprehensiveZmanimCalendar).getTzaisGeonim4Point42Degrees()),
+    ('TzaisGeonim4Point66Degrees', (calendar) => (calendar as ComprehensiveZmanimCalendar).getTzaisGeonim4Point66Degrees()),
+    ('TzaisGeonim4Point8Degrees', (calendar) => (calendar as ComprehensiveZmanimCalendar).getTzaisGeonim4Point8Degrees()),
+    ('TzaisGeonim5Point95Degrees', (calendar) => (calendar as ComprehensiveZmanimCalendar).getTzaisGeonim5Point95Degrees()),
+    ('TzaisGeonim6Point45Degrees', (calendar) => (calendar as ComprehensiveZmanimCalendar).getTzaisGeonim6Point45Degrees()),
+    ('TzaisGeonim7Point083Degrees', (calendar) => (calendar as ComprehensiveZmanimCalendar).getTzaisGeonim7Point083Degrees()),
+    ('TzaisGeonim7Point67Degrees', (calendar) => (calendar as ComprehensiveZmanimCalendar).getTzaisGeonim7Point67Degrees()),
+    ('TzaisGeonim9Point3Degrees', (calendar) => (calendar as ComprehensiveZmanimCalendar).getTzaisGeonim9Point3Degrees()),
+    ('TzaisGeonim9Point75Degrees', (calendar) => (calendar as ComprehensiveZmanimCalendar).getTzaisGeonim9Point75Degrees()),
+    ('ZmanMolad', (calendar) => (calendar as ComprehensiveZmanimCalendar).getZmanMolad()),
   ];
+}
+
+String _durationText(Duration duration) {
+  final (seconds, nanos) = spanOfMicros(duration.inMicroseconds);
+  return javaDurationText(seconds, nanos);
 }
 
 class _Metadata {
@@ -401,12 +395,12 @@ class _Metadata {
     final geoLocation = calendar.getGeoLocation();
     zone = geoLocation.getZoneId();
     _instantFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX").withZone(zone);
-    final localDate = calendar.getCalendar();
+    final localDate = calendar.getLocalDate();
     date = DateTimeFormatter.ofPattern('yyyy-MM-dd')
         .format(DateTime.utc(localDate.year, localDate.month, localDate.day));
     final (javaType, javaTag) = switch (calendar.runtimeType) {
       const (AstronomicalCalendar) => ('com.kosherjava.zmanim.AstronomicalCalendar', 'AstronomicalTimes'),
-      const (ComplexZmanimCalendar) => ('com.kosherjava.zmanim.ComprehensiveZmanimCalendar', 'Zmanim'),
+      const (ComprehensiveZmanimCalendar) => ('com.kosherjava.zmanim.ComprehensiveZmanimCalendar', 'Zmanim'),
       const (ZmanimCalendar) => ('com.kosherjava.zmanim.ZmanimCalendar', 'BasicZmanim'),
       _ => (calendar.runtimeType.toString(), ''),
     };
@@ -416,7 +410,7 @@ class _Metadata {
     location = geoLocation.getLocationName();
     latitude = javaDouble(geoLocation.getLatitude());
     longitude = javaDouble(geoLocation.getLongitude());
-    elevation = javaDouble(geoLocation.getElevation() ?? 0);
+    elevation = javaDouble(geoLocation.getElevation());
     final lastMidnight = startOfDay(zone, localDate.year, localDate.month, localDate.day);
     timeZoneName = zoneName(zone, lastMidnight.timeZone.isDst);
     timeZoneId = zone.name;
@@ -451,7 +445,7 @@ class _Values {
       }
       if (value is DateTime) {
         dates.add(Zman(value, label));
-      } else if (value is double && !value.isNaN) {
+      } else if (value is Duration) {
         durations.add(Zman.duration(value, label));
       } else {
         missing.add(label);
