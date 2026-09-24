@@ -88,6 +88,8 @@ class TefilaRules {
 
   bool _mizmorLesodaRecitedErevYomKippurAndPesach = false;
 
+  bool _selichosRecitedAllElul = false;
+
   TefilaRules();
 
   /// Returns if _tachanun_ is recited during _shacharis_ on the day in question. See the many
@@ -586,6 +588,166 @@ class TefilaRules {
   /// See also [isMizmorLesodaRecited].
   bool isMizmorLesodaRecitedErevYomKippurAndPesach() {
     return _mizmorLesodaRecitedErevYomKippurAndPesach;
+  }
+
+  bool isSelichosRecitedAllElul() {
+    return _selichosRecitedAllElul;
+  }
+
+  void setSelichosRecitedAllElul(bool selichosRecitedAllElul) {
+    _selichosRecitedAllElul = selichosRecitedAllElul;
+  }
+
+  bool isSuccosKorbanRecited(JewishCalendar jewishCalendar, int dayOfSuccos) {
+    if (dayOfSuccos < 2 || dayOfSuccos > 7) {
+      throw ArgumentError.value(dayOfSuccos, 'dayOfSuccos',
+          'chol hamoed Succos reads the korbanos of days 2 through 7');
+    }
+
+    if (!jewishCalendar.isCholHamoedSuccos()) {
+      return false;
+    }
+
+    const int daysOfTishreiBeforeSuccos = 14;
+    final int today = jewishCalendar.getJewishDayOfMonth();
+    if (jewishCalendar.getInIsrael()) {
+      return today == dayOfSuccos + daysOfTishreiBeforeSuccos;
+    }
+    return today == dayOfSuccos + daysOfTishreiBeforeSuccos ||
+        today == dayOfSuccos + daysOfTishreiBeforeSuccos + 1;
+  }
+
+  bool isAtaChonantanuRecited(JewishCalendar jewishCalendar) {
+    return jewishCalendar.isMotzeiShabbos() || jewishCalendar.isMotzeiYomTov();
+  }
+
+  bool isHavdalahRecited(JewishCalendar jewishCalendar) {
+    if (jewishCalendar.isAssurBemelacha() || jewishCalendar.isTishaBav()) {
+      return false;
+    }
+
+    if (jewishCalendar.isMotzeiShabbos() || jewishCalendar.isMotzeiYomTov()) {
+      return true;
+    }
+
+    final JewishCalendar yesterday = jewishCalendar.clone()..minusDays(1);
+
+    return yesterday.isTishaBav() && yesterday.isMotzeiShabbos();
+  }
+
+  bool isHavdalahBesamimRecited(JewishCalendar jewishCalendar) {
+    return jewishCalendar.isMotzeiShabbos() &&
+        !jewishCalendar.isTishaBav() &&
+        !jewishCalendar.isAssurBemelacha();
+  }
+
+  bool isHavdalahNerRecited(JewishCalendar jewishCalendar) {
+    if (jewishCalendar.isAssurBemelacha()) {
+      return false;
+    }
+
+    final JewishCalendar yesterday = jewishCalendar.clone()..minusDays(1);
+
+    return jewishCalendar.isMotzeiShabbos() || yesterday.isYomKippur();
+  }
+
+  bool isKiddushLevanaRecited(JewishCalendar jewishCalendar) {
+    final int month = jewishCalendar.getJewishMonth();
+    final int day = jewishCalendar.getJewishDayOfMonth();
+
+    final bool beforeTishaBav =
+        month == JewishDate.AV && (day <= 9 || jewishCalendar.isTishaBav());
+    final bool beforeYomKippur = month == JewishDate.TISHREI && day <= 10;
+
+    if (beforeTishaBav || beforeYomKippur) {
+      return false;
+    }
+
+    final DateTime date = jewishCalendar.getLocalDate();
+    final DateTime noonBeforeTonight =
+        DateTime(date.year, date.month, date.day - 1, 12);
+    final DateTime noonAfterTonight =
+        DateTime(date.year, date.month, date.day, 12);
+
+    return jewishCalendar
+            .getTchilasZmanKidushLevana7Days()
+            .isBefore(noonAfterTonight) &&
+        jewishCalendar
+            .getSofZmanKidushLevana15Days()
+            .isAfter(noonBeforeTonight);
+  }
+
+  bool isTashlichRecited(JewishCalendar jewishCalendar) {
+    return jewishCalendar.getJewishMonth() == JewishDate.TISHREI &&
+        jewishCalendar.getJewishDayOfMonth() <= 21;
+  }
+
+  bool isAvinuMalkeinuRecited(JewishCalendar jewishCalendar) {
+    if (jewishCalendar.isShabbos()) {
+      return false;
+    }
+    return jewishCalendar.isAseresYemeiTeshuva() ||
+        (jewishCalendar.isTaanis() && !jewishCalendar.isTishaBav());
+  }
+
+  bool isLongTachanunRecited(JewishCalendar jewishCalendar) {
+    return jewishCalendar.isMondayOrThursday() &&
+        isTachanunRecitedShacharis(jewishCalendar);
+  }
+
+  bool isMussafRecited(JewishCalendar jewishCalendar) {
+    return jewishCalendar.isShabbos() ||
+        jewishCalendar.isRoshChodesh() ||
+        jewishCalendar.isYomTovAssurBemelacha() ||
+        jewishCalendar.isCholHamoed();
+  }
+
+  bool isVihiNoamRecited(JewishCalendar jewishCalendar) {
+    if (!jewishCalendar.isMotzeiShabbos() || jewishCalendar.isTishaBav()) {
+      return false;
+    }
+
+    final JewishCalendar week = jewishCalendar.clone();
+
+    for (int day = 0; day < 6; day++) {
+      if (week.isYomTovAssurBemelacha()) {
+        return false;
+      }
+      week.plusDays(1);
+    }
+
+    return true;
+  }
+
+  bool isSelichosRecited(JewishCalendar jewishCalendar) {
+    final bool inElul = _selichosRecitedAllElul
+        ? jewishCalendar.getJewishMonth() == JewishDate.ELUL &&
+            !jewishCalendar.isShabbos()
+        : jewishCalendar.getDayOfSelichos() != -1 ||
+            jewishCalendar.isErevRoshHashana();
+
+    return inElul ||
+        jewishCalendar.getDayOfSelichosOfTeshuva() != -1 ||
+        jewishCalendar.isErevYomKippur();
+  }
+
+  bool isSelichosDayRecited(JewishCalendar jewishCalendar, int dayOfSelichos) {
+    if (dayOfSelichos < 1 || dayOfSelichos > 7) {
+      throw ArgumentError.value(dayOfSelichos, 'dayOfSelichos',
+          'the Elul selichos run to at most seven numbered days');
+    }
+
+    return jewishCalendar.getDayOfSelichos() == dayOfSelichos;
+  }
+
+  bool isSelichosDayOfTeshuvaRecited(
+      JewishCalendar jewishCalendar, int dayOfSelichos) {
+    if (dayOfSelichos < 1 || dayOfSelichos > 5) {
+      throw ArgumentError.value(dayOfSelichos, 'dayOfSelichos',
+          'the Aseres Yemei Teshuva hold five days of selichos');
+    }
+
+    return jewishCalendar.getDayOfSelichosOfTeshuva() == dayOfSelichos;
   }
 
   static const int _SUNDAY = 1;

@@ -1084,4 +1084,48 @@ class JewishDate implements Comparable<JewishDate> {
   /// Returns a hash code based on the absolute Gregorian date.
   @override
   int get hashCode => _gregorianAbsDate;
+
+  int getGregorianYear() {
+    return getLocalDate().year;
+  }
+
+  int getGregorianMonth() {
+    return getLocalDate().month;
+  }
+
+  int getGregorianDayOfMonth() {
+    return getLocalDate().day;
+  }
+
+  bool isSunday() {
+    return getDayOfWeek() == 1;
+  }
+
+  bool isMonday() {
+    return getDayOfWeek() == 2;
+  }
+
+  bool isTuesday() {
+    return getDayOfWeek() == 3;
+  }
+
+  bool isWednesday() {
+    return getDayOfWeek() == 4;
+  }
+
+  bool isThursday() {
+    return getDayOfWeek() == 5;
+  }
+
+  bool isFriday() {
+    return getDayOfWeek() == 6;
+  }
+
+  bool isShabbos() {
+    return getDayOfWeek() == 7;
+  }
+
+  bool isMondayOrThursday() {
+    return isMonday() || isThursday();
+  }
 }

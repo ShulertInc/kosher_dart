@@ -304,6 +304,22 @@ class ZmanimCalendar extends AstronomicalCalendar {
   DateTime? getCandleLighting() => AstronomicalCalendar.getTimeOffset(
       getSeaLevelSunset(), durationOfNanos((-getCandleLightingOffset() * AstronomicalCalendar.MINUTE_NANOS).truncate()));
 
+  DateTime? getCandleLightingTonight({bool inIsrael = false}) {
+    final JewishCalendar today = JewishCalendar.fromLocalDate(getLocalDate())..setInIsrael(inIsrael);
+    if (today.isFriday()) {
+      return getCandleLighting();
+    }
+    if ((today.isShabbos() && today.isErevYomTov()) || today.isErevYomTovSheni() || today.isChanukah()) {
+      return AstronomicalCalendar.getTimeOffset(
+          getSunsetOffsetByDegrees(AstronomicalCalendar.GEOMETRIC_ZENITH + 7 + (5.0 / 60)),
+          const Duration(minutes: -13, seconds: -30));
+    }
+    if (today.isErevYomTov()) {
+      return getCandleLighting();
+    }
+    return null;
+  }
+
   /// A generic method for calculating the latest _zman tfilah_ (time to recite the morning prayers)
   /// that is 4 * _shaos zmaniyos_ (temporal hours) after the start of the day, calculated using the start and
   /// end of the day passed to this method.

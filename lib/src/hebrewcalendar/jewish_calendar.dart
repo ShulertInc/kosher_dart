@@ -20,6 +20,11 @@ import 'package:kosher_dart/src/hebrewcalendar/jewish_date.dart';
 import 'package:kosher_dart/src/hebrewcalendar/daf.dart';
 import 'package:kosher_dart/src/hebrewcalendar/yerushalmi_yomi_calculator.dart';
 import 'package:kosher_dart/src/hebrewcalendar/yomi_calculator.dart';
+import 'package:kosher_dart/src/hebrewcalendar/limudim/amud.dart';
+import 'package:kosher_dart/src/hebrewcalendar/limudim/limudim_calculators.dart';
+import 'package:kosher_dart/src/hebrewcalendar/limudim/mishna.dart';
+import 'package:kosher_dart/src/hebrewcalendar/limudim/pirkei_avos_unit.dart';
+import 'package:kosher_dart/src/hebrewcalendar/limudim/tehillim_unit.dart';
 
 /// List of _parshiyos_ or special _Shabasos_. [NONE] indicates a week without a _parshah_, while the enum for
 /// the _parshah_ of [VZOS_HABERACHA] exists for consistency, but is not currently used. The special _Shabasos_ of
@@ -2324,5 +2329,188 @@ class JewishCalendar extends JewishDate {
       ..setInIsrael(getInIsrael())
       ..setIsMukafChoma(getIsMukafChoma())
       ..setUseModernHolidays(isUseModernHolidays());
+  }
+
+  bool isShoavavimWeek() {
+    final JewishCalendar shabbos = clone()..plusDays(7 - getDayOfWeek());
+    final Parshah parshah = shabbos.getParshah();
+    return parshah == Parshah.SHEMOS ||
+        parshah == Parshah.VAERA ||
+        parshah == Parshah.BO ||
+        parshah == Parshah.BESHALACH ||
+        parshah == Parshah.YISRO ||
+        parshah == Parshah.MISHPATIM;
+  }
+
+  bool isShushanPurim() {
+    return getYomTovIndex() == SHUSHAN_PURIM;
+  }
+
+  bool isPurimKatan() {
+    return getYomTovIndex() == PURIM_KATAN;
+  }
+
+  bool isShushanPurimKatan() {
+    return getYomTovIndex() == SHUSHAN_PURIM_KATAN;
+  }
+
+  bool isTaanisEsther() {
+    return getYomTovIndex() == FAST_OF_ESTHER;
+  }
+
+  bool isFastOfGedalyah() {
+    return getYomTovIndex() == FAST_OF_GEDALYAH;
+  }
+
+  bool isTenthOfTeves() {
+    return getYomTovIndex() == TENTH_OF_TEVES;
+  }
+
+  bool isSeventeenthOfTammuz() {
+    return getYomTovIndex() == SEVENTEEN_OF_TAMMUZ;
+  }
+
+  bool isErevPesach() {
+    return getYomTovIndex() == EREV_PESACH;
+  }
+
+  bool isErevYomKippur() {
+    return getYomTovIndex() == EREV_YOM_KIPPUR;
+  }
+
+  bool isErevRoshHashana() {
+    return getYomTovIndex() == EREV_ROSH_HASHANA;
+  }
+
+  bool isEruvTavshilin() {
+    if (isAssurBemelacha()) {
+      return false;
+    }
+
+    final JewishCalendar day = clone()..plusDays(1);
+
+    while (day.isYomTovAssurBemelacha()) {
+      if (day.isFriday()) {
+        return true;
+      }
+      day.plusDays(1);
+    }
+
+    return false;
+  }
+
+  bool isMotzeiShabbos() {
+    return isSunday();
+  }
+
+  bool isMotzeiYomTov() {
+    if (isYomTovAssurBemelacha()) {
+      return false;
+    }
+
+    return (clone()..minusDays(1)).isYomTovAssurBemelacha();
+  }
+
+  bool isYomHaatzmaut() {
+    return getYomTovIndex() == YOM_HAATZMAUT;
+  }
+
+  bool isYomYerushalayim() {
+    return getYomTovIndex() == YOM_YERUSHALAYIM;
+  }
+
+  bool isSefirasHaomer() {
+    return getDayOfOmer() != -1;
+  }
+
+  bool isOmerDay(int dayOfOmer) {
+    if (dayOfOmer < 1 || dayOfOmer > 49) {
+      throw ArgumentError.value(
+          dayOfOmer, 'dayOfOmer', 'the omer runs to forty-nine days');
+    }
+
+    return getDayOfOmer() == dayOfOmer;
+  }
+
+  bool isLeDavidPeriod() {
+    final int month = getJewishMonth();
+    return month == JewishDate.ELUL ||
+        (month == JewishDate.TISHREI && getJewishDayOfMonth() <= 21);
+  }
+
+  int getDayOfSelichos() {
+    if (getJewishMonth() != JewishDate.ELUL ||
+        getJewishDayOfMonth() == 29 ||
+        isShabbos()) {
+      return -1;
+    }
+
+    final JewishCalendar roshHashana = clone()
+      ..setJewishDate(getJewishYear() + 1, JewishDate.TISHREI, 1);
+    final int falls = roshHashana.getDayOfWeek();
+
+    const int daysInElul = 29;
+    final int sundayOfThatWeek = daysInElul + 2 - falls;
+    final int aWeekEarlier = roshHashana.isMonday() || roshHashana.isTuesday() ? 7 : 0;
+    final int opens = sundayOfThatWeek - aWeekEarlier;
+
+    final int daysSinceOpening = getJewishDayOfMonth() - opens + 1;
+    if (daysSinceOpening < 1) {
+      return -1;
+    }
+
+    final int shabbosos = daysSinceOpening ~/ 7;
+    return daysSinceOpening - shabbosos;
+  }
+
+  int getDayOfSelichosOfTeshuva() {
+    final int today = getJewishDayOfMonth();
+
+    if (getJewishMonth() != JewishDate.TISHREI ||
+        today < 3 ||
+        today > 8 ||
+        isShabbos()) {
+      return -1;
+    }
+
+    final JewishCalendar walk = clone();
+    int counted = 0;
+
+    for (int day = 3; day <= today; day++) {
+      walk.setJewishDate(getJewishYear(), JewishDate.TISHREI, day);
+      if (!walk.isShabbos()) {
+        counted++;
+      }
+    }
+
+    return counted;
+  }
+
+  bool isMashivHaruach() {
+    final JewishDate startDate =
+        JewishDate.fromJewishDate(getJewishYear(), JewishDate.TISHREI, 22);
+    final JewishDate endDate =
+        JewishDate.fromJewishDate(getJewishYear(), JewishDate.NISSAN, 15);
+    return compareTo(startDate) > 0 && compareTo(endDate) < 0;
+  }
+
+  Daf? getDafHashavuaBavli() {
+    return DafHashavuaBavliCalculator.getDafHashavuaBavli(this);
+  }
+
+  Amud? getAmudYomiBavliDirshu() {
+    return AmudYomiBavliDirshuCalculator.getAmudYomiBavliDirshu(this);
+  }
+
+  Mishnas? getMishnaYomis() {
+    return MishnaYomisCalculator.getMishnaYomis(this);
+  }
+
+  PirkeiAvosUnit? getPirkeiAvos() {
+    return PirkeiAvosCalculator.getPirkeiAvos(this);
+  }
+
+  TehillimUnit getTehillimMonthly() {
+    return TehillimMonthlyCalculator.getTehillimMonthly(this);
   }
 }
