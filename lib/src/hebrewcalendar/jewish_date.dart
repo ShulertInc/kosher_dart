@@ -1083,5 +1083,5 @@ class JewishDate implements Comparable<JewishDate> {
 
   /// Returns a hash code based on the absolute Gregorian date.
   @override
-  int get hashCode => _gregorianAbsDate.hashCode;
+  int get hashCode => _gregorianAbsDate;
 }

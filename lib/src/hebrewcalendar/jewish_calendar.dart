@@ -2316,7 +2316,7 @@ class JewishCalendar extends JewishDate {
 
   /// Returns a hash code based on the absolute Gregorian date and the Israel setting.
   @override
-  int get hashCode => 31 * getAbsDate().hashCode + getInIsrael().hashCode;
+  int get hashCode => 31 * getAbsDate() + (getInIsrael() ? 1231 : 1237);
 
   /// A method that creates a [deep copy](http://en.wikipedia.org/wiki/Object_copy#Deep_copy) of the object.
   @override
