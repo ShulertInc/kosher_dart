@@ -2216,8 +2216,7 @@ class JewishCalendar extends JewishDate {
   ///
   /// Returns the Date representing the moment 3 days after the molad.
   ///
-  /// See also [ComplexZmanimCalendar.getTchilasZmanKidushLevana3Days].
-  /// See also [ComplexZmanimCalendar.getTchilasZmanKidushLevana3Days].
+  /// See also [ComprehensiveZmanimCalendar.getTchilasZmanKidushLevana3Days].
   DateTime getTchilasZmanKidushLevana3Days() {
     return getMoladAsInstant()
         .add(const Duration(days: 3)); // 3 days after the molad
@@ -2229,8 +2228,7 @@ class JewishCalendar extends JewishDate {
   ///
   /// Returns the Date representing the moment 7 days after the molad.
   ///
-  /// See also [ComplexZmanimCalendar.getTchilasZmanKidushLevana7Days].
-  /// See also [ComplexZmanimCalendar.getTchilasZmanKidushLevana7Days].
+  /// See also [ComprehensiveZmanimCalendar.getTchilasZmanKidushLevana7Days].
   DateTime getTchilasZmanKidushLevana7Days() {
     return getMoladAsInstant()
         .add(const Duration(days: 7)); // 7 days after the molad
@@ -2244,8 +2242,7 @@ class JewishCalendar extends JewishDate {
   ///
   /// Returns the Date representing the moment halfway between molad and molad.
   /// See also [getSofZmanKidushLevana15Days].
-  /// See also [ComplexZmanimCalendar.getSofZmanKidushLevanaBetweenMoldos].
-  /// See also [ComplexZmanimCalendar.getSofZmanKidushLevanaBetweenMoldos].
+  /// See also [ComprehensiveZmanimCalendar.getSofZmanKidushLevanaBetweenMoldos].
   DateTime getSofZmanKidushLevanaBetweenMoldos() {
     // add half the time between molad and molad (half of 29 days, 12 hours and 793 chalakim (44 minutes, 3.3
     // seconds), or 14 days, 18 hours, 22 minutes and 666 milliseconds)
@@ -2264,8 +2261,7 @@ class JewishCalendar extends JewishDate {
   ///
   /// Returns the Date representing the moment 15 days after the molad.
   /// See also [getSofZmanKidushLevanaBetweenMoldos].
-  /// See also [ComplexZmanimCalendar.getSofZmanKidushLevana15Days].
-  /// See also [ComplexZmanimCalendar.getSofZmanKidushLevana15Days].
+  /// See also [ComprehensiveZmanimCalendar.getSofZmanKidushLevana15Days].
   DateTime getSofZmanKidushLevana15Days() {
     return getMoladAsInstant()
         .add(const Duration(days: 15)); // 15 days after the molad

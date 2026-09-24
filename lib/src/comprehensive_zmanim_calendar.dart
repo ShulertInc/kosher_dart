@@ -2304,7 +2304,7 @@ class ComprehensiveZmanimCalendar extends ZmanimCalendar {
   ///
   /// _see [getTchilasZmanKidushLevana3Days]_
   /// _see [getTchilasZmanKidushLevana7Days]_
-  /// _see [JewishCalendar#getMoladAsDate]_
+  /// _see [JewishCalendar.getMoladAsInstant]_
   DateTime? getZmanMolad() {
     JewishCalendar jewishCalendar = JewishCalendar.fromLocalDate(getLocalDate());
 
@@ -2644,7 +2644,6 @@ class ComprehensiveZmanimCalendar extends ZmanimCalendar {
   /// See detailed explanation on top of the [AstronomicalCalendar] documentation.
   /// See also [getAlos18Degrees].
   /// See also [getFixedLocalChatzosHayom].
-  /// See also [getFixedLocalChatzosBasedZmanim].
   DateTime? getSofZmanShmaMGA18DegreesToFixedLocalChatzos() {
     return getHalfDayBasedZman(
         getAlos18Degrees(), getFixedLocalChatzosHayom(), 3);
@@ -2662,7 +2661,6 @@ class ComprehensiveZmanimCalendar extends ZmanimCalendar {
   /// See detailed explanation on top of the [AstronomicalCalendar] documentation.
   /// See also [getAlos16Point1Degrees].
   /// See also [getFixedLocalChatzosHayom].
-  /// See also [getFixedLocalChatzosBasedZmanim].
 
   DateTime? getSofZmanShmaMGA16Point1DegreesToFixedLocalChatzos() {
     return getHalfDayBasedZman(
@@ -2682,7 +2680,6 @@ class ComprehensiveZmanimCalendar extends ZmanimCalendar {
   /// See detailed explanation on top of the [AstronomicalCalendar] documentation.
   /// See also [getAlos90Minutes].
   /// See also [getFixedLocalChatzosHayom].
-  /// See also [getFixedLocalChatzosBasedZmanim].
   DateTime? getSofZmanShmaMGA90MinutesToFixedLocalChatzos() {
     return getHalfDayBasedZman(
         getAlos90Minutes(), getFixedLocalChatzosHayom(), 3);
@@ -2701,7 +2698,6 @@ class ComprehensiveZmanimCalendar extends ZmanimCalendar {
   /// See detailed explanation on top of the [AstronomicalCalendar] documentation.
   /// See also [getAlos72Minutes].
   /// See also [getFixedLocalChatzosHayom].
-  /// See also [getFixedLocalChatzosBasedZmanim].
   DateTime? getSofZmanShmaMGA72MinutesToFixedLocalChatzos() {
     return getHalfDayBasedZman(
         getAlos72Minutes(), getFixedLocalChatzosHayom(), 3);
@@ -2719,7 +2715,6 @@ class ComprehensiveZmanimCalendar extends ZmanimCalendar {
   /// See detailed explanation on top of the [AstronomicalCalendar] documentation.
   /// See also [getSunrise].
   /// See also [getFixedLocalChatzosHayom].
-  /// See also [getFixedLocalChatzosBasedZmanim].
   DateTime? getSofZmanShmaGRASunriseToFixedLocalChatzos() {
     return getHalfDayBasedZman(
         getSunriseBasedOnElevationSetting(), getFixedLocalChatzosHayom(), 3);
@@ -2738,7 +2733,6 @@ class ComprehensiveZmanimCalendar extends ZmanimCalendar {
   /// See detailed explanation on top of the [AstronomicalCalendar] documentation.
   /// See also [getSunrise].
   /// See also [getFixedLocalChatzosHayom].
-  /// See also [getFixedLocalChatzosBasedZmanim].
   DateTime? getSofZmanTfilaGRASunriseToFixedLocalChatzos() {
     return getHalfDayBasedZman(
         getSunriseBasedOnElevationSetting(), getFixedLocalChatzosHayom(), 4);

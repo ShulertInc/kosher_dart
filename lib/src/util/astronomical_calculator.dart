@@ -95,7 +95,7 @@ abstract class AstronomicalCalculator {
   /// A method that calculates UTC sunrise as well as any time based on an angle above or below sunrise. This abstract
   /// method is implemented by the classes that extend this class.
   ///
-  /// - [calendar]: 
+  /// - [localDate]: 
   ///   Used to calculate day of year.
   /// - [geoLocation]: 
   ///   The location information used for astronomical calculating sun times.
@@ -116,7 +116,7 @@ abstract class AstronomicalCalculator {
   /// A method that calculates UTC sunset as well as any time based on an angle above or below sunset. This abstract
   /// method is implemented by the classes that extend this class.
   ///
-  /// - [calendar]: 
+  /// - [localDate]: 
   ///   Used to calculate day of year.
   /// - [geoLocation]: 
   ///   The location information used for astronomical calculating sun times.

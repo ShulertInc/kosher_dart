@@ -232,7 +232,6 @@ class GeoLocation {
   /// Calculate [geodesic distance](http://en.wikipedia.org/wiki/Great-circle_distance) in Meters between
   /// this Object and a second Object passed to this method using [Thaddeus Vincenty's](http://en.wikipedia.org/wiki/Thaddeus_Vincenty) inverse formula See T Vincenty, "[Direct and Inverse Solutions of Geodesics on the Ellipsoid with application of nested equations](http://www.ngs.noaa.gov/PUBS_LIB/inverse.pdf)", Survey Review, vol XXII no 176, 1975
   ///
-  /// See also [vincentyFormula].
   /// - [location]: 
   ///   the destination location
   /// Returns the geodesic distance in Meters
