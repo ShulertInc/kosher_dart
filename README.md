@@ -45,7 +45,12 @@ import 'package:kosher_dart/kosher_dart.dart';
 ```
 
 ##### Get time of the day
+Zones come from [timezone](https://pub.dev/packages/timezone); load its database once before looking one up.
 ```
+import 'package:timezone/data/latest.dart' as tzdata;
+import 'package:timezone/timezone.dart' as tz;
+
+  tzdata.initializeTimeZones();
   GeoLocation geoLocation = GeoLocation.withZoneId(
       'Jerusalem', 31.7962419, 35.2453988, tz.getLocation('Asia/Jerusalem'));
   ComprehensiveZmanimCalendar calendar = ComprehensiveZmanimCalendar.withGeoLocation(geoLocation);
