@@ -158,8 +158,79 @@ String isoDate(DateTime date) => '${date.year.toString().padLeft(4, '0')}-${date
 
 String javaDateText(kj.LocalDate date) => date.toString$1()!.toDartString(releaseOriginal: true);
 
+const _equalityChanges = [
+  'none',
+  'useElevation',
+  'candleLightingOffset',
+  'ateretTorahSunsetOffset',
+  'useAstronomicalChatzos',
+  'useAstronomicalChatzosForOtherZmanim',
+  'localDate',
+  'elevation',
+  'refraction',
+];
+
 class ZmanimArea extends Area {
   ZmanimArea(super.zones);
+
+  void compareEquality(
+      Random rng, String prefix, String describe, JavaCalendar java, DartCalendar dart, Report report) {
+    final change = pick(rng, _equalityChanges);
+    final javaOther = java.clone() as JavaCalendar;
+    final dartOther = dart.clone();
+    switch (change) {
+      case 'useElevation':
+        javaOther.useElevation = !java.isUseElevation;
+        dartOther.setUseElevation(!dart.isUseElevation());
+      case 'candleLightingOffset':
+        javaOther.candleLightingOffset = java.candleLightingOffset + 1;
+        dartOther.setCandleLightingOffset(dart.getCandleLightingOffset() + 1);
+      case 'ateretTorahSunsetOffset':
+        javaOther.ateretTorahSunsetOffset = java.ateretTorahSunsetOffset + 1;
+        dartOther.setAteretTorahSunsetOffset(dart.getAteretTorahSunsetOffset() + 1);
+      case 'useAstronomicalChatzos':
+        javaOther.useAstronomicalChatzos = !java.isUseAstronomicalChatzos;
+        dartOther.setUseAstronomicalChatzos(!dart.isUseAstronomicalChatzos());
+      case 'useAstronomicalChatzosForOtherZmanim':
+        javaOther.useAstronomicalChatzosForOtherZmanim = !java.isUseAstronomicalChatzosForOtherZmanim;
+        dartOther.setUseAstronomicalChatzosForOtherZmanim(!dart.isUseAstronomicalChatzosForOtherZmanim());
+      case 'localDate':
+        final date = java.localDate!;
+        final next = date.plusDays(1)!;
+        javaOther.localDate = next;
+        next.release();
+        date.release();
+        dartOther.setLocalDate(dart.getLocalDate().add(const Duration(days: 1)));
+      case 'elevation':
+        final geo = javaOther.geoLocation!;
+        geo.elevation = geo.elevation + 1;
+        geo.release();
+        dartOther.getGeoLocation().setElevation(dartOther.getGeoLocation().getElevation() + 1);
+      case 'refraction':
+        final calculator = javaOther.astronomicalCalculator!;
+        calculator.refraction = calculator.refraction + 0.01;
+        calculator.release();
+        dartOther.getAstronomicalCalculator().setRefraction(dartOther.getAstronomicalCalculator().getRefraction() + 0.01);
+    }
+    final input = '$describe equality change=$change';
+    report.exact('$prefix.equals(clone with $change)', input, attempt(() => java.equals(javaOther)),
+        attempt(() => dart == dartOther));
+    report.exact('$prefix.equals(original) after changing a clone\'s $change', input,
+        attempt(() => java.equals(java.clone())), attempt(() => dart == dart.clone()));
+    report.exact('$prefix.hashCode agrees with equals', input, Value(true),
+        attempt(() => dart != dartOther || dart.hashCode == dartOther.hashCode));
+    final javaGeo = java.geoLocation!;
+    final javaOtherGeo = javaOther.geoLocation!;
+    report.exact('$prefix.GeoLocation.equals', input, attempt(() => javaGeo.equals(javaOtherGeo)),
+        attempt(() => dart.getGeoLocation() == dartOther.getGeoLocation()));
+    final javaCalculator = java.astronomicalCalculator!;
+    final javaOtherCalculator = javaOther.astronomicalCalculator!;
+    report.exact('$prefix.AstronomicalCalculator.equals', input, attempt(() => javaCalculator.equals(javaOtherCalculator)),
+        attempt(() => dart.getAstronomicalCalculator() == dartOther.getAstronomicalCalculator()));
+    for (final object in <JObject>[javaGeo, javaOtherGeo, javaCalculator, javaOtherCalculator, javaOther]) {
+      object.release();
+    }
+  }
 
   @override
   String get name => 'zmanim';
@@ -217,6 +288,7 @@ class ZmanimArea extends Area {
       }
       runArgumentChecks(rng, prefix, describe, javaCalendar, dartCalendar, javaMidnight, report);
       compareProtected(prefix, describe, javaCalendar, dartCalendar, report);
+      compareEquality(rng, prefix, describe, javaCalendar, dartCalendar, report);
       javaCalendar.release();
     }
   }
