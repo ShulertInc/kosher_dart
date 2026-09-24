@@ -305,10 +305,25 @@ class CalculatorsArea extends Area {
     java.release();
   }
 
+  int _solarPositionInstant(_Setup setup) {
+    final rng = setup.rng;
+    if (chance(rng, 0.5)) {
+      final zenith = uniform(rng, 88, 92);
+      final hours = chance(rng, 0.5)
+          ? kd.NOAACalculator().getUTCSunrise(setup.dartDate, setup.dartGeo, zenith, false)
+          : kd.NOAACalculator().getUTCSunset(setup.dartDate, setup.dartGeo, zenith, false);
+      if (hours.isFinite) {
+        final utcMidnight = DateTime.utc(setup.date.year, setup.date.month, setup.date.day).millisecondsSinceEpoch;
+        return utcMidnight + (hours * 3600000).floor() + rng.nextInt(600000) - 300000;
+      }
+    }
+    return setup.midnight + rng.nextInt(_day);
+  }
+
   void _solarPosition(_Setup setup, Report report) {
     final rng = setup.rng;
     for (final kind in const [CalculatorKind.noaa, CalculatorKind.meeus, CalculatorKind.spa]) {
-      final at = setup.midnight + rng.nextInt(_day);
+      final at = _solarPositionInstant(setup);
       final micros = rng.nextInt(1000);
       final (java, dart, precision) = _configured(rng, kind);
       final refraction = chance(rng, 0.5) ? null : uniform(rng, 0, 1.5);
