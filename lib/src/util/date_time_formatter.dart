@@ -1,4 +1,3 @@
-import 'dart:typed_data';
 
 import 'package:timezone/timezone.dart';
 
@@ -229,35 +228,6 @@ String instantText(DateTime instant) {
 (int, int) spanOfMicros(int micros) {
   final nanos = micros % 1000000 * 1000;
   return ((micros - micros % 1000000) ~/ 1000000, nanos);
-}
-
-(int, int) spanOfMillis(double millis) {
-  if (!millis.isFinite) throw ArgumentError.value(millis, 'millis', 'must be finite');
-  final data = ByteData(8)..setFloat64(0, millis);
-  final high = data.getUint32(0);
-  final low = data.getUint32(4);
-  final negative = high >= 0x80000000;
-  final exponentBits = (high >> 20) & 0x7ff;
-  var mantissa = (BigInt.from(high & 0xfffff) << 32) + BigInt.from(low);
-  var exponent = -1074;
-  if (exponentBits != 0) {
-    mantissa += BigInt.one << 52;
-    exponent = exponentBits - 1075;
-  }
-  final scaled = mantissa * BigInt.from(1000000);
-  var nanos = exponent >= 0
-      ? scaled << exponent
-      : (scaled + (BigInt.one << (-exponent - 1))) >> -exponent;
-  if (negative) nanos = -nanos;
-  final billion = BigInt.from(1000000000);
-  final seconds = nanos >= BigInt.zero ? nanos ~/ billion : -((-nanos + billion - BigInt.one) ~/ billion);
-  if (!seconds.isValidInt) throw ArgumentError.value(millis, 'millis', 'is too large for a duration');
-  return (seconds.toInt(), (nanos - seconds * billion).toInt());
-}
-
-String javaDurationTextOfMillis(double millis) {
-  final (seconds, nanos) = spanOfMillis(millis);
-  return javaDurationText(seconds, nanos);
 }
 
 String javaDurationText(int seconds, int nanos) {

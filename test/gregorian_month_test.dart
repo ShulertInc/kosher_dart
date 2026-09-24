@@ -5,13 +5,14 @@
 /// and [JewishDate.setGregorianMonth] used to expect 0 for January and add one
 /// internally. Feeding the getter into the setter therefore moved the date on by
 /// a month, and six places inside this library did exactly that by passing
-/// `getCalendar().month` - a [DateTime] month - straight in. That put
-/// [ComplexZmanimCalendar]'s Kiddush Levana zmanim and
-/// [ZmanimCalendar.isAssurBemlacha] a whole month out.
+/// `getLocalDate().month` - a [DateTime] month - straight in. That put
+/// [ComprehensiveZmanimCalendar]'s Kiddush Levana zmanim and
+/// [ZmanimCalendar.isAssurBemelacha] a whole month out.
 library;
 
 import 'package:test/test.dart';
 import 'package:kosher_dart/kosher_dart.dart';
+import 'package:timezone/timezone.dart' as tz;
 
 void main() {
   test('the setter takes the month the way DateTime gives it', () {
@@ -90,31 +91,30 @@ void main() {
   });
 
   test('the day melacha is judged on is the day the calendar is set to', () {
-    // isAssurBemlacha reads its day through setGregorianDate, so a month shifted
+    // isAssurBemelacha reads its day through setGregorianDate, so a month shifted
     // there answered for the wrong day entirely. Friday 21 August 2026 after
     // shkia is erev shabbos; a month on it would have been a Monday.
-    final ComplexZmanimCalendar zmanimCalendar =
-        ComplexZmanimCalendar.intGeoLocation(GeoLocation.setLocation(
-            'New York', 40.7128, -74.0060, DateTime.utc(2026, 8, 21)));
-    zmanimCalendar.setCalendar(DateTime(2026, 8, 21));
+    final ComprehensiveZmanimCalendar zmanimCalendar = ComprehensiveZmanimCalendar.withGeoLocation(
+        GeoLocation.withZoneId('New York', 40.7128, -74.0060, tz.UTC));
+    zmanimCalendar.setLocalDate(DateTime.utc(2026, 8, 21));
 
     expect(JewishCalendar.fromDateTime(DateTime(2026, 8, 21)).getDayOfWeek(), 6,
         reason: 'the test date is a Friday');
 
     final DateTime sunset = zmanimCalendar.getSunset()!;
-    final DateTime tzais = zmanimCalendar.getTzais()!;
+    final DateTime tzais = zmanimCalendar.getTzaisGeonim8Point5Degrees()!;
 
-    expect(zmanimCalendar.isAssurBemlacha(
+    expect(zmanimCalendar.isAssurBemelacha(
             sunset.add(const Duration(minutes: 1)), tzais, false),
         isTrue,
         reason: 'after shkia on erev shabbos');
 
     // The following Wednesday is an ordinary weekday at the same hour.
-    zmanimCalendar.setCalendar(DateTime(2026, 8, 26));
+    zmanimCalendar.setLocalDate(DateTime.utc(2026, 8, 26));
     expect(
-        zmanimCalendar.isAssurBemlacha(
+        zmanimCalendar.isAssurBemelacha(
             zmanimCalendar.getSunset()!.add(const Duration(minutes: 1)),
-            zmanimCalendar.getTzais()!,
+            zmanimCalendar.getTzaisGeonim8Point5Degrees()!,
             false),
         isFalse);
   });

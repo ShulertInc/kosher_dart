@@ -38,12 +38,11 @@ class GeoLocation {
   /// See also [setLongitude].
   late double _longitude;
   late String _locationName;
-  late DateTime _dateTime;
-  tz.Location? _zoneId;
+  late tz.Location _zoneId;
 
   /// See also [getElevation].
   /// See also [setElevation].
-  double? _elevation;
+  double _elevation = 0;
 
   /// Constant for a distance type calculation.
   /// See also [getGeodesicDistance].
@@ -58,19 +57,23 @@ class GeoLocation {
   static const int _FINAL_BEARING = 2;
 
   /// constant for milliseconds in a minute (60,000)
-  static const double _MINUTE_MILLIS = 60 * 1000.0;
+  static const int _MINUTE_MILLIS = 60 * 1000;
 
   /// constant for milliseconds in an hour (3,600,000)
-  static const double _HOUR_MILLIS = _MINUTE_MILLIS * 60;
+  static const int _HOUR_MILLIS = _MINUTE_MILLIS * 60;
 
   /// Default GeoLocation constructor will set location to the Prime Meridian at Greenwich, England and a TimeZone of
   /// GMT. The longitude will be set to 0 and the latitude will be 51.4772 to match the location of the [Royal Observatory, Greenwich ](http://www.rog.nmm.ac.uk). No daylight savings time will be used.
   GeoLocation() {
     setLocationName("Greenwich, England");
-    setLongitude(longitude: 0); // added for clarity
-    setLatitude(latitude: 51.4772);
-    setDateTime(DateTime.now().toUtc());
+    setLongitude(0);
+    setLatitude(51.4772);
+    setZoneId(tz.timeZoneDatabase.locations['GMT'] ??
+        tz.Location('GMT', [tz.minTime], [0], [tz.TimeZone.UTC]));
   }
+
+  GeoLocation.withZoneId(String name, double latitude, double longitude, tz.Location zoneId)
+      : this.withElevation(name, latitude, longitude, 0, zoneId);
 
   /// GeoLocation constructor with parameters for all required fields.
   ///
@@ -85,22 +88,21 @@ class GeoLocation {
   /// - [elevation]: 
   ///   the elevation above sea level in Meters. Elevation is not used in most algorithms used for calculating
   ///   sunrise and set.
-  /// - [timeZone]: 
-  ///   the `TimeZone` for the location.
-  GeoLocation.setLocation(
-      String locationName, double latitude, double longitude, DateTime dateTime,
-      [double elevation = 0]) {
-    setLocationName(locationName);
-    setLatitude(latitude: latitude);
-    setLongitude(longitude: longitude);
+  /// - [zoneId]: 
+  ///   the zone for the location.
+  GeoLocation.withElevation(
+      String name, double latitude, double longitude, double elevation, tz.Location zoneId) {
+    setLocationName(name);
+    setLatitude(latitude);
+    setLongitude(longitude);
     setElevation(elevation);
-    setDateTime(dateTime);
+    setZoneId(zoneId);
   }
 
   /// Method to get the elevation in Meters.
   ///
   /// Returns the elevation in Meters.
-  double? getElevation() {
+  double getElevation() {
     return _elevation;
   }
 
@@ -118,47 +120,11 @@ class GeoLocation {
     _elevation = elevation;
   }
 
-  /// Method to set the latitude in degrees, minutes and seconds.
-  ///
-  /// - [degrees]: 
-  ///   The degrees of latitude to set between 0° and 90°. For example 40 would be used for Lakewood, NJ.
-  ///   An IllegalArgumentException will be thrown if the value exceeds the limit.
-  /// - [minutes]: 
-  ///   [minutes of arc](http://en.wikipedia.org/wiki/Minute_of_arc#Cartography)
-  /// - [seconds]: 
-  ///   [seconds of arc](http://en.wikipedia.org/wiki/Minute_of_arc#Cartography)
-  /// - [direction]: 
-  ///   N for north and S for south. An IllegalArgumentException will be thrown if the value is not S or N.
-  void setLatitude(
-      {int? degrees,
-      int? minutes,
-      double? seconds,
-      String? direction,
-      double? latitude}) {
-    if (latitude != null) {
-      if (latitude > 90 || latitude < -90 || latitude.isNaN) {
-        throw ArgumentError("Latitude must be between -90 and  90");
-      }
-      _latitude = latitude;
-    } else if (degrees == null ||
-        minutes == null ||
-        seconds == null ||
-        direction == null) {
-      throw ArgumentError(
-          "Longitude must be between 0 and  180.  Use a direction of W instead of negative.");
-    } else {
-      double tempLat = degrees + ((minutes + (seconds / 60.0)) / 60.0);
-      if (tempLat > 90 || tempLat < 0) {
-        throw ArgumentError(
-            "Latitude must be between 0 and  90. Use direction of S instead of negative.");
-      }
-      if (direction == "S") {
-        tempLat *= -1;
-      } else if (direction != "N") {
-        throw ArgumentError("Latitude direction must be N or S");
-      }
-      _latitude = tempLat;
+  void setLatitude(double latitude) {
+    if (latitude > 90 || latitude < -90 || latitude.isNaN) {
+      throw ArgumentError("Latitude must be between -90 and  90");
     }
+    _latitude = latitude;
   }
 
   /// Returns the latitude.
@@ -166,49 +132,11 @@ class GeoLocation {
     return _latitude;
   }
 
-  /// Method to set the longitude in degrees, minutes and seconds.
-  ///
-  /// - [degrees]: 
-  ///   The degrees of longitude to set between 0° and 180°. As an example 74 would be set for Lakewood, NJ.
-  ///   An IllegalArgumentException will be thrown if the value exceeds the limits.
-  /// - [minutes]: 
-  ///   [minutes of arc](http://en.wikipedia.org/wiki/Minute_of_arc#Cartography)
-  /// - [seconds]: 
-  ///   [seconds of arc](http://en.wikipedia.org/wiki/Minute_of_arc#Cartography)
-  /// - [direction]: 
-  ///   E for east of the [Prime Meridian ](http://en.wikipedia.org/wiki/Prime_Meridian) or W for west of it.
-  ///   An IllegalArgumentException will be thrown if
-  ///   the value is not E or W.
-  void setLongitude(
-      {int? degrees,
-      int? minutes,
-      double? seconds,
-      String? direction,
-      double? longitude}) {
-    if (longitude != null) {
-      if (longitude > 180 || longitude < -180 || longitude.isNaN) {
-        throw ArgumentError("Longitude must be between -180 and  180");
-      }
-      _longitude = longitude;
-    } else if (degrees == null ||
-        minutes == null ||
-        seconds == null ||
-        direction == null) {
-      throw ArgumentError(
-          "Longitude must be between 0 and  180.  Use a direction of W instead of negative.");
-    } else {
-      double longTemp = degrees + ((minutes + (seconds / 60.0)) / 60.0);
-      if (longTemp > 180 || longTemp < 0) {
-        throw ArgumentError(
-            "Longitude must be between 0 and  180.  Use a direction of W instead of negative.");
-      }
-      if (direction == "W") {
-        longTemp *= -1;
-      } else if (direction != "E") {
-        throw ArgumentError("Longitude direction must be E or W");
-      }
-      _longitude = longTemp;
+  void setLongitude(double longitude) {
+    if (longitude > 180 || longitude < -180 || longitude.isNaN) {
+      throw ArgumentError("Longitude must be between -180 and  180");
     }
+    _longitude = longitude;
   }
 
   /// Returns the longitude.
@@ -227,33 +155,9 @@ class GeoLocation {
     _locationName = name;
   }
 
-  /// Returns the timeZone.
-  DateTime getDateTime() {
-    return _dateTime;
-  }
+  tz.Location getZoneId() => _zoneId;
 
-  /// Method to set the TimeZone. If this is ever set after the GeoLocation is set in the
-  /// [AstronomicalCalendar], it is critical that
-  /// [AstronomicalCalendar.getCalendar].
-  /// [Calendar.setTimeZone] be called in order for the
-  /// AstronomicalCalendar to output times in the expected offset. This situation will arise if the
-  /// AstronomicalCalendar is ever [AstronomicalCalendar.clone].
-  ///
-  /// - [timeZone]: 
-  ///   The timeZone to set.
-  void setDateTime(DateTime dateTime) {
-    _dateTime = dateTime;
-  }
-
-  tz.Location getZoneId() {
-    final zoneId = _zoneId;
-    if (zoneId != null) return zoneId;
-    final dateTime = getDateTime();
-    if (dateTime is tz.TZDateTime) return dateTime.location;
-    return dateTime.isUtc ? tz.UTC : tz.local;
-  }
-
-  void setZoneId(tz.Location? zoneId) {
+  void setZoneId(tz.Location zoneId) {
     _zoneId = zoneId;
   }
 
@@ -268,10 +172,10 @@ class GeoLocation {
   ///
   /// Returns the offset in milliseconds not accounting for Daylight saving time. A positive value will be returned
   /// East of the 15° timezone line, and a negative value West of it.
-  double getLocalMeanTimeOffset([DateTime? instant]) {
-    return (getLongitude() * 4 * _MINUTE_MILLIS -
-            (instant ?? getDateTime()).timeZoneOffset.inMilliseconds)
-        .toDouble();
+  int getLocalMeanTimeOffset(DateTime instant) {
+    final int timezoneOffsetMillis =
+        tz.TZDateTime.from(instant, _zoneId).timeZoneOffset.inSeconds * 1000;
+    return (getLongitude() * 4 * _MINUTE_MILLIS - timezoneOffsetMillis).truncate();
   }
 
   /// Adjust the date for [antimeridian](https://en.wikipedia.org/wiki/180th_meridian) crossover. This is
@@ -289,7 +193,7 @@ class GeoLocation {
   /// to bring the date back to 2018-02-03.
   ///
   /// Returns the number of days to adjust the date This will typically be 0 unless the date crosses the antimeridian
-  int getAntimeridianAdjustment([DateTime? instant]) {
+  int getAntimeridianAdjustment(DateTime instant) {
     double localHoursOffset = getLocalMeanTimeOffset(instant) / _HOUR_MILLIS;
 
     if (localHoursOffset >= 20) {
@@ -311,7 +215,7 @@ class GeoLocation {
   ///   the destination location
   /// Returns the initial bearing
   double getGeodesicInitialBearing(GeoLocation location) {
-    return vincentyFormula(location, _INITIAL_BEARING);
+    return _vincentyInverseFormula(location, _INITIAL_BEARING);
   }
 
   /// Calculate the final [geodesic](http://en.wikipedia.org/wiki/Great_circle) bearing between this Object
@@ -322,7 +226,7 @@ class GeoLocation {
   ///   the destination location
   /// Returns the final bearing
   double getGeodesicFinalBearing(GeoLocation location) {
-    return vincentyFormula(location, _FINAL_BEARING);
+    return _vincentyInverseFormula(location, _FINAL_BEARING);
   }
 
   /// Calculate [geodesic distance](http://en.wikipedia.org/wiki/Great-circle_distance) in Meters between
@@ -333,7 +237,7 @@ class GeoLocation {
   ///   the destination location
   /// Returns the geodesic distance in Meters
   double getGeodesicDistance(GeoLocation location) {
-    return vincentyFormula(location, _DISTANCE);
+    return _vincentyInverseFormula(location, _DISTANCE);
   }
 
   /// Calculate [geodesic distance](http://en.wikipedia.org/wiki/Great-circle_distance) in Meters between
@@ -345,7 +249,7 @@ class GeoLocation {
   ///   This formula calculates initial bearing ([INITIAL_BEARING]), final bearing (
   ///   [FINAL_BEARING]) and distance ([DISTANCE]).
   /// Returns geodesic distance in Meters
-  double vincentyFormula(GeoLocation location, int formula) {
+  double _vincentyInverseFormula(GeoLocation location, int formula) {
     double a = 6378137;
     double b = 6356752.3142;
     double f = 1 / 298.257223563; // WGS-84 ellipsiod
@@ -476,60 +380,42 @@ class GeoLocation {
         '\t<LocationName>${getLocationName()}</LocationName>\n'
         '\t<Latitude>${javaDouble(getLatitude())}</Latitude>\n'
         '\t<Longitude>${javaDouble(getLongitude())}</Longitude>\n'
-        '\t<Elevation>${javaDouble(getElevation() ?? 0)} Meters</Elevation>\n'
+        '\t<Elevation>${javaDouble(getElevation())} Meters</Elevation>\n'
         '\t<TimezoneName>${getZoneId().name}</TimezoneName>\n'
         '\t<TimeZoneDisplayName>${zoneGenericName(getZoneId())}</TimeZoneDisplayName>\n'
         '</GeoLocation>';
   }
 
-  /// See also [Object.equals].
   @override
-  bool operator ==(Object object) {
-    if (identical(this, object)) {
+  bool operator ==(Object other) {
+    if (identical(this, other)) {
       return true;
     }
-    try {
-      GeoLocation geo = object as GeoLocation;
-      return _latitude == geo._latitude &&
-          _longitude == geo._longitude &&
-          _elevation == geo._elevation &&
-          (_locationName == geo._locationName) &&
-          (_dateTime == geo._dateTime);
-    } catch (e) {
+    if (other is! GeoLocation || other.runtimeType != runtimeType) {
       return false;
     }
+    return _latitude.compareTo(other._latitude) == 0 &&
+        _longitude.compareTo(other._longitude) == 0 &&
+        _elevation.compareTo(other._elevation) == 0 &&
+        _locationName == other._locationName &&
+        _zoneId.name == other._zoneId.name;
   }
 
-  ///See also [Object.hashCode].
   @override
-  int get hashCode {
-    int result = 17;
-    int latInt = _latitude.toInt() ^ (_latitude * 10000).round();
-    int lonInt = _longitude.toInt() ^ (_longitude * 10000).round();
-    int elevInt = _elevation?.toInt() ?? 0 ^ (_elevation ?? 0 * 10000).round();
-    result = 37 * result + runtimeType.hashCode;
-    result += 37 * result + latInt;
-    result += 37 * result + lonInt;
-    result += 37 * result + elevInt;
-    result += 37 * result + _locationName.hashCode;
-    result += 37 * result + _dateTime.hashCode;
-    return result;
-  }
+  int get hashCode => Object.hash(runtimeType, _latitude, _longitude, _elevation, _locationName, _zoneId.name);
+
   @override
   String toString() {
     final degrees = String.fromCharCode(0xB0);
     return '\nLocation Name:\t\t\t${getLocationName()}'
         '\nLatitude:\t\t\t${javaDouble(getLatitude())}$degrees'
         '\nLongitude:\t\t\t${javaDouble(getLongitude())}$degrees'
-        '\nElevation:\t\t\t${javaDouble(getElevation() ?? 0)} Meters'
+        '\nElevation:\t\t\t${javaDouble(getElevation())} Meters'
         '\nTimezone ID:\t\t\t${getZoneId().name}'
         '\nTimezone Display Name:\t\t${zoneGenericName(getZoneId())}';
   }
 
   /// Create clone of this GeoLocation
-  GeoLocation clone() {
-    return GeoLocation.setLocation(getLocationName(), getLatitude(),
-        getLongitude(), getDateTime(), getElevation() ?? 0)
-      .._zoneId = _zoneId;
-  }
+  GeoLocation clone() =>
+      GeoLocation.withElevation(getLocationName(), getLatitude(), getLongitude(), getElevation(), getZoneId());
 }

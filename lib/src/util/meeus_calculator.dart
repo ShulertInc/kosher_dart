@@ -12,7 +12,7 @@ class MeeusCalculator extends AstronomicalCalculator {
 
   @override
   MeeusCalculator clone() =>
-      copySettingsTo(MeeusCalculator()).._applyDeltaT = _applyDeltaT;
+      copyCalculatorSettings(this, MeeusCalculator()).._applyDeltaT = _applyDeltaT;
 
   @override
   String getCalculatorName() =>
@@ -23,6 +23,13 @@ class MeeusCalculator extends AstronomicalCalculator {
   }
 
   bool isApplyDeltaT() => _applyDeltaT;
+
+  @override
+  bool operator ==(Object other) =>
+      super == other && _applyDeltaT == (other as MeeusCalculator)._applyDeltaT;
+
+  @override
+  int get hashCode => Object.hash(super.hashCode, _applyDeltaT);
 
   @override
   double getUTCSunrise(DateTime dateTime, GeoLocation geoLocation,
@@ -39,7 +46,7 @@ class MeeusCalculator extends AstronomicalCalculator {
   double _getUTCSunRiseSet(DateTime dateTime, GeoLocation geoLocation,
       double zenith, bool adjustForElevation, _SolarEvent solarEvent) {
     final double elevation =
-        adjustForElevation ? (geoLocation.getElevation() ?? 0) : 0;
+        adjustForElevation ? geoLocation.getElevation() : 0;
     final double adjustedZenith = adjustZenith(zenith, elevation, dateTime);
     final double riseSet = _getSunRiseSetUTC(dateTime,
             geoLocation.getLatitude(), -geoLocation.getLongitude(),
@@ -109,7 +116,7 @@ class MeeusCalculator extends AstronomicalCalculator {
   }
 
   @override
-  double getUTCTimeAtAzimuth(
+  double getTimeAtAzimuth(
       DateTime dateTime, GeoLocation geoLocation, double azimuth) {
     if (azimuth != 90.0 && azimuth != 270.0) {
       throw ArgumentError(

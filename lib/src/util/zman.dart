@@ -30,7 +30,7 @@ class Zman {
 
   DateTime? _zman;
 
-  double? _duration;
+  Duration? _duration;
 
   String? _description;
 
@@ -44,9 +44,9 @@ class Zman {
 
   void setGeoLocation(GeoLocation? geoLocation) => _geoLocation = geoLocation;
 
-  double? getDuration() => _duration;
+  Duration? getDuration() => _duration;
 
-  void setDuration(double? duration) => _duration = duration;
+  void setDuration(Duration? duration) => _duration = duration;
 
   String? getLabel() => _label;
 
@@ -134,6 +134,8 @@ class Zman {
 
   String _durationText() {
     final duration = getDuration();
-    return duration == null || duration.isNaN ? 'null' : javaDurationTextOfMillis(duration);
+    if (duration == null) return 'null';
+    final (seconds, nanos) = spanOfMicros(duration.inMicroseconds);
+    return javaDurationText(seconds, nanos);
   }
 }

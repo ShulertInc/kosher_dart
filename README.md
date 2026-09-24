@@ -46,9 +46,9 @@ import 'package:kosher_dart/kosher_dart.dart';
 
 ##### Get time of the day
 ```
-  GeoLocation geoLocation = GeoLocation.setLocation(
-        'Jerusalem', 31.7962419, 35.2453988, DateTime.now());
-    ComplexZmanimCalendar complexZmanimCalendar = ComplexZmanimCalendar.intGeoLocation(geoLocation);
-    DateTime? sofZmanTfila = complexZmanimCalendar.getSofZmanTfilaGRA();
-    DateTime? minchaKetana = complexZmanimCalendar.getMinchaKetana();
+  GeoLocation geoLocation = GeoLocation.withZoneId(
+      'Jerusalem', 31.7962419, 35.2453988, tz.getLocation('Asia/Jerusalem'));
+  ComprehensiveZmanimCalendar calendar = ComprehensiveZmanimCalendar.withGeoLocation(geoLocation);
+  DateTime? sofZmanTfila = calendar.getSofZmanTfilaGRA();
+  DateTime? minchaKetana = calendar.getMinchaKetanaGRA();
 ```
