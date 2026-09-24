@@ -65,6 +65,18 @@ reused across dates.
   1923-09-11 and Daf Yomi Yerushalmi before 1980-02-02; kosher-rust returns `None`. Those
   throws count as no limud. Any other error only agrees with an error.
 
+## What agreement does not prove
+
+Both libraries port the same sources, so a defect they share passes. Checked against
+hebcal's `@hebcal/learning` over 1900-2300, every schedule agrees except two, where
+kosher_dart keeps KosherJava's and kosher-rust's answer:
+
+- Daf Yomi Yerushalmi: KosherJava's cycle-end search, which both ports copy, does not count
+  a skipped day that lands on the first day of an extension. On 2172-07-30 (Tisha B'Av)
+  that drops Niddah 13 and starts the next cycle a day early.
+- Dirshu Amud Yomi: kosher-rust ends Rosh Hashana on 35b; hebcal ends it on 35a
+  (hebcal/hebcal#316), and every date from 2027-07-01 is an amud apart.
+
 ## Range
 
 The random range stops at 6235-12-31 because kosher-rust's Hebrew calendar ends with year

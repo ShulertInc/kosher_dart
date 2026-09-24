@@ -59,44 +59,12 @@ fn tehillim(value: Option<TehillimUnit>) -> String {
     }
 }
 
-fn dirshu_start() -> Date {
-    jiff::civil::date(2023, 10, 16)
-}
-
-fn rosh_hashana_35b_offset() -> Option<i64> {
-    let start = dirshu_start();
-    (0..5407).find(|&offset| {
-        start
-            .checked_add(jiff::Span::new().days(offset))
-            .ok()
-            .and_then(|day| day.limud(AmudYomiBavliDirshu::default()))
-            .is_some_and(|amud| amud.tractate == Tractate::RoshHashanah && amud.page == 35 && amud.side == Side::Bet)
-    })
-}
-
-fn dirshu_without_rosh_hashana_35b(day: Date, extra: Option<i64>) -> Option<Amud> {
-    let Some(extra) = extra else {
-        return day.limud(AmudYomiBavliDirshu::default());
-    };
-    let start = dirshu_start();
-    if day < start {
-        return None;
-    }
-    let offset = start.until(day).ok()?.get_days() as i64 % 5406;
-    let shifted = if offset >= extra { offset + 1 } else { offset };
-    start
-        .checked_add(jiff::Span::new().days(shifted))
-        .ok()?
-        .limud(AmudYomiBavliDirshu::default())
-}
-
-fn line_for(day: Date, extra: Option<i64>) -> String {
+fn line_for(day: Date) -> String {
     let fields = [
         ("dafYomiBavli", guarded(|| daf(day.limud(DafYomiBavli::default())))),
         ("dafYomiYerushalmi", guarded(|| daf(day.limud(DafYomiYerushalmiVilna::default())))),
         ("dafHashavuaBavli", guarded(|| daf(day.limud(DafHashavuaBavli::default())))),
-        ("amudYomiBavliDirshu", guarded(|| amud(dirshu_without_rosh_hashana_35b(day, extra)))),
-        ("amudYomiBavliDirshuRaw", guarded(|| amud(day.limud(AmudYomiBavliDirshu::default())))),
+        ("amudYomiBavliDirshu", guarded(|| amud(day.limud(AmudYomiBavliDirshu::default())))),
         ("mishnaYomis", guarded(|| mishnas(day.limud(MishnaYomis)))),
         ("pirkeiAvosIsrael", guarded(|| pirkei_avos(day.limud(PirkeiAvos::new(true))))),
         ("pirkeiAvosDiaspora", guarded(|| pirkei_avos(day.limud(PirkeiAvos::new(false))))),
@@ -116,8 +84,6 @@ fn main() -> std::io::Result<()> {
         .map(|line| line.trim().trim_start_matches('\u{feff}').to_string())
         .filter(|text| !text.is_empty())
         .collect();
-    let extra = rosh_hashana_35b_offset();
-    eprintln!("kosher-rust Rosh Hashana 35b at Dirshu offset {extra:?}");
     let workers =std::thread::available_parallelism().map_or(1, |n| n.get());
     let chunk = texts.len().div_ceil(workers).max(1);
     let answers: Vec<String> = std::thread::scope(|scope| {
@@ -127,7 +93,7 @@ fn main() -> std::io::Result<()> {
                 scope.spawn(move || {
                     part.iter()
                         .map(|text| match text.parse::<Date>() {
-                            Ok(day) => line_for(day, extra),
+                            Ok(day) => line_for(day),
                             Err(_) => format!("{{\"g\":\"{text}\",\"unparsed\":true}}"),
                         })
                         .collect::<Vec<String>>()

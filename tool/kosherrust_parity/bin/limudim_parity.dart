@@ -425,18 +425,9 @@ Future<List<Map<String, dynamic>>> runGolden(
     throw StateError('$golden exited $exitCode: ${await errors}');
   }
   stdout.write(await errors);
-  final List<Map<String, dynamic>> records = output
+  return output
       .map((String line) => jsonDecode(line) as Map<String, dynamic>)
       .toList();
-  final int shifted = records
-      .where(
-        (Map<String, dynamic> record) =>
-            rustAmud(record['amudYomiBavliDirshu']) !=
-            rustAmud(record['amudYomiBavliDirshuRaw']),
-      )
-      .length;
-  print('kosher-rust Dirshu answers moved past its Rosh Hashana 35b: $shifted');
-  return records;
 }
 
 Future<List<Map<String, String>>> runChunk(List<Input> part) =>

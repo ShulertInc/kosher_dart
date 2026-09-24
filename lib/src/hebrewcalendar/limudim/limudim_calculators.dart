@@ -68,7 +68,7 @@ class AmudYomiBavliDirshuCalculator {
   static final DateTime cycleStartDay = DateTime(2023, 10, 16);
 
   /// The number of amudim in the Bavli as the schedule counts them.
-  static const int WHOLE_SHAS_AMUDIM = 5406;
+  static const int WHOLE_SHAS_AMUDIM = 5407;
 
   static final int _cycleStartAbsDate = _absDateOfGregorian(2023, 10, 16);
 

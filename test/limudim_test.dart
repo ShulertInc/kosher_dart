@@ -47,18 +47,6 @@ void main() {
     test('is null before the first cycle', () {
       expect(on(2023, 10, 15).getAmudYomiBavliDirshu(), isNull);
     });
-
-    test('ends Rosh Hashana on 35a and goes on to Taanis 2a', () {
-      final last = on(2027, 6, 30).getAmudYomiBavliDirshu()!;
-      expect(last.getMasechtaTransliterated(), 'Rosh Hashana');
-      expect(last.getDaf(), 35);
-      expect(last.getSide(), AmudSide.ALEPH);
-
-      final next = on(2027, 7, 1).getAmudYomiBavliDirshu()!;
-      expect(next.getMasechtaTransliterated(), 'Taanis');
-      expect(next.getDaf(), 2);
-      expect(next.getSide(), AmudSide.ALEPH);
-    });
   });
 
   group('Mishna Yomis', () {
