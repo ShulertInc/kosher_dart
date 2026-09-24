@@ -14,11 +14,11 @@ import 'package:kosher_dart/kosher_dart.dart';
 
 void main() {
   HebrewDateFormatter hdf = HebrewDateFormatter();
-  hdf.hebrewFormat = true;
+  hdf.setHebrewFormat(true);
 
   // 10 Elul 5777 → tractate 29 (Horayot), daf 8.
   test('testCorrectDaf1', () async {
-    JewishCalendar jewishCalendar = JewishCalendar.initDate(5777, 6, 10);
+    JewishCalendar jewishCalendar = JewishCalendar.fromJewishDate(5777, 6, 10);
     expect(jewishCalendar.getDafYomiYerushalmi()!.getDaf(), 8);
     expect(jewishCalendar.getDafYomiYerushalmi()!.getMasechtaNumber(), 29);
     print(hdf.formatDafYomiYerushalmi(jewishCalendar.getDafYomiYerushalmi()));
@@ -26,7 +26,7 @@ void main() {
 
   // 1 Kislev 5744 → tractate 32 (Niddah), daf 26.
   test('testCorrectDaf2', () async {
-    JewishCalendar jewishCalendar = JewishCalendar.initDate(5744, 9, 1);
+    JewishCalendar jewishCalendar = JewishCalendar.fromJewishDate(5744, 9, 1);
     expect(jewishCalendar.getDafYomiYerushalmi()!.getDaf(), 26);
     expect(jewishCalendar.getDafYomiYerushalmi()!.getMasechtaNumber(), 32);
     print(hdf.formatDafYomiYerushalmi(jewishCalendar.getDafYomiYerushalmi()));
@@ -34,14 +34,14 @@ void main() {
 
   // 1 Sivan 5782 → tractate 33 (Kinnim), daf 15.
   test('testCorrectDaf3', () async {
-    JewishCalendar jewishCalendar = JewishCalendar.initDate(5782, 3, 1);
+    JewishCalendar jewishCalendar = JewishCalendar.fromJewishDate(5782, 3, 1);
     expect(jewishCalendar.getDafYomiYerushalmi()!.getDaf(), 15);
     expect(jewishCalendar.getDafYomiYerushalmi()!.getMasechtaNumber(), 33);
     print(hdf.formatDafYomiYerushalmi(jewishCalendar.getDafYomiYerushalmi()));
   });
 
   test('testCorrectSpecialDate', () async {
-    JewishCalendar jewishCalendar = JewishCalendar.initDate(5775, 7, 10);
+    JewishCalendar jewishCalendar = JewishCalendar.fromJewishDate(5775, 7, 10);
     expect(jewishCalendar.getDafYomiYerushalmi(), isNull);
     expect(hdf.formatDafYomiYerushalmi(jewishCalendar.getDafYomiYerushalmi()),
         Daf(39, 0).getYerushalmiMasechta());

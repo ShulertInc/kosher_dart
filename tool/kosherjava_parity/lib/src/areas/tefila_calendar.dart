@@ -82,14 +82,14 @@ class CalendarDay {
   kd.JewishCalendar dart() {
     final kd.JewishCalendar calendar;
     if (gregorian case final date?) {
-      calendar = kd.JewishCalendar.fromDateTime(
+      calendar = kd.JewishCalendar.fromLocalDate(
           utc ? DateTime.utc(date.year, date.month, date.day) : DateTime(date.year, date.month, date.day));
     } else {
-      calendar = kd.JewishCalendar.initDate(jewish!.$1, jewish!.$2, jewish!.$3);
+      calendar = kd.JewishCalendar.fromJewishDate(jewish!.$1, jewish!.$2, jewish!.$3);
     }
     calendar
-      ..inIsrael = inIsrael
-      ..isMukafChoma = isMukafChoma
+      ..setInIsrael(inIsrael)
+      ..setIsMukafChoma(isMukafChoma)
       ..setUseModernHolidays(useModernHolidays);
     return calendar;
   }
@@ -102,9 +102,11 @@ class CalendarDay {
     return state;
   }
 
-  String stateOfDart(kd.JewishDate date) =>
-      '${date.getJewishYear()}-${date.getJewishMonth()}-${date.getJewishDayOfMonth()} dow=${date.getDayOfWeek()} '
-      '${date.getGregorianYear()}-${date.getGregorianMonth()}-${date.getGregorianDayOfMonth()}';
+  String stateOfDart(kd.JewishDate date) {
+    final local = date.getLocalDate();
+    return '${date.getJewishYear()}-${date.getJewishMonth()}-${date.getJewishDayOfMonth()} dow=${date.getDayOfWeek()} '
+        '${local.year}-${local.month}-${local.day}';
+  }
 
   bool agrees(Report report, String area, String describe) {
     final javaState = attempt(() {

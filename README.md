@@ -28,8 +28,8 @@ import 'package:kosher_dart/kosher_dart.dart';
 ```
   JewishDate jewishDate = JewishDate();
   HebrewDateFormatter hebrewDateFormatter = HebrewDateFormatter();
-  hebrewDateFormatter.hebrewFormat = true; // optional
-  hebrewDateFormatter.useGershGershayim = true; // optional
+  hebrewDateFormatter.setHebrewFormat(true); // optional
+  hebrewDateFormatter.setUseGershGershayim(true); // optional
   String hebrewDate = hebrewDateFormatter.format(jewishDate);
 ```
 ##### Get jewish holiday
@@ -37,9 +37,9 @@ import 'package:kosher_dart/kosher_dart.dart';
   JewishCalendar jewishCalendar = JewishCalendar();
   HebrewDateFormatter hebrewDateFormatter = HebrewDateFormatter();
   
-  jewishCalendar.inIsrael = true; // set to true if your location is in israel
-  hebrewDateFormatter.hebrewFormat = true; // optional
-  hebrewDateFormatter.useGershGershayim = true; // optional
+  jewishCalendar.setInIsrael(true); // set to true if your location is in israel
+  hebrewDateFormatter.setHebrewFormat(true); // optional
+  hebrewDateFormatter.setUseGershGershayim(true); // optional
   
   String yomTov = hebrewDateFormatter.formatYomTov(jewishCalendar);
 ```

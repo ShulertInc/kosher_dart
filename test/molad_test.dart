@@ -27,7 +27,7 @@ void main() {
 
   test('molad is the molad in standard time, not local mean time', () {
     final JewishCalendar jewishCalendar =
-        JewishCalendar.fromDateTime(DateTime(2026, 8, 27));
+        JewishCalendar.fromLocalDate(DateTime(2026, 8, 27));
     final JewishDate molad = jewishCalendar.getMolad();
 
     // Molad of Elul 5786: Thursday 13 August 2026, 8 hours 15 minutes 0 chalakim.
@@ -35,15 +35,15 @@ void main() {
     expect(molad.getMoladMinutes(), 15);
     expect(molad.getMoladChalakim(), 0);
 
-    expect(jewishCalendar.getMoladAsDateTime().toUtc(),
+    expect(jewishCalendar.getMoladAsInstant().toUtc(),
         DateTime.utc(2026, 8, 13, 6, 15).subtract(localMeanTimeOffset));
-    expect(jewishCalendar.getMoladAsDateTime().toUtc(),
+    expect(jewishCalendar.getMoladAsInstant().toUtc(),
         DateTime.utc(2026, 8, 13, 5, 54, 3, 504));
   });
 
   test('chalakim that are not whole seconds keep their milliseconds', () {
     final JewishCalendar jewishCalendar =
-        JewishCalendar.fromDateTime(DateTime(2027, 1, 10));
+        JewishCalendar.fromLocalDate(DateTime(2027, 1, 10));
     final JewishDate molad = jewishCalendar.getMolad();
 
     // 23 hours 55 minutes 5 chalakim. A chelek is 10/3 of a second, so five of
@@ -52,20 +52,20 @@ void main() {
     expect(molad.getMoladMinutes(), 55);
     expect(molad.getMoladChalakim(), 5);
 
-    expect(jewishCalendar.getMoladAsDateTime().toUtc(),
-        DateTime.utc(2027, 1, 7, 21, 55, 16, 666).subtract(localMeanTimeOffset));
-    expect(jewishCalendar.getMoladAsDateTime().toUtc(),
-        DateTime.utc(2027, 1, 7, 21, 34, 20, 170));
-    expect(jewishCalendar.getMoladAsDateTime().toUtc().millisecond, isNot(0));
+    expect(jewishCalendar.getMoladAsInstant().toUtc(),
+        DateTime.utc(2027, 1, 7, 21, 55, 16, 666, 666).subtract(localMeanTimeOffset));
+    expect(jewishCalendar.getMoladAsInstant().toUtc(),
+        DateTime.utc(2027, 1, 7, 21, 34, 20, 170, 666));
+    expect(jewishCalendar.getMoladAsInstant().toUtc().millisecond, isNot(0));
   });
 
   test('every day of a month reports that month s molad', () {
     // The offset applied is a constant of Har Habayis, not anything read off the
     // host, so any day of Sivan 5786 must give the same answer.
     final DateTime fromEarly =
-        JewishCalendar.fromDateTime(DateTime(2026, 5, 20)).getMoladAsDateTime();
+        JewishCalendar.fromLocalDate(DateTime(2026, 5, 20)).getMoladAsInstant();
     final DateTime fromLate =
-        JewishCalendar.fromDateTime(DateTime(2026, 6, 10)).getMoladAsDateTime();
+        JewishCalendar.fromLocalDate(DateTime(2026, 6, 10)).getMoladAsInstant();
 
     expect(fromEarly, fromLate);
     expect(fromEarly.toUtc(), DateTime.utc(2026, 5, 16, 15, 41, 53, 504));
@@ -76,8 +76,8 @@ void main() {
 
   test('Kiddush Levana zmanim are reckoned from that moment', () {
     final JewishCalendar jewishCalendar =
-        JewishCalendar.fromDateTime(DateTime(2026, 8, 27));
-    final DateTime molad = jewishCalendar.getMoladAsDateTime();
+        JewishCalendar.fromLocalDate(DateTime(2026, 8, 27));
+    final DateTime molad = jewishCalendar.getMoladAsInstant();
 
     expect(jewishCalendar.getTchilasZmanKidushLevana3Days(),
         molad.add(const Duration(days: 3)));

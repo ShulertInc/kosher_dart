@@ -20,7 +20,7 @@ void main() {
   // KosherJava TefilaRulesTest, ported
   // ────────────────────────────────────────────────────────────────
   group('TefilaRules - ordinary summer weekday (21 August 2023)', () {
-    final date = JewishCalendar.fromDateTime(DateTime(2023, 8, 21));
+    final date = JewishCalendar.fromLocalDate(DateTime(2023, 8, 21));
 
     test('tachanun is recited', () {
       expect(rules.isTachanunRecitedShacharis(date), isTrue);
@@ -54,7 +54,7 @@ void main() {
   });
 
   group('TefilaRules - Shemini Atzeres (7 October 2023)', () {
-    final date = JewishCalendar.fromDateTime(DateTime(2023, 10, 7));
+    final date = JewishCalendar.fromLocalDate(DateTime(2023, 10, 7));
 
     test('no tachanun', () {
       expect(rules.isTachanunRecitedShacharis(date), isFalse);
@@ -91,7 +91,7 @@ void main() {
   // The three predicates this port was missing
   // ────────────────────────────────────────────────────────────────
   group('TefilaRules - al hanissim', () {
-    JewishCalendar cal() => JewishCalendar()..inIsrael = false;
+    JewishCalendar cal() => JewishCalendar()..setInIsrael(false);
 
     test('said on Chanukah', () {
       final c = cal()..setJewishDate(5784, JewishDate.KISLEV, 25);
@@ -110,7 +110,7 @@ void main() {
 
     test('said on Shushan Purim in a walled city', () {
       final c = cal()
-        ..isMukafChoma = true
+        ..setIsMukafChoma(true)
         ..setJewishDate(5784, JewishDate.ADAR_II, 15);
       expect(rules.isAlHanissimRecited(c), isTrue);
     });
@@ -122,8 +122,8 @@ void main() {
   });
 
   group('TefilaRules - yaaleh vyavo', () {
-    JewishCalendar diaspora() => JewishCalendar()..inIsrael = false;
-    JewishCalendar israel() => JewishCalendar()..inIsrael = true;
+    JewishCalendar diaspora() => JewishCalendar()..setInIsrael(false);
+    JewishCalendar israel() => JewishCalendar()..setInIsrael(true);
 
     test('said on rosh chodesh', () {
       final c = diaspora()..setJewishDate(5784, JewishDate.CHESHVAN, 1);
@@ -207,7 +207,7 @@ void main() {
   });
 
   group('TefilaRules - mizmor lesoda', () {
-    JewishCalendar cal() => JewishCalendar()..inIsrael = false;
+    JewishCalendar cal() => JewishCalendar()..setInIsrael(false);
 
     test('said on an ordinary weekday', () {
       final c = cal()..setJewishDate(5784, JewishDate.CHESHVAN, 12);
@@ -232,155 +232,16 @@ void main() {
 
     test('said on those days when the minhag says so', () {
       final saying =
-          TefilaRules(mizmorLesodaRecitedErevYomKippurAndPesach: true);
+          TefilaRules()..setMizmorLesodaRecitedErevYomKippurAndPesach(true);
       final c = cal()..setJewishDate(5784, JewishDate.NISSAN, 14);
       expect(saying.isMizmorLesodaRecited(c), isTrue);
     });
 
     test('the minhag does not override a day work is forbidden', () {
       final saying =
-          TefilaRules(mizmorLesodaRecitedErevYomKippurAndPesach: true);
+          TefilaRules()..setMizmorLesodaRecitedErevYomKippurAndPesach(true);
       final c = cal()..setJewishDate(5784, JewishDate.TISHREI, 15);
       expect(saying.isMizmorLesodaRecited(c), isFalse);
-    });
-  });
-
-  group('TefilaRules - ata chonantanu', () {
-    JewishCalendar cal() => JewishCalendar()..inIsrael = false;
-
-    test('said on motzei shabbos', () {
-      final c = cal()..setJewishDate(5784, JewishDate.CHESHVAN, 14);
-      expect(c.isSunday(), isTrue);
-      expect(rules.isAtaChonantanuRecited(c), isTrue);
-    });
-
-    test('said after yom tov as well', () {
-      // 23 Tishrei 5784 is Simchas Torah, so the 24th is the first weekday after it.
-      final c = cal()..setJewishDate(5784, JewishDate.TISHREI, 24);
-      expect(c.isMotzeiShabbos(), isFalse);
-      expect(rules.isAtaChonantanuRecited(c), isTrue);
-    });
-
-    test('not said on an ordinary weekday', () {
-      final c = cal()..setJewishDate(5784, JewishDate.CHESHVAN, 16);
-      expect(rules.isAtaChonantanuRecited(c), isFalse);
-    });
-  });
-
-  group('TefilaRules - havdalah', () {
-    JewishCalendar cal(int year, int month, int day, {bool inIsrael = false}) =>
-        JewishCalendar()
-          ..inIsrael = inIsrael
-          ..setJewishDate(year, month, day);
-
-    test('said on motzei shabbos and motzei yom tov', () {
-      expect(
-          rules.isHavdalahRecited(cal(5784, JewishDate.CHESHVAN, 14)), isTrue);
-      expect(rules.isHavdalahRecited(cal(5784, JewishDate.SIVAN, 8)), isTrue,
-          reason: 'the Friday after Shavuos');
-      expect(rules.isHavdalahRecited(cal(5786, JewishDate.TISHREI, 11)), isTrue,
-          reason: 'the Friday after Yom Kippur');
-    });
-
-    test('not said where the night opens shabbos or yom tov', () {
-      expect(rules.isHavdalahRecited(cal(5785, JewishDate.TISHREI, 3)), isFalse,
-          reason: 'Rosh Hashana into Shabbos');
-      expect(rules.isHavdalahRecited(cal(5785, JewishDate.TISHREI, 4)), isTrue);
-      expect(
-          rules.isHavdalahRecited(cal(5784, JewishDate.TISHREI, 16)), isFalse,
-          reason: 'Shabbos into the second day of Succos');
-      expect(
-          rules.isHavdalahRecited(
-              cal(5784, JewishDate.TISHREI, 16, inIsrael: true)),
-          isTrue,
-          reason: 'Shabbos into chol hamoed');
-    });
-
-    test('put off to the night after a fast that opened on motzei shabbos', () {
-      expect(rules.isHavdalahRecited(cal(5782, JewishDate.AV, 10)), isFalse);
-      expect(rules.isHavdalahRecited(cal(5782, JewishDate.AV, 11)), isTrue);
-      expect(rules.isHavdalahRecited(cal(5785, JewishDate.AV, 9)), isFalse);
-      expect(rules.isHavdalahRecited(cal(5785, JewishDate.AV, 10)), isTrue);
-      expect(rules.isHavdalahRecited(cal(5786, JewishDate.AV, 10)), isFalse);
-    });
-
-    test('not said on an ordinary weekday', () {
-      expect(
-          rules.isHavdalahRecited(cal(5784, JewishDate.CHESHVAN, 16)), isFalse);
-    });
-
-    test('spices only after shabbos, never on or after tisha b\'av', () {
-      bool besamim(int year, int month, int day) =>
-          rules.isHavdalahBesamimRecited(cal(year, month, day));
-
-      expect(besamim(5784, JewishDate.CHESHVAN, 14), isTrue);
-      expect(besamim(5785, JewishDate.TISHREI, 11), isTrue,
-          reason: 'Yom Kippur on Shabbos');
-      expect(besamim(5786, JewishDate.TISHREI, 11), isFalse,
-          reason: 'Yom Kippur on Thursday');
-      expect(besamim(5784, JewishDate.SIVAN, 8), isFalse,
-          reason: 'after Shavuos');
-      expect(besamim(5785, JewishDate.AV, 9), isFalse);
-      expect(besamim(5782, JewishDate.AV, 10), isFalse);
-      expect(besamim(5782, JewishDate.AV, 11), isFalse);
-      expect(besamim(5784, JewishDate.TISHREI, 16), isFalse,
-          reason: 'Shabbos into yom tov');
-    });
-
-    test('the flame after shabbos and yom kippur, not after yom tov', () {
-      bool ner(int year, int month, int day) =>
-          rules.isHavdalahNerRecited(cal(year, month, day));
-
-      expect(ner(5784, JewishDate.CHESHVAN, 14), isTrue);
-      expect(ner(5786, JewishDate.TISHREI, 11), isTrue,
-          reason: 'Yom Kippur on Thursday');
-      expect(ner(5784, JewishDate.SIVAN, 8), isFalse, reason: 'after Shavuos');
-      expect(ner(5785, JewishDate.AV, 9), isTrue,
-          reason: 'the night tisha b\'av opens');
-      expect(ner(5782, JewishDate.AV, 10), isTrue,
-          reason: 'the night a put off tisha b\'av opens');
-      expect(ner(5782, JewishDate.AV, 11), isFalse,
-          reason: 'havdalah after the fast');
-      expect(ner(5784, JewishDate.TISHREI, 16), isFalse,
-          reason: 'Shabbos into yom tov');
-      expect(ner(5784, JewishDate.CHESHVAN, 16), isFalse);
-    });
-  });
-
-  group('TefilaRules - kiddush levana', () {
-    bool levana(int year, int month, int day) => rules.isKiddushLevanaRecited(
-        JewishCalendar()..setJewishDate(year, month, day));
-
-    test('from seven days after the molad to fifteen days after it', () {
-      expect(levana(5785, JewishDate.CHESHVAN, 5), isFalse);
-      expect(levana(5785, JewishDate.CHESHVAN, 10), isTrue);
-      expect(levana(5785, JewishDate.CHESHVAN, 15), isTrue);
-      expect(levana(5785, JewishDate.CHESHVAN, 17), isFalse);
-    });
-
-    test('not before Yom Kippur', () {
-      expect(levana(5785, JewishDate.TISHREI, 10), isFalse);
-      expect(levana(5785, JewishDate.TISHREI, 11), isTrue);
-    });
-
-    test('not before Tisha B\'Av, wherever the fast falls', () {
-      expect(levana(5785, JewishDate.AV, 9), isFalse);
-      expect(levana(5785, JewishDate.AV, 10), isTrue);
-      expect(levana(5782, JewishDate.AV, 10), isFalse,
-          reason: 'the fast put off from Shabbos');
-      expect(levana(5782, JewishDate.AV, 11), isTrue);
-    });
-  });
-
-  group('TefilaRules - tashlich', () {
-    bool tashlich(int month, int day) => rules
-        .isTashlichRecited(JewishCalendar()..setJewishDate(5785, month, day));
-
-    test('from Rosh Hashana through Hoshana Rabba', () {
-      expect(tashlich(JewishDate.ELUL, 29), isFalse);
-      expect(tashlich(JewishDate.TISHREI, 1), isTrue);
-      expect(tashlich(JewishDate.TISHREI, 21), isTrue);
-      expect(tashlich(JewishDate.TISHREI, 22), isFalse);
     });
   });
 }

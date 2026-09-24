@@ -305,35 +305,35 @@ String dartTehillim(TehillimUnit unit) => unit.isPartialPsalm
     ? '${unit.psalm}:${unit.startVerse}-${unit.endVerse}'
     : '${unit.start}-${unit.end}';
 
-JewishCalendar reused = JewishCalendar.initDate(5784, JewishDate.ADAR_II, 14);
+JewishCalendar reused = JewishCalendar.fromJewishDate(5784, JewishDate.ADAR_II, 14);
 
 JewishCalendar buildCalendar(int build, DateTime date) {
   switch (build) {
     case 0:
-      return JewishCalendar.fromDateTime(
+      return JewishCalendar.fromLocalDate(
         DateTime(date.year, date.month, date.day),
       );
     case 1:
-      return JewishCalendar.fromDateTime(date);
+      return JewishCalendar.fromZonedDateTime(date);
     case 2:
       return JewishCalendar()
-        ..setGregorianDate(date.year, date.month, date.day);
+        ..setGregorianDate(DateTime.utc(date.year, date.month, date.day));
     case 3:
-      final JewishCalendar hebrew = JewishCalendar.fromDateTime(date);
-      return JewishCalendar.initDate(
+      final JewishCalendar hebrew = JewishCalendar.fromLocalDate(date);
+      return JewishCalendar.fromJewishDate(
         hebrew.getJewishYear(),
         hebrew.getJewishMonth(),
         hebrew.getJewishDayOfMonth(),
       );
     default:
-      return reused..setGregorianDate(date.year, date.month, date.day);
+      return reused..setGregorianDate(date);
   }
 }
 
 Map<String, String> dartValues(Input input) {
   final DateTime date = input.date;
   JewishCalendar calendarFor(bool inIsrael) =>
-      buildCalendar(input.build, date)..inIsrael = inIsrael;
+      buildCalendar(input.build, date)..setInIsrael(inIsrael);
 
   JewishCalendar? calendar;
   String? calendarError;
@@ -358,15 +358,15 @@ Map<String, String> dartValues(Input input) {
       noneBefore: dafYomiYerushalmiStart,
       date: date,
     ),
-    'dafHashavuaBavli': guarded(() => dartDaf(c.getDafHashavuaBavli(), bavli)),
-    'amudYomiBavliDirshu': guarded(() => dartAmud(c.getAmudYomiBavliDirshu())),
-    'mishnaYomis': guarded(() => dartMishnas(c.getMishnaYomis())),
-    'tehillimMonthly': guarded(() => dartTehillim(c.getTehillimMonthly())),
+    'dafHashavuaBavli': guarded(() => dartDaf(DafHashavuaBavliCalculator.getDafHashavuaBavli(c), bavli)),
+    'amudYomiBavliDirshu': guarded(() => dartAmud(AmudYomiBavliDirshuCalculator.getAmudYomiBavliDirshu(c))),
+    'mishnaYomis': guarded(() => dartMishnas(MishnaYomisCalculator.getMishnaYomis(c))),
+    'tehillimMonthly': guarded(() => dartTehillim(TehillimMonthlyCalculator.getTehillimMonthly(c))),
     'pirkeiAvosIsrael': guarded(
-      () => dartPirkeiAvos(calendarFor(true).getPirkeiAvos()),
+      () => dartPirkeiAvos(PirkeiAvosCalculator.getPirkeiAvos(calendarFor(true))),
     ),
     'pirkeiAvosDiaspora': guarded(
-      () => dartPirkeiAvos(calendarFor(false).getPirkeiAvos()),
+      () => dartPirkeiAvos(PirkeiAvosCalculator.getPirkeiAvos(calendarFor(false))),
     ),
   };
 }

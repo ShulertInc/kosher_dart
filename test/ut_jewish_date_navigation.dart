@@ -13,9 +13,9 @@ void main() {
   test('jewishForwardMonthToMonth', () async {
     JewishDate jewishDate = JewishDate();
     jewishDate.setJewishDate(5771, 1, 1);
-    expect(jewishDate.getGregorianDayOfMonth(), 5);
-    expect(jewishDate.getGregorianMonth(), 4);
-    expect(jewishDate.getGregorianYear(), 2011);
+    expect(jewishDate.getLocalDate().day, 5);
+    expect(jewishDate.getLocalDate().month, 4);
+    expect(jewishDate.getLocalDate().year, 2011);
   });
 
   // Regression test: computing Rosh Hashana 5771 previously caused an infinite
@@ -25,8 +25,8 @@ void main() {
 
     JewishDate jewishDate = JewishDate();
     jewishDate.setJewishDate(5771, 7, 1);
-    expect(jewishDate.getGregorianDayOfMonth(), 9);
-    expect(jewishDate.getGregorianMonth(), 9);
-    expect(jewishDate.getGregorianYear(), 2010);
+    expect(jewishDate.getLocalDate().day, 9);
+    expect(jewishDate.getLocalDate().month, 9);
+    expect(jewishDate.getLocalDate().year, 2010);
   });
 }

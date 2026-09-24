@@ -7,7 +7,7 @@ import 'package:kosher_dart/kosher_dart.dart';
 
 void main() {
   JewishCalendar cal({bool inIsrael = false}) =>
-      JewishCalendar()..inIsrael = inIsrael;
+      JewishCalendar()..setInIsrael(inIsrael);
 
   group('isYomTov', () {
     // Erev yom tov is not yom tov, and the fork read the test the other way round: it
@@ -115,42 +115,6 @@ void main() {
     });
   });
 
-  group('the named fasts', () {
-    test('each answers for its own fast alone', () {
-      final gedalyah = cal()..setJewishDate(5784, JewishDate.TISHREI, 3);
-      expect(gedalyah.isFastOfGedalyah(), isTrue);
-      expect(gedalyah.isTenthOfTeves(), isFalse);
-      expect(gedalyah.isTaanis(), isTrue);
-
-      final teves = cal()..setJewishDate(5784, JewishDate.TEVES, 10);
-      expect(teves.isTenthOfTeves(), isTrue);
-      expect(teves.isFastOfGedalyah(), isFalse);
-
-      final tammuz = cal()..setJewishDate(5784, JewishDate.TAMMUZ, 17);
-      expect(tammuz.isSeventeenthOfTammuz(), isTrue);
-      expect(tammuz.isFastOfGedalyah(), isFalse);
-    });
-
-    // The 3rd of Tishrei is moved to the 4th when it is Shabbos, so the predicate is
-    // checked against the index rather than against a fixed day.
-    test('Tzom Gedalyah moves off Shabbos', () {
-      final c = cal();
-      var found = 0;
-
-      for (var day = 3; day <= 4; day++) {
-        c.setJewishDate(5785, JewishDate.TISHREI, day);
-        expect(
-          c.isFastOfGedalyah(),
-          equals(c.getYomTovIndex() == JewishCalendar.FAST_OF_GEDALYAH),
-          reason: '$day Tishrei',
-        );
-        if (c.isFastOfGedalyah()) found++;
-      }
-
-      expect(found, equals(1));
-    });
-  });
-
   group('isBeHaB', () {
     test('the Monday, Thursday and Monday after the first Shabbos', () {
       final c = cal();
@@ -164,15 +128,15 @@ void main() {
       expect(days.length, equals(3));
       expect(
         (cal()..setJewishDate(5784, JewishDate.IYAR, days[0])).getDayOfWeek(),
-        equals(JewishDate.monday),
+        equals(2),
       );
       expect(
         (cal()..setJewishDate(5784, JewishDate.IYAR, days[1])).getDayOfWeek(),
-        equals(JewishDate.thursday),
+        equals(5),
       );
       expect(
         (cal()..setJewishDate(5784, JewishDate.IYAR, days[2])).getDayOfWeek(),
-        equals(JewishDate.monday),
+        equals(2),
       );
     });
 
@@ -201,12 +165,12 @@ void main() {
           found++;
           expect(
             c.getDayOfWeek(),
-            isNot(JewishDate.friday),
+            isNot(6),
             reason: 'month $month',
           );
           expect(
             c.getDayOfWeek(),
-            isNot(JewishDate.saturday),
+            isNot(7),
             reason: 'month $month',
           );
         }
@@ -244,46 +208,6 @@ void main() {
             .isTonightMutarBemelacha(),
         isFalse,
       );
-    });
-  });
-
-  group('isEruvTavshilin', () {
-    bool eruv(int year, int month, int day, {required bool inIsrael}) =>
-        (cal(inIsrael: inIsrael)..setJewishDate(year, month, day))
-            .isEruvTavshilin();
-
-    test('before a yom tov that runs into Shabbos, everywhere', () {
-      for (final inIsrael in [false, true]) {
-        expect(eruv(5784, JewishDate.ELUL, 29, inIsrael: inIsrael), isTrue,
-            reason: 'Rosh Hashana on Thursday and Friday');
-        expect(eruv(5782, JewishDate.NISSAN, 20, inIsrael: inIsrael), isTrue,
-            reason: 'the seventh day of Pesach on Friday');
-        expect(eruv(5786, JewishDate.SIVAN, 5, inIsrael: inIsrael), isTrue,
-            reason: 'Shavuos on Friday');
-      }
-    });
-
-    test('before a Thursday yom tov only where it lasts two days', () {
-      expect(eruv(5785, JewishDate.TISHREI, 14, inIsrael: false), isTrue);
-      expect(eruv(5785, JewishDate.TISHREI, 14, inIsrael: true), isFalse);
-      expect(eruv(5785, JewishDate.TISHREI, 21, inIsrael: false), isTrue);
-      expect(eruv(5785, JewishDate.TISHREI, 21, inIsrael: true), isFalse);
-      expect(eruv(5786, JewishDate.NISSAN, 14, inIsrael: false), isTrue);
-      expect(eruv(5786, JewishDate.NISSAN, 14, inIsrael: true), isFalse);
-    });
-
-    test('never on the yom tov itself', () {
-      expect(eruv(5785, JewishDate.TISHREI, 15, inIsrael: false), isFalse);
-      expect(eruv(5785, JewishDate.TISHREI, 1, inIsrael: false), isFalse);
-    });
-
-    test('not before a yom tov that ends before Friday', () {
-      expect(eruv(5785, JewishDate.TISHREI, 9, inIsrael: false), isFalse,
-          reason: 'erev Yom Kippur');
-      expect(eruv(5784, JewishDate.NISSAN, 14, inIsrael: false), isFalse,
-          reason: 'Pesach on Tuesday');
-      expect(eruv(5784, JewishDate.CHESHVAN, 11, inIsrael: false), isFalse,
-          reason: 'an ordinary Thursday');
     });
   });
 }

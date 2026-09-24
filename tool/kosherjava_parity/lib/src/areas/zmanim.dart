@@ -133,9 +133,8 @@ class ZmanimCase {
 const day = 86400000;
 
 CivilDate erevPesach(Random rng) {
-  final jewishDate =
-      kd.JewishDate.initDate(jewishYear: between(rng, 5661, 6060), jewishMonth: kd.JewishDate.NISSAN, jewishDayOfMonth: 14);
-  return CivilDate(jewishDate.getGregorianYear(), jewishDate.getGregorianMonth(), jewishDate.getGregorianDayOfMonth());
+  final date = kd.JewishDate.fromJewishDate(between(rng, 5661, 6060), kd.JewishDate.NISSAN, 14).getLocalDate();
+  return CivilDate(date.year, date.month, date.day);
 }
 
 int? millisOf(kj.Instant? instant) {

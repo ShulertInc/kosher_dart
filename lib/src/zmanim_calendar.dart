@@ -336,8 +336,7 @@ class ZmanimCalendar extends AstronomicalCalendar {
       _isErevPesach() ? getSofZmanTfila(startOfDay, endOfDay, synchronous) : null;
 
   bool _isErevPesach() {
-    final DateTime day = getLocalDate();
-    final JewishCalendar jewishCalendar = JewishCalendar()..setGregorianDate(day.year, day.month, day.day);
+    final JewishCalendar jewishCalendar = JewishCalendar.fromLocalDate(getLocalDate());
     return jewishCalendar.getJewishMonth() == JewishDate.NISSAN && jewishCalendar.getJewishDayOfMonth() == 14;
   }
 
@@ -542,9 +541,8 @@ class ZmanimCalendar extends AstronomicalCalendar {
   /// _see [JewishCalendar.hasCandleLighting]_
   /// _see [JewishCalendar.setInIsrael]_
   bool isAssurBemelacha(DateTime currentTime, DateTime tzais, bool inIsrael) {
-    final DateTime day = getLocalDate();
-    final JewishCalendar jewishCalendar = JewishCalendar()..setGregorianDate(day.year, day.month, day.day);
-    jewishCalendar.inIsrael = inIsrael;
+    final JewishCalendar jewishCalendar = JewishCalendar.fromLocalDate(getLocalDate());
+    jewishCalendar.setInIsrael(inIsrael);
     if (jewishCalendar.hasCandleLighting() && currentTime.compareTo(getSunsetBasedOnElevationSetting()!) >= 0) {
       return true;
     }
