@@ -1,6 +1,3 @@
-/// Coverage for [TefilaRules.isVihiNoamRecited], which is the one rule in this library
-library;
-
 import 'package:test/test.dart';
 import 'package:kosher_dart/kosher_dart.dart';
 

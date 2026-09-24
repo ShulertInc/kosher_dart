@@ -1,6 +1,3 @@
-/// Coverage for the _selichos_ count, which is the only rule here whose answer is an
-library;
-
 import 'package:test/test.dart';
 import 'package:kosher_dart/kosher_dart.dart';
 

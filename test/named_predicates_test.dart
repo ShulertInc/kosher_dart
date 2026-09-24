@@ -1,6 +1,3 @@
-/// Coverage for the predicates that name a day or a rule outright, so a caller never has
-library;
-
 import 'package:test/test.dart';
 import 'package:kosher_dart/kosher_dart.dart';
 
