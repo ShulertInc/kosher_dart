@@ -14,17 +14,52 @@ const hebrewNumberEdges = [0, 1, 9, 10, 11, 14, 15, 16, 17, 19, 20, 99, 100, 115
   516, 700, 999, 1000, 1001, 1015, 5000, 5015, 5016, 5020, 5780, 5790, 5800, 9000, 9999];
 const hebrewNumberInvalid = [-1, -1000, 10000, 12345, 2147483647];
 
+class _EnumMaps {
+  final enumMap = JClass.forName('java/util/EnumMap');
+  late final _copy = enumMap.constructorId('(Ljava/util/EnumMap;)V');
+  late final _put = enumMap.instanceMethodId('put', '(Ljava/lang/Enum;Ljava/lang/Object;)Ljava/lang/Object;');
+  late final _get = enumMap.instanceMethodId('get', '(Ljava/lang/Object;)Ljava/lang/Object;');
+
+  kj.EnumMap copy(kj.EnumMap source) => _copy.call(enumMap, [source]).as(kj.EnumMap.type, releaseOriginal: true);
+
+  void put(kj.EnumMap map, JObject key, String value) {
+    final text = value.toJString();
+    _put.call(map, JObject.type, [key, text]).release();
+    text.release();
+  }
+
+  String? get(kj.EnumMap map, JObject key) {
+    final value = _get.callNullable(map, JObject.type, [key]);
+    if (value == null) return null;
+    return javaString(value.as(JString.type, releaseOriginal: true));
+  }
+}
+
+final _enumMaps = _EnumMaps();
+
+kj.JewishCalendar$Parshah javaParshahValue(String name) {
+  final key = name.toJString();
+  final parshah = kj.JewishCalendar$Parshah.valueOf(key)!;
+  key.release();
+  return parshah;
+}
+
 class FormatterFlags {
   FormatterFlags(this.hebrewFormat, this.useGershGershayim, this.longWeekFormat, this.useFinalFormLetters,
       this.useLongHebrewYears,
-      {this.omerPrefix, this.shabbosName, this.customMonths = false, this.customHolidays = false});
+      {this.omerPrefix,
+      this.shabbosName,
+      this.customMonths = false,
+      this.customHolidays = false,
+      this.customParshiyos = false});
 
   factory FormatterFlags.random(Random rng) => FormatterFlags(
       chance(rng, 0.5), chance(rng, 0.7), chance(rng, 0.7), chance(rng, 0.5), chance(rng, 0.5),
       omerPrefix: chance(rng, 0.2) ? pick(rng, const ['ל', '', 'ביום ']) : null,
       shabbosName: chance(rng, 0.2) ? pick(rng, const ['Shabbat', 'Sabbath', 'Sh']) : null,
       customMonths: chance(rng, 0.15),
-      customHolidays: chance(rng, 0.15));
+      customHolidays: chance(rng, 0.15),
+      customParshiyos: chance(rng, 0.15));
 
   final bool hebrewFormat;
   final bool useGershGershayim;
@@ -35,6 +70,7 @@ class FormatterFlags {
   final String? shabbosName;
   final bool customMonths;
   final bool customHolidays;
+  final bool customParshiyos;
 
   String get mode => hebrewFormat ? 'hebrew' : 'transliterated';
 
@@ -42,7 +78,8 @@ class FormatterFlags {
   String toString() => 'hebrew=$hebrewFormat gersh=$useGershGershayim longWeek=$longWeekFormat '
       'finalForms=$useFinalFormLetters longYears=$useLongHebrewYears'
       '${omerPrefix == null ? '' : ' omerPrefix="$omerPrefix"'}${shabbosName == null ? '' : ' shabbos=$shabbosName'}'
-      '${customMonths ? ' customMonths' : ''}${customHolidays ? ' customHolidays' : ''}';
+      '${customMonths ? ' customMonths' : ''}${customHolidays ? ' customHolidays' : ''}'
+      '${customParshiyos ? ' customParshiyos' : ''}';
 
   static List<String> marked(List<String> names) => [for (final name in names) '$name°'];
 
@@ -61,27 +98,44 @@ class FormatterFlags {
     if (shabbosName != null) formatter.transliteratedShabbosDayOfWeek = shabbosName!.toJString();
     final defaults = kd.HebrewDateFormatter();
     if (customMonths) {
-      formatter.transliteratedMonthList = javaArray(marked(defaults.transliteratedMonths));
-      formatter.hebrewMonthList = javaArray(marked(defaults.hebrewMonths));
+      formatter.transliteratedMonthList = javaArray(marked(defaults.getTransliteratedMonthList()));
+      formatter.hebrewMonthList = javaArray(marked(defaults.getHebrewMonthList()));
     }
-    if (customHolidays) formatter.transliteratedHolidayList = javaArray(marked(defaults.transliteratedHolidays));
+    if (customHolidays) formatter.transliteratedHolidayList = javaArray(marked(defaults.getTransliteratedHolidayList()));
+    if (customParshiyos) {
+      final source = formatter.transliteratedParshiyosList!;
+      final map = _enumMaps.copy(source);
+      source.release();
+      for (final entry in defaults.getTransliteratedParshiyosList().entries) {
+        final key = javaParshahValue(entry.key.name);
+        _enumMaps.put(map, key, '${entry.value}°');
+        key.release();
+      }
+      formatter.transliteratedParshiyosList = map;
+      map.release();
+    }
     return formatter;
   }
 
   kd.HebrewDateFormatter dart() {
     final formatter = kd.HebrewDateFormatter()
-      ..hebrewFormat = hebrewFormat
-      ..useGershGershayim = useGershGershayim
-      ..longWeekFormat = longWeekFormat
-      ..useFinalFormLetters = useFinalFormLetters
-      ..useLongHebrewYears = useLongHebrewYears;
-    if (omerPrefix != null) formatter.hebrewOmerPrefix = omerPrefix!;
-    if (shabbosName != null) formatter.transliteratedShabbosDayOfWeek = shabbosName!;
+      ..setHebrewFormat(hebrewFormat)
+      ..setUseGershGershayim(useGershGershayim)
+      ..setLongWeekFormat(longWeekFormat)
+      ..setUseFinalFormLetters(useFinalFormLetters)
+      ..setUseLongHebrewYears(useLongHebrewYears);
+    if (omerPrefix != null) formatter.setHebrewOmerPrefix(omerPrefix!);
+    if (shabbosName != null) formatter.setTransliteratedShabbosDayOfWeek(shabbosName!);
     if (customMonths) {
-      formatter.transliteratedMonths = marked(formatter.transliteratedMonths);
-      formatter.hebrewMonths = marked(formatter.hebrewMonths);
+      formatter.setTransliteratedMonthList(marked(formatter.getTransliteratedMonthList()));
+      formatter.setHebrewMonthList(marked(formatter.getHebrewMonthList()));
     }
-    if (customHolidays) formatter.transliteratedHolidays = marked(formatter.transliteratedHolidays);
+    if (customHolidays) formatter.setTransliteratedHolidayList(marked(formatter.getTransliteratedHolidayList()));
+    if (customParshiyos) {
+      formatter.setTransliteratedParshiyosList({
+        for (final entry in formatter.getTransliteratedParshiyosList().entries) entry.key: '${entry.value}°',
+      });
+    }
     return formatter;
   }
 }
@@ -94,7 +148,7 @@ class FormatterInput {
         kviahYear = chance(rng, 0.7) ? between(rng, 5660, 6060) : between(rng, 3762, 13700),
         bavli = (between(rng, 0, 39), between(rng, 2, 180)),
         yerushalmi = (between(rng, 0, 38), between(rng, 1, 110)),
-        parshah = rng.nextInt(kd.Parsha.values.length);
+        parshah = rng.nextInt(kd.Parshah.values.length);
 
   static int _randomNumber(Random rng) {
     final roll = rng.nextDouble();
@@ -112,7 +166,7 @@ class FormatterInput {
   final int parshah;
 
   String describe(String id) => '$id $day $flags number=$number kviahYear=$kviahYear '
-      'bavli=${bavli.$1}:${bavli.$2} yerushalmi=${yerushalmi.$1}:${yerushalmi.$2} parshah=${kd.Parsha.values[parshah].name}';
+      'bavli=${bavli.$1}:${bavli.$2} yerushalmi=${yerushalmi.$1}:${yerushalmi.$2} parshah=${kd.Parshah.values[parshah].name}';
 }
 
 class FormatterArea extends Area {
@@ -131,6 +185,7 @@ class FormatterArea extends Area {
       final dart = input.flags.dart();
       final mode = input.flags.mode;
 
+      compareSettings(report, 'formatter', describe, java, dart);
       compareOrBothThrow(report, 'formatter.formatHebrewNumber', describe,
           attempt(() => javaString(java.formatHebrewNumber(input.number))),
           attempt(() => dart.formatHebrewNumber(input.number)));
@@ -149,10 +204,12 @@ class FormatterArea extends Area {
           attempt(() => dart.formatDafYomiYerushalmi(kd.Daf(input.yerushalmi.$1, input.yerushalmi.$2))));
       javaYerushalmi.release();
 
-      final parshah = kd.Parsha.values[input.parshah];
+      final parshah = kd.Parshah.values[input.parshah];
       compareOrBothThrow(report, 'formatter.formatParshah(Parshah)[$mode]', describe,
-          attempt(() => javaParshah(java, parshah.name)),
-          attempt(() => (input.flags.hebrewFormat ? dart.hebrewParshaMap : dart.transliteratedParshaMap)[parshah]));
+          attempt(() => javaParshah(java, parshah.name)), attempt(() => dart.formatParshah(parshah)));
+      compareOrBothThrow(report, 'formatter.getTransliteratedParshiyosList', describe,
+          attempt(() => javaParshiyosEntry(java, parshah.name)),
+          attempt(() => dart.getTransliteratedParshiyosList()[parshah]));
 
       if (input.day.agrees(report, name, describe)) {
         compareCalendar(report, describe, mode, input, java, dart);
@@ -162,12 +219,46 @@ class FormatterArea extends Area {
   }
 
   String? javaParshah(kj.HebrewDateFormatter java, String name) {
-    final key = name.toJString();
-    final parshah = kj.JewishCalendar$Parshah.valueOf(key);
-    key.release();
+    final parshah = javaParshahValue(name);
     final formatted = javaString(java.formatParshah$1(parshah));
-    parshah?.release();
+    parshah.release();
     return formatted;
+  }
+
+  String? javaParshiyosEntry(kj.HebrewDateFormatter java, String name) {
+    final map = java.transliteratedParshiyosList!;
+    final parshah = javaParshahValue(name);
+    final value = _enumMaps.get(map, parshah);
+    parshah.release();
+    map.release();
+    return value;
+  }
+
+  void compareSettings(
+      Report report, String prefix, String describe, kj.HebrewDateFormatter java, kd.HebrewDateFormatter dart) {
+    report.exact('$prefix.isHebrewFormat', describe, attempt(() => java.isHebrewFormat),
+        attempt(() => dart.isHebrewFormat()));
+    report.exact('$prefix.isUseGershGershayim', describe, attempt(() => java.isUseGershGershayim),
+        attempt(() => dart.isUseGershGershayim()));
+    report.exact('$prefix.isLongWeekFormat', describe, attempt(() => java.isLongWeekFormat),
+        attempt(() => dart.isLongWeekFormat()));
+    report.exact('$prefix.isUseFinalFormLetters', describe, attempt(() => java.isUseFinalFormLetters),
+        attempt(() => dart.isUseFinalFormLetters()));
+    report.exact('$prefix.isUseLongHebrewYears', describe, attempt(() => java.isUseLongHebrewYears),
+        attempt(() => dart.isUseLongHebrewYears()));
+    report.exact('$prefix.getHebrewOmerPrefix', describe, attempt(() => javaString(java.hebrewOmerPrefix)),
+        attempt(() => dart.getHebrewOmerPrefix()));
+    report.exact('$prefix.getTransliteratedShabbosDayOfWeek', describe,
+        attempt(() => javaString(java.transliteratedShabbosDayOfWeek)),
+        attempt(() => dart.getTransliteratedShabbosDayOfWeek()));
+    report.exact('$prefix.getTransliteratedMonthList', describe,
+        attempt(() => javaStrings(java.transliteratedMonthList)),
+        attempt(() => dart.getTransliteratedMonthList().join('|')));
+    report.exact('$prefix.getHebrewMonthList', describe, attempt(() => javaStrings(java.hebrewMonthList)),
+        attempt(() => dart.getHebrewMonthList().join('|')));
+    report.exact('$prefix.getTransliteratedHolidayList', describe,
+        attempt(() => javaStrings(java.transliteratedHolidayList)),
+        attempt(() => dart.getTransliteratedHolidayList().join('|')));
   }
 
   void compareCalendar(Report report, String describe, String mode, FormatterInput input, kj.HebrewDateFormatter java,
@@ -180,11 +271,8 @@ class FormatterArea extends Area {
       'formatYomTov': ((c) => javaString(java.formatYomTov(c)), (c) => dart.formatYomTov(c)),
       'formatRoshChodesh': ((c) => javaString(java.formatRoshChodesh(c)), (c) => dart.formatRoshChodesh(c)),
       'formatTekufaName': ((c) => javaString(java.formatTekufaName(c)), (c) => dart.formatTekufaName(c)),
-      'formatParshah / formatParsha': ((c) => javaString(java.formatParshah(c)), (c) => dart.formatParsha(c)),
-      'formatSpecialParshah / formatSpecialParsha': (
-        (c) => javaString(java.formatSpecialParshah(c)),
-        (c) => dart.formatSpecialParsha(c)
-      ),
+      'formatParshah(JewishCalendar)': ((c) => javaString(java.formatParshah(c)), (c) => dart.formatParshah(c)),
+      'formatSpecialParshah': ((c) => javaString(java.formatSpecialParshah(c)), (c) => dart.formatSpecialParshah(c)),
       'formatDafYomiBavli(getDafYomiBavli)': (
         (c) {
           final daf = c.dafYomiBavli;
@@ -235,7 +323,7 @@ class FormatterArea extends Area {
       final dart = flags.dart();
       final mode = flags.mode;
       final javaDay = kj.JewishCalendar.new1(5660, kd.JewishDate.TISHREI, 1);
-      final dartDay = kd.JewishCalendar.initDate(5660, kd.JewishDate.TISHREI, 1);
+      final dartDay = kd.JewishCalendar.fromJewishDate(5660, kd.JewishDate.TISHREI, 1);
       for (var day = 0; day < 146100; day++) {
         compareOrBothThrow(report, 'formatter.sweep.formatTekufaName[$mode]', 'sweep ${dartDay.toString()}',
             attempt(() => javaString(java.formatTekufaName(javaDay))), attempt(() => dart.formatTekufaName(dartDay)));
@@ -250,13 +338,12 @@ class FormatterArea extends Area {
         }
       }
       final javaNames = javaEnumNames();
-      for (final parshah in kd.Parsha.values) {
+      for (final parshah in kd.Parshah.values) {
         compareOrBothThrow(report, 'formatter.sweep.formatParshah(Parshah)[$mode]', 'sweep parshah=${parshah.name}',
-            attempt(() => javaParshah(java, parshah.name)),
-            attempt(() => (hebrew ? dart.hebrewParshaMap : dart.transliteratedParshaMap)[parshah]));
+            attempt(() => javaParshah(java, parshah.name)), attempt(() => dart.formatParshah(parshah)));
       }
       report.exact('formatter.sweep.Parshah enum names', 'sweep', Value(javaNames),
-          Value(kd.Parsha.values.map((parshah) => parshah.name).join('|')));
+          Value(kd.Parshah.values.map((parshah) => parshah.name).join('|')));
       for (var daf = 0; daf <= 3; daf++) {
         for (var masechta = -1; masechta <= 41; masechta++) {
           final javaDaf = kj.Daf(masechta, daf);
@@ -270,6 +357,8 @@ class FormatterArea extends Area {
           javaDaf.release();
         }
       }
+      compareOrBothThrow(report, 'formatter.sweep.formatDafYomiYerushalmi(null)[$mode]', 'sweep null daf',
+          attempt(() => javaString(java.formatDafYomiYerushalmi(null))), attempt(() => dart.formatDafYomiYerushalmi(null)));
       java.release();
     }
 
@@ -291,13 +380,7 @@ class FormatterArea extends Area {
 
     final java = kj.HebrewDateFormatter();
     final dart = kd.HebrewDateFormatter();
-    report.exact('formatter.sweep.default transliteratedMonths', 'sweep',
-        attempt(() => javaStrings(java.transliteratedMonthList)), Value(dart.getTransliteratedMonthList().join('|')));
-    report.exact('formatter.sweep.default hebrewMonths', 'sweep', attempt(() => javaStrings(java.hebrewMonthList)),
-        Value(dart.getHebrewMonthList().join('|')));
-    report.exact('formatter.sweep.default transliteratedHolidays', 'sweep',
-        attempt(() => javaStrings(java.transliteratedHolidayList)),
-        Value(dart.getTransliteratedHolidayList().join('|')));
+    compareSettings(report, 'formatter.sweep.default', 'defaults', java, dart);
     for (final length in const [0, 13, 14, 15]) {
       final names = [for (var i = 0; i < length; i++) 'm$i'];
       compareOrBothThrow(report, 'formatter.sweep.setHebrewMonthList(length $length)', 'sweep',
@@ -317,15 +400,6 @@ class FormatterArea extends Area {
             return dart.getTransliteratedMonthList().join('|');
           }));
     }
-    report.exact('formatter.sweep.default hebrewOmerPrefix', 'sweep', attempt(() => javaString(java.hebrewOmerPrefix)),
-        Value(dart.hebrewOmerPrefix));
-    report.exact('formatter.sweep.default transliteratedShabbosDayOfWeek', 'sweep',
-        attempt(() => javaString(java.transliteratedShabbosDayOfWeek)), Value(dart.transliteratedShabbosDayOfWeek));
-    report.exact('formatter.sweep.default flags', 'sweep',
-        Value('${java.isHebrewFormat} ${java.isUseGershGershayim} ${java.isLongWeekFormat} '
-            '${java.isUseFinalFormLetters} ${java.isUseLongHebrewYears}'),
-        Value('${dart.hebrewFormat} ${dart.useGershGershayim} ${dart.longWeekFormat} '
-            '${dart.useFinalFormLetters} ${dart.useLongHebrewYears}'));
     java.release();
     report.exact('formatter.sweep.Daf.getYerushalmiMasechtos', 'sweep',
         attempt(() => javaStrings(kj.Daf.yerushalmiMasechtos)),

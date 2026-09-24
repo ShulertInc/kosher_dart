@@ -134,13 +134,13 @@ String upperSnake(String camel) {
   return buffer.toString();
 }
 
-Parsha parshaFor(String? rustName) {
-  if (rustName == null) return Parsha.NONE;
+Parshah parshaFor(String? rustName) {
+  if (rustName == null) return Parshah.NONE;
   final dartName = parshaAlias[rustName] ?? upperSnake(rustName);
-  for (final parsha in Parsha.values) {
+  for (final parsha in Parshah.values) {
     if (parsha.name == dartName) return parsha;
   }
-  throw ArgumentError('no kosher_dart Parsha for $rustName (looked for $dartName)');
+  throw ArgumentError('no kosher_dart Parshah for $rustName (looked for $dartName)');
 }
 
 /// kosher-rust and kosher_dart transliterate a few tractates differently in ways
@@ -284,7 +284,7 @@ void compareCalendarRecord(Report report, Map<String, dynamic> record) {
   final parts = (record['g'] as String).split('-');
   final gregorian = DateTime(int.parse(parts[0]), int.parse(parts[1]), int.parse(parts[2]));
 
-  final calendar = JewishCalendar.fromDateTime(gregorian);
+  final calendar = JewishCalendar.fromLocalDate(gregorian);
   final date = record['g'] as String;
 
   final leap = record['leap'] as bool;
@@ -324,29 +324,26 @@ void compareCalendarRecord(Report report, Map<String, dynamic> record) {
     report.fail('kviah', '$date rust=${record['kviah']} dart=${calendar.getCheshvanKislevKviah()}');
   }
 
-  calendar.inIsrael = true;
+  calendar.setInIsrael(true);
   calendar.setUseModernHolidays(false);
   compareHolidayView(report, 'israel', record['il'] as Map<String, dynamic>, calendar, date);
 
-  calendar.inIsrael = false;
+  calendar.setInIsrael(false);
   compareHolidayView(report, 'diaspora', record['ch'] as Map<String, dynamic>, calendar, date);
 
-  calendar.inIsrael = true;
+  calendar.setInIsrael(true);
   calendar.setUseModernHolidays(true);
   compareHolidayView(report, 'israelModern', record['ilModern'] as Map<String, dynamic>, calendar, date);
   calendar.setUseModernHolidays(false);
 
   final molad = record['molad'];
   if (molad != null && (record['hd'] as int) <= 2) {
-    final expected = JewishDate.initDate(
-      jewishYear: calendar.getJewishYear(),
-      jewishMonth: calendar.getJewishMonth(),
-      jewishDayOfMonth: calendar.getJewishDayOfMonth(),
+    final expected = JewishDate.fromJewishDate(calendar.getJewishYear(), calendar.getJewishMonth(), calendar.getJewishDayOfMonth(),
     ).getMolad();
     final actualSeconds = expected.getMoladChalakim() * 10 / 3;
-    final mismatch = expected.getGregorianYear() != molad['y'] ||
-        expected.getGregorianMonth() != molad['mon'] ||
-        expected.getGregorianDayOfMonth() != molad['d'] ||
+    final mismatch = expected.getLocalDate().year != molad['y'] ||
+        expected.getLocalDate().month != molad['mon'] ||
+        expected.getLocalDate().day != molad['d'] ||
         expected.getMoladHours() != molad['h'] ||
         expected.getMoladMinutes() != molad['mi'] ||
         actualSeconds.floor() != molad['s'];
@@ -354,7 +351,7 @@ void compareCalendarRecord(Report report, Map<String, dynamic> record) {
       report.fail(
         'molad',
         '$date rust=${molad['y']}-${molad['mon']}-${molad['d']} ${molad['h']}:${molad['mi']}:${molad['s']} '
-            'dart=${expected.getGregorianYear()}-${expected.getGregorianMonth()}-${expected.getGregorianDayOfMonth()} '
+            'dart=${expected.getLocalDate().year}-${expected.getLocalDate().month}-${expected.getLocalDate().day} '
             '${expected.getMoladHours()}:${expected.getMoladMinutes()}:${actualSeconds.floor()}',
       );
     }
@@ -369,18 +366,18 @@ void compareCalendarRecord(Report report, Map<String, dynamic> record) {
     return [daf.getYerushlmiMasechtaTransliterated(), daf.getDaf()];
   });
   compareDaf(report, 'dafHashavua', record['dafHashavua'], date, () {
-    final daf = calendar.getDafHashavuaBavli();
+    final daf = DafHashavuaBavliCalculator.getDafHashavuaBavli(calendar);
     return daf == null ? null : [daf.getMasechtaTransliterated(), daf.getDaf()];
   });
 
-  compareAmud(report, record['amudYomiDirshu'], date, calendar.getAmudYomiBavliDirshu());
-  compareMishnas(report, record['mishnaYomis'], date, calendar.getMishnaYomis());
-  compareTehillim(report, record['tehillim'], date, calendar.getTehillimMonthly());
+  compareAmud(report, record['amudYomiDirshu'], date, AmudYomiBavliDirshuCalculator.getAmudYomiBavliDirshu(calendar));
+  compareMishnas(report, record['mishnaYomis'], date, MishnaYomisCalculator.getMishnaYomis(calendar));
+  compareTehillim(report, record['tehillim'], date, TehillimMonthlyCalculator.getTehillimMonthly(calendar));
 
-  calendar.inIsrael = true;
-  comparePirkeiAvos(report, 'israel', record['pirkeiAvosIl'], date, calendar.getPirkeiAvos());
-  calendar.inIsrael = false;
-  comparePirkeiAvos(report, 'diaspora', record['pirkeiAvosCh'], date, calendar.getPirkeiAvos());
+  calendar.setInIsrael(true);
+  comparePirkeiAvos(report, 'israel', record['pirkeiAvosIl'], date, PirkeiAvosCalculator.getPirkeiAvos(calendar));
+  calendar.setInIsrael(false);
+  comparePirkeiAvos(report, 'diaspora', record['pirkeiAvosCh'], date, PirkeiAvosCalculator.getPirkeiAvos(calendar));
 
   report.recordsCompared++;
 }
