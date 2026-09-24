@@ -53,7 +53,7 @@ The dates are:
 
 Each date gets a random `inIsrael`, which only Pirkei Avos may depend on, and a random way
 of building its `JewishCalendar`: from a local or UTC `DateTime`, `setGregorianDate` on a
-new calendar, `initDate` from the Hebrew date, or `setGregorianDate` on one calendar
+new calendar, `fromJewishDate` from the Hebrew date, or `setGregorianDate` on one calendar
 reused across dates.
 
 ## Normalizations
