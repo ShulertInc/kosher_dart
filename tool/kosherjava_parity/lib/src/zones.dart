@@ -48,8 +48,7 @@ class Zones {
 
   tz.Location dartFromJava(String name, int fromMillis, int toMillis) {
     final rules = java(name).rules!;
-    final transitionAt = <int>[tz.minTime];
-    final zones = <tz.TimeZone>[_timeZone(rules, fromMillis)];
+    final offsetChanges = <int>[];
     var at = fromMillis;
     while (true) {
       final cursor = kj.Instant.ofEpochMilli(at)!;
@@ -61,11 +60,40 @@ class Zones {
       at = instant.toEpochMilli();
       instant.release();
       if (at > toMillis) break;
-      transitionAt.add(at);
-      zones.add(_timeZone(rules, at));
+      offsetChanges.add(at);
     }
+    final starts = <int>[fromMillis];
+    final ends = [...offsetChanges, toMillis + 1];
+    for (var index = 0; index < ends.length; index++) {
+      final start = index == 0 ? fromMillis : offsetChanges[index - 1];
+      if (index > 0) starts.add(start);
+      final end = ends[index];
+      final dstAtEnd = _isDst(rules, end - 1);
+      if (end - 1 > start && _isDst(rules, start) != dstAtEnd) {
+        var low = start + 1;
+        var high = end - 1;
+        while (low < high) {
+          final middle = low + (high - low) ~/ 2;
+          if (_isDst(rules, middle) == dstAtEnd) {
+            high = middle;
+          } else {
+            low = middle + 1;
+          }
+        }
+        starts.add(low);
+      }
+    }
+    final transitionAt = <int>[tz.minTime, ...starts.skip(1)];
+    final zones = [for (final start in starts) _timeZone(rules, start)];
     rules.release();
     return tz.Location(name, transitionAt, List.generate(zones.length, (index) => index), zones);
+  }
+
+  bool _isDst(kj.ZoneRules rules, int atMillis) {
+    final instant = kj.Instant.ofEpochMilli(atMillis)!;
+    final dst = rules.isDaylightSavings(instant);
+    instant.release();
+    return dst;
   }
 
   tz.TimeZone _timeZone(kj.ZoneRules rules, int atMillis) {

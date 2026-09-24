@@ -677,9 +677,15 @@ class AstronomicalCalendar {
       DateTime.utc(_calendar.year, _calendar.month, _calendar.day);
 
   void setLocalDate(DateTime localDate) {
-    final int days = DateTime.utc(localDate.year, localDate.month, localDate.day)
-        .difference(getLocalDate())
-        .inDays;
-    setCalendar(startOfLocalDay(_calendar).add(Duration(hours: days * 24 + 12)));
+    final DateTime target =
+        DateTime.utc(localDate.year, localDate.month, localDate.day);
+    for (int attempt = 0; attempt < 4; attempt++) {
+      final int days = target.difference(getLocalDate()).inDays;
+      if (days == 0 && attempt > 0) {
+        return;
+      }
+      setCalendar(
+          startOfLocalDay(_calendar).add(Duration(hours: days * 24 + 12)));
+    }
   }
 }
