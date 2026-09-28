@@ -2445,7 +2445,8 @@ class JewishCalendar extends JewishDate {
 
   bool isLeDavidPeriod() {
     final int month = getJewishMonth();
-    return month == JewishDate.ELUL ||
+    return (month == JewishDate.AV && getJewishDayOfMonth() == 30) ||
+        month == JewishDate.ELUL ||
         (month == JewishDate.TISHREI && getJewishDayOfMonth() <= 21);
   }
 

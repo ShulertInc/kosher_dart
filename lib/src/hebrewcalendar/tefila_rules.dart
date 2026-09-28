@@ -87,6 +87,8 @@ class TefilaRules {
 
   bool _tachanunRecitedMinchaAllYear = true;
 
+  bool _tachanunRecitedTishaBav = false;
+
   bool _mizmorLesodaRecitedErevYomKippurAndPesach = false;
 
   bool _selichosRecitedAllElul = false;
@@ -134,7 +136,8 @@ class TefilaRules {
             _tachanunRecited15IyarOutOfIsrael ||
             month != JewishDate.IYAR ||
             day != 15) &&
-        holidayIndex != JewishCalendar.TISHA_BEAV &&
+        (_tachanunRecitedTishaBav ||
+            holidayIndex != JewishCalendar.TISHA_BEAV) &&
         !jewishCalendar.isIsruChag() &&
         !jewishCalendar.isRoshChodesh() &&
         (_tachanunRecitedShivasYemeiHamiluim || !lastAdar || day <= 22) &&
@@ -164,6 +167,7 @@ class TefilaRules {
             tomorrow.getYomTovIndex() == JewishCalendar.EREV_ROSH_HASHANA ||
             tomorrow.getYomTovIndex() == JewishCalendar.EREV_YOM_KIPPUR ||
             tomorrow.getYomTovIndex() == JewishCalendar.PESACH_SHENI) &&
+        tomorrow.getYomTovIndex() != JewishCalendar.TISHA_BEAV &&
         (_tachanunRecitedMinchaErevLagBaomer ||
             tomorrow.getYomTovIndex() != JewishCalendar.LAG_BAOMER);
   }
@@ -464,6 +468,14 @@ class TefilaRules {
     _tachanunRecitedEndOfTishrei = tachanunRecitedEndOfTishrei;
   }
 
+  bool isTachanunRecitedTishaBav() {
+    return _tachanunRecitedTishaBav;
+  }
+
+  void setTachanunRecitedTishaBav(bool tachanunRecitedTishaBav) {
+    _tachanunRecitedTishaBav = tachanunRecitedTishaBav;
+  }
+
   /// Is _tachanun_ set to be recited during the week after _Shavuos_. This is the opinion of the Pri Megadim
   /// quoted by the Mishna Berurah. This is since _karbanos_ of _Shavuos_ have _tashlumim_ for
   /// 7 days, it is still considered like a Yom Tov. The Chazon Ish quoted in the Orchos Rabainu vol. 1 page 68
@@ -687,8 +699,16 @@ class TefilaRules {
     if (jewishCalendar.isShabbos()) {
       return false;
     }
+    if (jewishCalendar.isErevYomKippur()) {
+      return jewishCalendar.isFriday();
+    }
     return jewishCalendar.isAseresYemeiTeshuva() ||
         (jewishCalendar.isTaanis() && !jewishCalendar.isTishaBav());
+  }
+
+  bool isAvinuMalkeinuRecitedMincha(JewishCalendar jewishCalendar) {
+    return isAvinuMalkeinuRecited(jewishCalendar) &&
+        isTachanunRecitedMincha(jewishCalendar);
   }
 
   bool isLongTachanunRecited(JewishCalendar jewishCalendar) {

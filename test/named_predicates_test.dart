@@ -107,10 +107,14 @@ void main() {
       );
     });
 
-    test('ledavid runs from Elul through hoshana rabba', () {
+    test('ledavid runs from rosh chodesh Elul through hoshana rabba', () {
       expect(
         (cal()..setJewishDate(5784, JewishDate.AV, 29)).isLeDavidPeriod(),
         isFalse,
+      );
+      expect(
+        (cal()..setJewishDate(5784, JewishDate.AV, 30)).isLeDavidPeriod(),
+        isTrue,
       );
       expect(
         (cal()..setJewishDate(5784, JewishDate.ELUL, 1)).isLeDavidPeriod(),
@@ -192,6 +196,57 @@ void main() {
         ),
         isFalse,
       );
+    });
+
+    test('on erev yom kippur, said only when yom kippur is shabbos', () {
+      final weekday = cal()..setJewishDate(5784, JewishDate.TISHREI, 9);
+      expect(weekday.isFriday(), isFalse);
+      expect(rules.isAvinuMalkeinuRecited(weekday), isFalse);
+
+      final friday = cal()..setJewishDate(5785, JewishDate.TISHREI, 9);
+      expect(friday.isFriday(), isTrue);
+      expect(rules.isAvinuMalkeinuRecited(friday), isTrue);
+      expect(rules.isAvinuMalkeinuRecitedMincha(friday), isFalse);
+    });
+
+    test('at mincha, not on a friday, taanis esther or erev yom kippur', () {
+      final tzomGedalia = cal()..setJewishDate(5784, JewishDate.TISHREI, 3);
+      expect(tzomGedalia.isFastOfGedalyah(), isTrue);
+      expect(rules.isAvinuMalkeinuRecitedMincha(tzomGedalia), isTrue);
+
+      final esther = cal()..setJewishDate(5785, JewishDate.ADAR, 13);
+      expect(esther.isTaanisEsther(), isTrue);
+      expect(rules.isAvinuMalkeinuRecited(esther), isTrue);
+      expect(rules.isAvinuMalkeinuRecitedMincha(esther), isFalse);
+
+      final estherMovedToThursday =
+          cal()..setJewishDate(5784, JewishDate.ADAR_II, 11);
+      expect(estherMovedToThursday.isTaanisEsther(), isTrue);
+      expect(rules.isAvinuMalkeinuRecitedMincha(estherMovedToThursday), isTrue);
+
+      final teves = cal()..setJewishDate(5784, JewishDate.TEVES, 10);
+      expect(teves.isFriday(), isTrue);
+      expect(rules.isAvinuMalkeinuRecitedMincha(teves), isFalse);
+    });
+  });
+
+  group('TefilaRules - tachanun on tisha bav', () {
+    test('off by default, on where the minhag falls on tisha bav', () {
+      final tishaBav = cal()..setJewishDate(5784, JewishDate.AV, 9);
+      final falling = TefilaRules()..setTachanunRecitedTishaBav(true);
+
+      expect(rules.isTachanunRecitedShacharis(tishaBav), isFalse);
+      expect(rules.isTachanunRecitedMincha(tishaBav), isFalse);
+      expect(falling.isTachanunRecitedShacharis(tishaBav), isTrue);
+      expect(falling.isTachanunRecitedMincha(tishaBav), isTrue);
+    });
+
+    test('never at mincha on erev tisha bav', () {
+      final erev = cal()..setJewishDate(5784, JewishDate.AV, 8);
+      final falling = TefilaRules()..setTachanunRecitedTishaBav(true);
+
+      expect(falling.isTachanunRecitedShacharis(erev), isTrue);
+      expect(falling.isTachanunRecitedMincha(erev), isFalse);
     });
   });
 
