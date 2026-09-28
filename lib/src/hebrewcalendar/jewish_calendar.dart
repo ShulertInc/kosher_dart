@@ -2432,6 +2432,17 @@ class JewishCalendar extends JewishDate {
     return getDayOfOmer() == dayOfOmer;
   }
 
+  bool isSuccosDay(int dayOfSuccos) {
+    if (dayOfSuccos < 1 || dayOfSuccos > 7) {
+      throw ArgumentError.value(
+          dayOfSuccos, 'dayOfSuccos', 'succos runs to seven days');
+    }
+
+    const int daysOfTishreiBeforeSuccos = 14;
+    return isSuccos() &&
+        getJewishDayOfMonth() == dayOfSuccos + daysOfTishreiBeforeSuccos;
+  }
+
   bool isLeDavidPeriod() {
     final int month = getJewishMonth();
     return month == JewishDate.ELUL ||
