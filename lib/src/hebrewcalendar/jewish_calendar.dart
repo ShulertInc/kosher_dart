@@ -2443,6 +2443,19 @@ class JewishCalendar extends JewishDate {
         getJewishDayOfMonth() == dayOfSuccos + daysOfTishreiBeforeSuccos;
   }
 
+  bool isChanukahDay(int dayOfChanukah) {
+    if (dayOfChanukah < 1 || dayOfChanukah > 8) {
+      throw ArgumentError.value(
+          dayOfChanukah, 'dayOfChanukah', 'chanukah runs to eight days');
+    }
+
+    return getDayOfChanukah() == dayOfChanukah;
+  }
+
+  bool isPurimDePrazim() {
+    return getYomTovIndex() == PURIM;
+  }
+
   bool isLeDavidPeriod() {
     final int month = getJewishMonth();
     return (month == JewishDate.AV && getJewishDayOfMonth() == 30) ||
