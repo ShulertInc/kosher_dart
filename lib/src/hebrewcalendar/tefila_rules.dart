@@ -630,6 +630,69 @@ class TefilaRules {
         today == dayOfSuccos + daysOfTishreiBeforeSuccos + 1;
   }
 
+  bool isWeekdayParshahRead(JewishCalendar jewishCalendar, Parshah parshah) {
+    if (parshah.index < Parshah.BERESHIS.index ||
+        parshah.index > Parshah.VZOS_HABERACHA.index) {
+      throw ArgumentError.value(parshah, 'parshah',
+          'Monday and Thursday read the opening of a single parshah');
+    }
+
+    if (!jewishCalendar.isMondayOrThursday() ||
+        jewishCalendar.isRoshChodesh() ||
+        jewishCalendar.isChanukah() ||
+        jewishCalendar.isPurim() ||
+        jewishCalendar.isTaanis() ||
+        jewishCalendar.isCholHamoed() ||
+        jewishCalendar.isYomTovAssurBemelacha()) {
+      return false;
+    }
+
+    return _weekdayParshah(jewishCalendar) == parshah;
+  }
+
+  static const Map<Parshah, Parshah> _firstOfJoined = {
+    Parshah.VAYAKHEL_PEKUDEI: Parshah.VAYAKHEL,
+    Parshah.TAZRIA_METZORA: Parshah.TAZRIA,
+    Parshah.ACHREI_MOS_KEDOSHIM: Parshah.ACHREI_MOS,
+    Parshah.BEHAR_BECHUKOSAI: Parshah.BEHAR,
+    Parshah.CHUKAS_BALAK: Parshah.CHUKAS,
+    Parshah.MATOS_MASEI: Parshah.MATOS,
+    Parshah.NITZAVIM_VAYEILECH: Parshah.NITZAVIM,
+  };
+
+  Parshah _weekdayParshah(JewishCalendar jewishCalendar) {
+    final Parshah upcoming = jewishCalendar.getUpcomingParshah();
+
+    const int shminiAtzeres = 22;
+    if (upcoming == Parshah.BERESHIS &&
+        jewishCalendar.getJewishMonth() == JewishDate.TISHREI &&
+        jewishCalendar.getJewishDayOfMonth() < shminiAtzeres) {
+      return Parshah.VZOS_HABERACHA;
+    }
+
+    return _firstOfJoined[upcoming] ?? upcoming;
+  }
+
+  bool isPesachReadingRead(JewishCalendar jewishCalendar, int reading) {
+    if (reading < 1 || reading > 5) {
+      throw ArgumentError.value(reading, 'reading',
+          'chol hamoed Pesach has five readings, the first in Israel only');
+    }
+
+    if (!jewishCalendar.isCholHamoedPesach() || jewishCalendar.isShabbos()) {
+      return false;
+    }
+
+    final int today = switch (jewishCalendar.getJewishDayOfMonth()) {
+      16 => 1,
+      17 => 2,
+      18 => jewishCalendar.isSunday() ? 2 : 3,
+      19 => jewishCalendar.isMonday() ? 3 : 4,
+      _ => 5,
+    };
+    return today == reading;
+  }
+
   bool isAtaChonantanuRecited(JewishCalendar jewishCalendar) {
     return jewishCalendar.isMotzeiShabbos() || jewishCalendar.isMotzeiYomTov();
   }
