@@ -2456,6 +2456,13 @@ class JewishCalendar extends JewishDate {
     return getYomTovIndex() == PURIM;
   }
 
+  bool isPurimMeshulashSunday() {
+    final int adar = isJewishLeapYear() ? JewishDate.ADAR_II : JewishDate.ADAR;
+    return getJewishMonth() == adar &&
+        getJewishDayOfMonth() == 16 &&
+        getDayOfWeek() == _SUNDAY;
+  }
+
   bool isLeDavidPeriod() {
     final int month = getJewishMonth();
     return (month == JewishDate.AV && getJewishDayOfMonth() == 30) ||
