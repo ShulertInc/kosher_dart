@@ -2015,6 +2015,14 @@ class JewishCalendar extends JewishDate {
     return false;
   }
 
+  bool isBeHaBFirstMonday() {
+    return isBeHaB() && getDayOfWeek() == _MONDAY && getJewishDayOfMonth() < 11;
+  }
+
+  bool isBeHaBSecondMonday() {
+    return isBeHaB() && getDayOfWeek() == _MONDAY && getJewishDayOfMonth() > 11;
+  }
+
   /// Returns true if the day is _Yom Kippur Katan_, said on _erev Rosh Chodesh_ and moved
   /// back to the Thursday when that falls on Friday or _Shabbos_. It is not said before
   /// _Rosh Chodesh_ Cheshvan, Teves, Iyar or Sivan, so Elul, Tishrei, Kislev and Nissan
