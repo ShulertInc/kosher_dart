@@ -2382,6 +2382,17 @@ class JewishCalendar extends JewishDate {
     return getYomTovIndex() == EREV_PESACH;
   }
 
+  bool isBedikasChametz() {
+    if (getJewishMonth() != JewishDate.NISSAN) {
+      return false;
+    }
+    return switch (getJewishDayOfMonth()) {
+      13 => getDayOfWeek() == _FRIDAY,
+      14 => getDayOfWeek() != _SATURDAY,
+      _ => false,
+    };
+  }
+
   bool isErevYomKippur() {
     return getYomTovIndex() == EREV_YOM_KIPPUR;
   }
